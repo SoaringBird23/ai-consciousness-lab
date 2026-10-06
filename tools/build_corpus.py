@@ -107,6 +107,8 @@ def main():
     ap.add_argument("--min", type=int, default=2, help="最短字数（合词后）")
     ap.add_argument("--max", type=int, default=8, help="最长字数（合词后）")
     ap.add_argument("--top", type=int, default=20, help="样例打印条数")
+    ap.add_argument("--min-session", type=int, default=5,
+                    help="会话至少含多少个不同短语才保留（话题连续需足够素材）")
     args = ap.parse_args()
 
     if not os.path.isdir(SRC_DIR):
@@ -117,6 +119,7 @@ def main():
     freq = collections.Counter()
     speaker_count = collections.Counter()
     spa_count = collections.Counter()
+    sessions = []                 # 每份 .cha = 一次会话（P7 的话题单元）
     raw_lines = 0
     dropped = collections.Counter()
     n_files = 0
@@ -124,6 +127,7 @@ def main():
     for path in iter_cha(SRC_DIR):
         n_files += 1
         cur_spa = None
+        session = collections.Counter()
         with open(path, encoding="utf-8", errors="ignore") as f:
             for line in f:
                 if line.startswith("@"):
@@ -153,9 +157,12 @@ def main():
                         dropped["过长"] += 1
                     else:
                         freq[txt] += 1
+                        session[txt] += 1
                         if cur_spa:
                             spa_count[cur_spa.split(":")[0]] += 1
                 cur_spa = None
+        if len(session) >= args.min_session:
+            sessions.append(session)
 
     os.makedirs(OUT_DIR, exist_ok=True)
     lengths = collections.Counter(len(t) for t in freq.elements())
@@ -175,12 +182,29 @@ def main():
         "top_spa": dict(spa_count.most_common(10)),
         "length_distribution": dict(sorted(lengths.items())),
     }
-    with open(os.path.join(OUT_DIR, "stats.json"), "w") as f:
-        json.dump(stats, f, ensure_ascii=False, indent=2)
-
     corpus = [{"text": t, "count": c} for t, c in freq.most_common()]
     with open(os.path.join(OUT_DIR, "caregiver_corpus.json"), "w") as f:
         json.dump(corpus, f, ensure_ascii=False, indent=1)
+
+    # 会话索引（P7 话题连续用）：[[ [phrase, count], ... ], ...]
+    # 单元是"会话"而非相邻句：可行性探测显示相邻转移过稀（核心 5000 条中仅
+    # 1000 条有重复后继），一阶马尔可夫链学不到结构；会话是语料自带的时间分组。
+    sess_out = [[[t, c] for t, c in s.items()] for s in sessions]
+    with open(os.path.join(OUT_DIR, "caregiver_sessions.json"), "w") as f:
+        json.dump({"min_session": args.min_session, "sessions": sess_out},
+                  f, ensure_ascii=False)
+    sess_utt = sum(sum(s.values()) for s in sessions)
+    sizes = sorted(len(s) for s in sessions)
+    stats["n_sessions"] = len(sessions)
+    stats["session_min_phrases"] = args.min_session
+    stats["session_utterance_coverage"] = round(sess_utt / max(1, total_tokens), 4)
+    stats["session_size_median"] = sizes[len(sizes) // 2] if sizes else 0
+    with open(os.path.join(OUT_DIR, "stats.json"), "w") as f:
+        json.dump(stats, f, ensure_ascii=False, indent=2)
+
+    print("会话索引：%d 个会话（每个 ≥%d 个不同短语），覆盖 %.1f%% 的话语，中位规模 %d 条"
+          % (len(sessions), args.min_session,
+             100 * sess_utt / max(1, total_tokens), stats["session_size_median"]))
 
     print("扫描 .cha 文件 %d 个，主层话语 %d 条" % (n_files, raw_lines))
     print("成年照护者话语 %d 条 → 去重后 %d 个短语（长度 %d–%d 字）"

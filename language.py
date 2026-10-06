@@ -28,6 +28,17 @@ GOALS_PATH = os.path.join(_ROOT, STATE_DIR, "goals.json")
 LANG_STATE_PATH = os.path.join(_ROOT, STATE_DIR, "language_state.json")
 LING_MEMORY_PATH = os.path.join(_ROOT, STATE_DIR, "linguistic_memory.json")
 
+
+def _cumsum(weights):
+    """累积权重。random.choices 若不传 cum_weights，每次调用都会重建整个分布
+    （8.3 万型 = 每次选句 O(n)）；预计算后走 bisect，是 O(log n)。
+    语料扩到 8 万短语后这不是优化，是必需——否则语言层会被选句拖死。"""
+    out, acc = [], 0.0
+    for w in weights:
+        acc += w
+        out.append(acc)
+    return out
+
 # ---- 照护者语料（真实育儿语言分布：高度重复 + 少量新奇）----
 # 环境怎么说话是世界的属性（我们模拟世界的自由度），它的念头则完全由经历决定。
 CORPUS_EVENT = [          # 事件/互动时说（好奇、招呼、命名）
@@ -112,11 +123,32 @@ class Language:
         # 少数句子极高频、长尾极大——这样才保住"高重复 + 少量新奇"的发育结构）。
         self.corpus_texts = []
         self.corpus_weights = []
+        self.corpus_cum = []               # 累积权重（选句 O(log n)）
         self.corpus_directed = []          # 含"你/我"的子集索引（状态定义时刻用）
-        self.corpus_directed_w = []
+        self.corpus_directed_cum = []
         _cf = cg_cfg.get("corpus_file")
         if _cf:
             self._load_corpus(_cf, float(cg_cfg.get("corpus_zipf_exponent", 1.0)))
+        # ---- P7 话题连续性（burst）：一次说话回合内连说 k 句同一会话的话 ----
+        # 单元是"会话"而非相邻句——可行性探测显示相邻转移过稀（核心 5000 条中
+        # 仅 1000 条有重复后继），一阶马尔可夫链学不到结构。
+        # burst_shuffled=True 是对照臂：回合长度与语率完全相同，但句间独立，
+        # 用于把"爆发结构"与"话题内容"分开。
+        self.burst_mode = bool(cg_cfg.get("burst_mode", False))
+        self.burst_shuffled = bool(cg_cfg.get("burst_shuffled", False))
+        self.burst_k_min = int(cg_cfg.get("burst_k_min", 3))
+        self.burst_k_max = int(cg_cfg.get("burst_k_max", 5))
+        self.burst_sessions = []           # 每个会话的短语列表
+        self.burst_session_cum = []        # 每个会话内部的累积权重
+        self.burst_session_size = []       # 每个会话的话语量（会话被抽中的权重）
+        self.burst_session_size_cum = None # 跨会话的累积权重（载入后一次算好）
+        self.burst_directed = []           # 每个会话内含"你/我"的子集
+        self.burst_directed_cum = []
+        self.burst_session = None
+        self.burst_remaining = 0
+        if self.burst_mode:
+            self._load_sessions(cg_cfg.get("sessions_file",
+                                           "corpus/caregiver_sessions.json"))
         # 语言记忆：[{text, t, s2, hour, self_directed}]，片段级
         self.memory = []
         self.recent_inner = deque(maxlen=8)
@@ -136,7 +168,9 @@ class Language:
     # ============ 外部语料：加载与采样（扩语料）============
     def _load_corpus(self, path, exponent):
         """加载语料 JSON（[{"text":..., "count":...}, ...]）。
-        exponent=1.0 → 权重正比于观测频次（保真 Zipf）；>1 → 更偏向高频。"""
+        exponent=1.0 → 权重正比于观测频次（保真 Zipf）；>1 → 更偏向高频。
+        累积权重预先算好：random.choices 若不传 cum_weights，每次调用都会重建
+        整个分布（8.3 万型 = 每次选句 O(n)），会把语言层拖垮。预计算后是 O(log n)。"""
         full = path if os.path.isabs(path) else os.path.join(_ROOT, path)
         if not os.path.exists(full):
             return
@@ -156,24 +190,79 @@ class Language:
             return
         self.corpus_texts = texts
         self.corpus_weights = weights
+        self.corpus_cum = _cumsum(weights)
         self.corpus_directed = [i for i, _ in d_w]
-        self.corpus_directed_w = [w for _, w in d_w]
+        self.corpus_directed_cum = _cumsum([w for _, w in d_w])
 
     def _sample_corpus(self, directed=False):
         if directed and self.corpus_directed:
-            i = random.choices(self.corpus_directed, weights=self.corpus_directed_w, k=1)[0]
+            i = random.choices(self.corpus_directed,
+                               cum_weights=self.corpus_directed_cum, k=1)[0]
             return self.corpus_texts[i]
-        i = random.choices(range(len(self.corpus_texts)), weights=self.corpus_weights, k=1)[0]
-        return self.corpus_texts[i]
+        return random.choices(self.corpus_texts,
+                              cum_weights=self.corpus_cum, k=1)[0]
 
-    def _say(self, pool, directed=False):
+    def _say(self, pool, directed=False, use_burst=False):
         """选一句要说的话：加载了外部语料 → 按频次加权从整池采；
         否则退回内置池（未设 corpus_file 时行为与改动前逐位一致）。
         directed=True 时只从含"你/我"的子集里采——自我指向输入是自我模型
-        形成的硬前提（213 天 null 已证），故保留这一条词法过滤。"""
+        形成的硬前提（213 天 null 已证），故保留这一条词法过滤。
+        use_burst=True（仅用于通用内容的通道：安静基流 / 事件命名）时，改走
+        话题连续采样；状态针对性的通道（醒来问候 / 安抚 / 被注视 / 应答）
+        不受影响，以保住"什么时候说"的状态驱动性。"""
         if self.corpus_texts:
+            if use_burst and self.burst_mode and self.burst_sessions:
+                return self._burst_next(directed)
             return self._sample_corpus(directed)
         return random.choice(pool)
+
+    def _load_sessions(self, path):
+        """加载会话索引：{"sessions": [[[phrase, count], ...], ...]}。
+        每个会话的累积权重与"含你/我"子集都在这里一次算好，避免选句时重建。"""
+        full = path if os.path.isabs(path) else os.path.join(_ROOT, path)
+        if not os.path.exists(full):
+            return
+        with open(full, encoding="utf-8") as f:
+            d = json.load(f)
+        for s in d.get("sessions", []):
+            texts, wts, dtexts, dwts = [], [], [], []
+            for t, c in s:
+                t = str(t)
+                if not t:
+                    continue
+                texts.append(t)
+                wts.append(float(c))
+                if any(word in t for word in self.sd_words):
+                    dtexts.append(t)
+                    dwts.append(float(c))
+            if not texts:
+                continue
+            self.burst_sessions.append(texts)
+            self.burst_session_cum.append(_cumsum(wts))
+            self.burst_session_size.append(sum(wts))
+            self.burst_directed.append(dtexts)
+            self.burst_directed_cum.append(_cumsum(dwts))
+        if self.burst_session_size:
+            self.burst_session_size_cum = _cumsum(self.burst_session_size)
+
+    def _burst_next(self, directed=False):
+        """一次说话回合内，从同一会话里连续取句。回合用尽则新开一个会话。"""
+        if self.burst_remaining <= 0 or self.burst_session is None:
+            self.burst_session = random.choices(
+                range(len(self.burst_sessions)),
+                cum_weights=self.burst_session_size_cum, k=1)[0]
+            self.burst_remaining = random.randint(self.burst_k_min, self.burst_k_max)
+        self.burst_remaining -= 1
+        if self.burst_shuffled:              # 对照臂：结构相同、句间独立
+            return self._sample_corpus(directed)
+        i = self.burst_session
+        if directed and self.burst_directed[i]:
+            return random.choices(self.burst_directed[i],
+                                  cum_weights=self.burst_directed_cum[i], k=1)[0]
+        if directed:
+            return self._sample_corpus(True)
+        return random.choices(self.burst_sessions[i],
+                              cum_weights=self.burst_session_cum[i], k=1)[0]
 
     # ============ 环境（照护者）说话 ============
     def caregiver_speaks(self, dt_hours, sim_hour, event_happened,
@@ -213,7 +302,7 @@ class Language:
                 return self._say(["你醒啦", "你醒啦", "你醒啦", "你好呀"], directed=True)
             # 2) 事件时刻：命名/好奇（与随机模式同概率、同语料）
             if event_happened and random.random() < self.speech_prob_with_event:
-                return self._say(CORPUS_EVENT)
+                return self._say(CORPUS_EVENT, use_burst=True)
             # 3) 紧张高（s4）：安抚——含第一人称在场承诺（"我在这儿"与被安抚共现）
             #    C1 对照（inverted）：同一批"我"短语移到平静时刻说——频率匹配、语境反转
             fp_soothe = FP_SOOTHE if (self.corpus_fp and self.fp_context == "bound") else []
@@ -239,7 +328,7 @@ class Language:
             p = self.speech_per_hour_quiet * dt_hours
             if random.random() < p:
                 pool = CORPUS_NIGHT if (21 <= sim_hour or sim_hour < 5) else CORPUS_DAY
-                return self._say(pool)
+                return self._say(pool, use_burst=True)
             return None
 
         # ---- random 模式（原逻辑，对照） ----
