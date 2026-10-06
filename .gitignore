@@ -26,6 +26,10 @@ __pycache__/
 .vscode/
 .trae-html-share-packages/
 
+# ── 第三方语料：许可限制，不入库；只提交构建脚本与 corpus/MANIFEST.md ──
+corpus_raw/
+corpus/*.json
+
 # ── 手工备份与 LaTeX 中间产物（git 已提供历史）──
 *.bak_*
 *.aux
