@@ -1,0 +1,55 @@
+{
+  "experiment": "P5 痛 / 乐（把『匮乏』与『满足』显式化为两个内部状态）",
+  "created": "2026-10-06",
+  "preregistered_before_data": true,
+  "motivation": "这条路线一直有『好/坏』的物理地基（能量预算、睡眠压力、s4 紧张、s8 无聊），但没有把『我正难受』『我正舒坦』显式化为带惯性的内部状态。痛/乐是『内在好恶』的最小实现，也是从『被世界影响』走向『因难受而改行为』的第一步。关键约束：两者必须内生于自身的状态变量，绝不能是外部发下的 reward——否则系统会朝『让打分者满意』演化，即项目已经栽过的『表演』坑（P2.5 LLM 内言语）。",
+
+  "design": {
+    "instance": "三条臂，SIGSTOP 安全 fork 自同一成熟母本（同一心智，已过镜像期、语言层解锁），同窗口 30 仿真日",
+    "arms": {
+      "off": "affect.enabled=false —— 与改动前逐位一致的基准",
+      "rec_only": "affect.enabled=true, k_affect=0.00 —— 记录痛/乐但不接线（H2 对照）",
+      "on": "affect.enabled=true, k_affect=0.10 —— 记录并接线"
+    },
+    "mechanics": {
+      "distress": "0.5*(1-能量余量) + 0.3*s4 + 0.2*睡眠压力；积分量（升 tau=0.5h / 落 tau=6h，升快落慢 = 负性偏差）",
+      "ease": "0.4*能量余量 + 0.35*(1-s8) + 0.25*(1-s4)；积分量（升 tau=3h / 落 tau=0.75h，起慢退快）",
+      "feedback": "s4 += k*(痛偏置 - 乐偏置)；痛偏置 > 0 时 s8 *= (1 - 0.5*k*痛偏置)（注意力收窄）",
+      "sleep": "睡中暂停更新（睡眠是复位期）",
+      "zero_reward_guarantee": "环境只改变处境（剥夺/丰富），不向系统喂任何 reward 标量；痛/乐完全由系统自身状态算出"
+    },
+    "metrics": "M1 探索率/日、M2 发声率/日、M3 检索率/日、M4 活动-休息节律（睡眠总时长与入睡时相）",
+    "data": "state_*/trajectory.jsonl（新增 distress / ease 字段）、state_*/affect.json、inner_speech.jsonl、attribution.jsonl"
+  },
+
+  "hypotheses": {
+    "H1_channel_measurable": {
+      "criterion": "on 臂与 off 臂在 M1..M4 中，至少一项差异 ≥10%",
+      "positive": "痛/乐接线后行为可测地改变 → 该通道承重",
+      "negative": "四项差异全部 <10% → 痛/乐在当前量级下是副现象（与 E6a 同型结果，如实记录，不隐藏）"
+    },
+    "H2_load_bearing": {
+      "criterion": "在 H1 命中的指标上，rec_only 与 off 差异 <10%（记录本身不改变行为），且 (on − rec_only) ≈ (on − off)（±20% 相对误差内）",
+      "positive": "差异确由反馈通道产生，不是记录副作用或随机漂移",
+      "negative": "rec_only 也偏离 off → 差异不能归因于反馈通道"
+    },
+    "H3_anticipation": {
+      "criterion": "痛苦峰值是否领先其后 1 仿真日内的退避行为（探索率下降或发声减少）",
+      "verdict": "探索性 —— 仅记录，不判 PASS/FAIL"
+    }
+  },
+
+  "predictions_registered": {
+    "H1": "不确定。诚实理由：E6a 已证『念头→状态』的弱通道（±0.02）不承重；若痛/乐只是同一类弱通道，会得到同样的阴性。但本实验的耦合是 0.10（E6a 的 5 倍），且直接作用于 s4/s8 而非仅 s2，因此存在阳性可能——这正是本实验要分辨的。",
+    "H2": "阳性（若 H1 阳性）",
+    "H3": "不确定（观察项）"
+  },
+
+  "audits": {
+    "default_off": "config.affect.enabled 默认 false、k_affect 默认 0.0。未开启该键的线（含正在跑的 S1/S2/R）行为与改动前逐位一致，本改动不影响在跑的实验。",
+    "unit_test": "9/9 通过：关闭时 distress/ease 恒为 0；关闭时 feedback 返回 (0,0)；k_affect=0 时 receive_affect 逐位不改状态；剥夺 3h 后痛 >0.6；同样 3h 后痛保留 0.53 > 乐保留 0.46（负性偏差成立）；接线后 s4 被抬高、s8 被压缩；偏置域限在 0..1；睡眠中痛/乐暂停。",
+    "other_paths": "affect 只写入 s4/s8 两个既有维度，无第二条写入路径；关闭时不调用 receive_affect 的写入分支。"
+  },
+
+  "note": "本实验不改任何既有机制，只新增两个内部状态与一条反馈通道。判据事前冻结，事后不得修改。阴性结果如实记录。"
+}

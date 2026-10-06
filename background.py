@@ -180,3 +180,14 @@ class Background:
     # 婴儿期探索行为：无聊超过阈值时产生内生行动意图（由 main 调用）
     def wants_explore(self):
         return (not self.asleep) and self.s[7] > self.explore_threshold
+
+    # ---- P5：痛 / 乐 对状态的反馈 ----
+    def receive_affect(self, distress_bias, ease_bias, gain):
+        """gain=0 时为 no-op——与改动前逐位一致（默认 config.affect.k_affect=0）。
+        痛：s4 紧张抬升，且 s8 无聊被压缩（注意力收窄）；
+        乐：s4 松弛。两者共用同一增益，方向相反。"""
+        if self.asleep or not gain:
+            return
+        self.s[3] = _clip(self.s[3] + gain * (distress_bias - ease_bias))
+        if distress_bias > 0.0:
+            self.s[7] = _clip(self.s[7] * (1.0 - 0.5 * gain * distress_bias))

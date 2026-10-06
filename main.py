@@ -24,6 +24,7 @@ from collections import deque
 import numpy as np
 
 import attribution as attribution_mod
+import affect as affect_mod
 import awareness as awareness_mod
 import background as background_mod
 import energy as energy_mod
@@ -127,6 +128,8 @@ def main():
     # P4 行动环：milieu=它能施力的世界（独立动力学），motor=动作通道（给肌肉不给目标）
     milieu = milieu_mod.Milieu(config)
     motor = motor_mod.Motor(config, rng)
+    # P5：痛 / 乐——两个带惯性的内部状态（默认 disabled，行为与改动前一致）
+    affect = affect_mod.Affect(config)
 
     # ---- E6 因果中介（J-space 金标准移植）----
     # p1 损伤：ablation=true → 回流通道切断（念头不再反作用于背景态）
@@ -174,6 +177,8 @@ def main():
         resumed.append("milieu")
     if motor.load():
         resumed.append("motor")
+    if affect.load():
+        resumed.append("affect")
     if resumed:
         logger.info("恢复运行状态：%s（sim_time=%.0fs, day %d h%.2f）",
                     ", ".join(resumed), clock.sim_time(), clock.day_index(), clock.sim_hour())
@@ -244,6 +249,11 @@ def main():
             # ---- 背景层积分 ----
             bg.step(dt_h, surprise_bits=surprise, event=has_event,
                     ref_surprise=pred.running_mean())
+
+            # ---- P5：痛 / 乐（积分量；enabled=false 时 step 直接返回、增益为 0）----
+            affect.step(dt_h, bg.s, en.level / en.budget, bg.sleep_pressure, bg.asleep)
+            d_bias, e_bias = affect.feedback()
+            bg.receive_affect(d_bias, e_bias, affect.k_affect)
 
             # ---- 睡眠转换：入睡时固化记忆；醒来时补能量 ----
             if prev_asleep and not bg.asleep:
@@ -452,6 +462,8 @@ def main():
                 snap["energy"] = en.snapshot()
                 snap["stage"] = stage.stage
                 snap["self_ratio"] = att.self_ratio()
+                snap["distress"] = round(affect.distress, 4)
+                snap["ease"] = round(affect.ease, 4)
                 with open(TRAJECTORY, "a") as f:
                     f.write(json.dumps(snap, ensure_ascii=False) + "\n")
             if do_hb:
@@ -466,7 +478,7 @@ def main():
                 bg.save(); en.save(); pred.save(); att.save()
                 stage.save(clock.sim_time()); mem.save(); probes.save()
                 sm.save(); narr.save(); world.save(); lang.save(); voice.save()
-                milieu.save(); motor.save()
+                milieu.save(); motor.save(); affect.save()
 
             # ---- 实时节拍（wall_sleep 过小时跳过 sleep，避免加速模式下被系统调用开销拖垮）----
             wall_sleep = tick_s / time_scale * low_power_factor
@@ -479,7 +491,7 @@ def main():
         bg.save(); en.save(); pred.save(); att.save()
         stage.save(clock.sim_time()); mem.save(); probes.save()
         sm.save(); narr.save(); world.save(); lang.save(); voice.save()
-        milieu.save(); motor.save()
+        milieu.save(); motor.save(); affect.save()
         logger.info("退出。最后心跳仿真时刻：day %d %.2f 时。",
                     clock.day_index(), clock.sim_hour())
         if stop_requested and os.path.exists(STOP):
