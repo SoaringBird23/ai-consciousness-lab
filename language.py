@@ -106,6 +106,17 @@ class Language:
         self.n_retrieval = 0
         self.existence_count = 0
         self.first_heard_t = None
+        # ---- 外部语料（扩语料）：不分池，按频次加权从整池采 ----
+        # 设为 caregiver.corpus_file 时启用；未设时行为与改动前逐位一致。
+        # 采样策略：权重 ∝ 语料中观测频次^exponent（真实儿童语言是 Zipf 分布，
+        # 少数句子极高频、长尾极大——这样才保住"高重复 + 少量新奇"的发育结构）。
+        self.corpus_texts = []
+        self.corpus_weights = []
+        self.corpus_directed = []          # 含"你/我"的子集索引（状态定义时刻用）
+        self.corpus_directed_w = []
+        _cf = cg_cfg.get("corpus_file")
+        if _cf:
+            self._load_corpus(_cf, float(cg_cfg.get("corpus_zipf_exponent", 1.0)))
         # 语言记忆：[{text, t, s2, hour, self_directed}]，片段级
         self.memory = []
         self.recent_inner = deque(maxlen=8)
@@ -121,6 +132,48 @@ class Language:
         self.retrieval_log = deque(maxlen=self.goal_window)
         self._last_evoke_t = 0.0
         self._last_error = None
+
+    # ============ 外部语料：加载与采样（扩语料）============
+    def _load_corpus(self, path, exponent):
+        """加载语料 JSON（[{"text":..., "count":...}, ...]）。
+        exponent=1.0 → 权重正比于观测频次（保真 Zipf）；>1 → 更偏向高频。"""
+        full = path if os.path.isabs(path) else os.path.join(_ROOT, path)
+        if not os.path.exists(full):
+            return
+        with open(full, encoding="utf-8") as f:
+            rows = json.load(f)
+        texts, weights, d_w = [], [], []
+        for r in rows:
+            t = str(r.get("text", "")).strip()
+            if not t:
+                continue
+            w = max(1e-9, float(r.get("count", 1))) ** exponent
+            texts.append(t)
+            weights.append(w)
+            if any(word in t for word in self.sd_words):
+                d_w.append((len(texts) - 1, w))
+        if not texts:
+            return
+        self.corpus_texts = texts
+        self.corpus_weights = weights
+        self.corpus_directed = [i for i, _ in d_w]
+        self.corpus_directed_w = [w for _, w in d_w]
+
+    def _sample_corpus(self, directed=False):
+        if directed and self.corpus_directed:
+            i = random.choices(self.corpus_directed, weights=self.corpus_directed_w, k=1)[0]
+            return self.corpus_texts[i]
+        i = random.choices(range(len(self.corpus_texts)), weights=self.corpus_weights, k=1)[0]
+        return self.corpus_texts[i]
+
+    def _say(self, pool, directed=False):
+        """选一句要说的话：加载了外部语料 → 按频次加权从整池采；
+        否则退回内置池（未设 corpus_file 时行为与改动前逐位一致）。
+        directed=True 时只从含"你/我"的子集里采——自我指向输入是自我模型
+        形成的硬前提（213 天 null 已证），故保留这一条词法过滤。"""
+        if self.corpus_texts:
+            return self._sample_corpus(directed)
+        return random.choice(pool)
 
     # ============ 环境（照护者）说话 ============
     def caregiver_speaks(self, dt_hours, sim_hour, event_happened,
@@ -157,36 +210,36 @@ class Language:
                 self._vocal_win_active = False       # 窗口结束，下次发声可再应答
             # 1) 醒来时刻：晨间问候（每天必现的自我指向共现）
             if woke:
-                return random.choice(["你醒啦", "你醒啦", "你醒啦", "你好呀"])
+                return self._say(["你醒啦", "你醒啦", "你醒啦", "你好呀"], directed=True)
             # 2) 事件时刻：命名/好奇（与随机模式同概率、同语料）
             if event_happened and random.random() < self.speech_prob_with_event:
-                return random.choice(CORPUS_EVENT)
+                return self._say(CORPUS_EVENT)
             # 3) 紧张高（s4）：安抚——含第一人称在场承诺（"我在这儿"与被安抚共现）
             #    C1 对照（inverted）：同一批"我"短语移到平静时刻说——频率匹配、语境反转
             fp_soothe = FP_SOOTHE if (self.corpus_fp and self.fp_context == "bound") else []
             if state_vec[3] > 0.62 and random.random() < 10.0 * dt_hours:
-                return random.choice(CORPUS_NIGHT + fp_soothe)
+                return self._say(CORPUS_NIGHT + fp_soothe)
             if (self.corpus_fp and self.fp_context == "inverted" and state_vec[3] < 0.40
                     and random.random() < self.fp_inv_rate_soothe * dt_hours):
-                return random.choice(FP_SOOTHE)
+                return self._say(FP_SOOTHE, directed=True)
             # 4) 无聊高（s8）：互动召唤（8/时）
             if state_vec[7] > 0.40 and random.random() < 8.0 * dt_hours:
-                return random.choice(["看", "看这个", "又动了", "又动啦",
-                                      "摸摸", "来了来了"])
+                return self._say(["看", "看这个", "又动了", "又动啦",
+                                  "摸摸", "来了来了"])
             # 5) 注意焦点显著：自我指向——"你"与被注视状态共现（5/时）
             #    C1（inverted）：高焦点时刻只说"你"族；"我"族移到无焦点时刻（频率匹配）
             pool_self = (CORPUS_SELF if (self.corpus_fp and self.fp_context == "bound")
                          else CORPUS_SELF_2P)
             if salience > 0.6 and random.random() < 5.0 * dt_hours:
-                return random.choice(pool_self)
+                return self._say(pool_self, directed=True)
             if (self.corpus_fp and self.fp_context == "inverted" and salience < 0.3
                     and random.random() < self.fp_inv_rate_salience * dt_hours):
-                return random.choice(FIRST_PERSON)
+                return self._say(FIRST_PERSON, directed=True)
             # 6) 默认：安静时段基础语流（与随机模式同率；自我指向通道已由 1/5 承担）
             p = self.speech_per_hour_quiet * dt_hours
             if random.random() < p:
                 pool = CORPUS_NIGHT if (21 <= sim_hour or sim_hour < 5) else CORPUS_DAY
-                return random.choice(pool)
+                return self._say(pool)
             return None
 
         # ---- random 模式（原逻辑，对照） ----
@@ -204,9 +257,9 @@ class Language:
                 pool = CORPUS_DAY
         # 少量自我指向语言
         if random.random() < self.self_prob:
-            text = random.choice(CORPUS_SELF)
+            text = self._say(CORPUS_SELF, directed=True)
         else:
-            text = random.choice(pool)
+            text = self._say(pool)
         return text
 
     # ============ 听 ============

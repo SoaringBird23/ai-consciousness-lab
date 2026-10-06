@@ -1,0 +1,53 @@
+{
+  "experiment": "P6 语料扩容（55 条内置语料 → CHILDES 真实照护者语言 8.3 万条）",
+  "created": "2026-10-06",
+  "preregistered_before_data": true,
+  "motivation": "现有照护者语料是硬编码在 language.py 里的 55 条短句。真实儿童语言不是 55 条：它是 Zipf 分布——少数句子极高频、长尾极大。本实验把语料换成 CHILDES 中文子库抽出的 83,302 个真实成人短语（详见 corpus/MANIFEST.md），检验『更大的真实语料』对自我模型生长的影响。注意：这不是『投喂教材』——语料是环境属性，说话时机仍由候选体状态驱动，语料本身不含任何标注或课程安排。",
+
+  "design": {
+    "instance": "两条臂，SIGSTOP 安全 fork 自同一成熟母本（已过镜像期、语言层解锁），同窗口 60 仿真日",
+    "arms": {
+      "builtin": "现状：caregiver.corpus_file 未设 → 内置 55 条四池语料（逐位与改动前一致）",
+      "childes": "config_corpus.json：caregiver.corpus_file=corpus/caregiver_corpus.json，corpus_zipf_exponent=1.0"
+    },
+    "sampling": {
+      "single_pool": "不再分 EVENT/NIGHT/DAY/SELF 四池；内容一律从整池按频次加权采样（random.choices，权重 ∝ 观测频次）",
+      "directed_filter": "唯一保留的分类是词法过滤：状态定义时刻（醒来问候 / 被注视高显著 / 安抚）只从含『你』或『我』的子集采（18,269 条，占 22%）。理由不是审美，而是我们自己的证据：语料里没有第二/第一人称时自我模型 213 天保持 null（结构性不可能形成）。",
+      "timing_unchanged": "说话时机规则完全不动：安静基率、事件加权、紧张加权、醒来问候、无聊召唤、对发声的应答（E4 机制）——这些是状态驱动，与语料内容解耦"
+    },
+    "metrics": "M1 自我模型版本轨迹（首个碎片日龄、达 v3 日龄、末版本号）· M2 检索率/日 · M3 检索多样性（去重片段数）· M4 涌现目标数 · M5 语境绑定强度（高惊奇期听到的片段在后续高紧张态被检索的比例，复用 E2 度量）",
+    "data": "state_*/self_model_history.json, inner_speech.jsonl, trajectory.jsonl, goals.json"
+  },
+
+  "hypotheses": {
+    "H1_structure_holds": {
+      "criterion": "childes 臂 M2 与 builtin 臂同量级（比值落在 0.5–2.0）",
+      "positive": "语料放大 ~1500 倍后检索机制未崩溃（不爆炸也不归零）",
+      "negative": "比值出界 → 语料规模与检索阈值/频率增益不匹配，需重新校准后重跑"
+    },
+    "H2_growth_rate": {
+      "criterion": "两臂达 v3 的日龄比较（探索性，两个方向都可能）",
+      "purpose": "更真实的语料是否加快自我模型形成？两个假设都合理：语料更多样 → 状态-片段绑定更稀疏（更难）；语料更真实 → 共现结构更自然（更易）。不预设方向，只记录。"
+    },
+    "H3_binding_strength": {
+      "criterion": "childes 臂 M5 与 builtin 臂比较，是否 ≥ builtin",
+      "positive": "真实语料的语境绑定不弱于人工小语料 → 与 E2 的因果发现一致",
+      "negative": "绑定显著减弱 → 说明原 55 条小语料的高重复结构才是绑定的真正来源（这是一个重要的、反直觉的发现，如实记录）"
+    }
+  },
+
+  "predictions_registered": {
+    "H1": "阳性（机制上是采样替换，不改打分公式，量级应保持）",
+    "H2": "不确定（真两个方向都可能）",
+    "H3": "不确定。诚实理由：binding 依赖『同一句在不同状态下被听到』的对比；Zipf 采样下高频句会被听到在各种状态下，反而可能稀释绑定——这与我们的直觉相反，所以必须实测。"
+  },
+
+  "audits": {
+    "zero_impact_on_running": "corpus_file 默认未设 → 现有线（含在跑的 S1/S2/R、主线、P3 试点）行为与改动前逐位一致，本改动不影响在跑实验。",
+    "no_curriculum": "语料不含任何标注、顺序或阶段安排；说话时机仍由状态驱动，与内容解耦。未做任何『教材』式编排。",
+    "design_trace_declared": "『不分池』是实验者的选择（用户决定）；『含你/我』过滤是唯一保留的分类，其正当性来自 213 天 null 的自家证据，而非语义审美。两者均在此显式声明，不藏在脚本里。",
+    "unit_check": "已验：未设 corpus_file 时退回内置池且 corpus_texts 为空；设了之后载入 83,302 条（0.10s）；定向采样 2000 次含『你/我』违规 0 条；Zipf 采样下前 100 条占采样量 17.5%（高重复结构保住）。"
+  },
+
+  "note": "阴性结果如实记录。判据事前冻结，事后不得修改。语料构建设计与已知局限见 corpus/MANIFEST.md。"
+}
