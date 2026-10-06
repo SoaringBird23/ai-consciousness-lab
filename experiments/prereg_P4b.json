@@ -1,0 +1,55 @@
+{
+  "experiment": "P4b 时间化行动环（修 P4 的两处缺陷：无时间信号 + 无自因分离）",
+  "created": "2026-10-05 21:20",
+  "preregistered_before_data": true,
+  "motivation": "P4（瞬时空间梯度信号）判决：HA1 闭环 ✅、HA4 结构 ✅、HA2 追踪 ⚠️（高于基线但无学习曲线）、HA3 能动 ❌ 无法评估。根因见 experiments/p4/deviation_1.json：outcome 是'同一 tick 内两位置场强之差'，纯空间梯度、不含时间；世界自因变化从未被采样；系统从未被告知'哪些变化是自己造成的'。P4b 把学习信号时间化，并显式分离自因/世界因。",
+  "design": {
+    "instance": "state_body2（SIGSTOP 安全 fork 自 state_body，同一心智连续体；动作学习状态重置）",
+    "duration": "30 仿真日",
+    "controlled_variable": "世界完全相同（同 milieu 配置）、心智相同——唯一切换的是动作学习信号（motor.temporal: true）",
+    "control": "state_body（P4，瞬时信号）已归档，其 actions.jsonl 作为对照",
+    "new_mechanics": {
+      "world_model_fwd": "fwd[(level_bin, trend_bin)]：只从'停驻'试次学习的 EMA，估计'我不动时世界怎么变'。因只吃 stay 样本，不被动作污染。",
+      "temporal_outcome": "后果在动作区间上测：actual_Δ = f(t+Δ) − f(t)，Δt = 动作间隔（60 仿真秒）。含'世界漂移'+'我的动作效应'两部分。",
+      "self_caused": "self_caused = actual_Δ − fwd[level_bin, trend_bin]。这是'我的动作超出世界自身演变的那部分'。动作效用 q 仅在 self_caused 上更新。"
+    }
+  },
+  "hypotheses": {
+    "HB1_world_model": {
+      "metric": "M1 fwd 对停驻试次 Δ 的预测误差（|actual − fwd|）随时间下降；末段显著低于'恒为0'基线",
+      "positive": "它建模了世界自身动力学（拿到'不做事时会怎样'的对照）",
+      "negative": "未建模世界漂移 → self_caused 与 actual 无差别，退化为 P4"
+    },
+    "HB2_self_separation": {
+      "metric": "M2 移动试次的 self_caused 均值显著 > 0，且其方差显著小于 actual（即移除世界漂移后信号更干净）",
+      "positive": "自因/世界因分离成立——能动性的计算学定义达成",
+      "negative": "移动未带来超出世界漂移的效应（世界动力学主导，动作无足轻重）"
+    },
+    "HB3_agency_behavior": {
+      "metric": "M3 按签名统计：q 值与实测 self_caused 正相关；系统对高 self_caused 动作的选择率 > 低 self_caused 动作",
+      "positive": "它利用自我效能选择动作",
+      "negative": "未利用"
+    },
+    "HB4_learning_curve": {
+      "metric": "M4 末段（最后10日）场强时间均值 > 首段（前5日）——P4 中因瞬时信号而缺失的改进曲线",
+      "positive": "时间化信号恢复了学习曲线",
+      "negative": "仍无曲线（可能因世界周期平稳，无改进空间）"
+    }
+  },
+  "predictions_registered": {
+    "HB1": "阳性（EMA 是世界模型的直接学习，应能看到误差下降）",
+    "HB2": "不确定。诚实理由：若世界漂移在相邻位置高度相关，则 fwd 近似抵消，self_caused 可能仍被世界主导；若各源相位差异大，分离才显著",
+    "HB3": "弱阳性（若 HB2 成立则 HB3 机制上应成立）",
+    "HB4": "不确定（世界平稳，可能仍无曲线——若如此，说明'无曲线'是世界性质而非信号性质，是重要区分）"
+  },
+  "known_confounds": [
+    "世界周期平稳且源位置固定——策略可能'记住相位'而非'追踪梯度'（与 P4 同）",
+    "fork 自 state_body，心智比 P4 起点晚约 20 仿真日（个体连续，非严格同期对照）"
+  ],
+  "interpretation_ladder": {
+    "HB1+HB2阳性": "能动性的计算学定义达成：系统能分离'我造成的'与'世界自己变的'。这是从'梯度趋近'到'能动'的跃迁 → 下一步加生存压力（能量可由接触源补充）",
+    "HB1阳性+HB2阴性": "它建了世界模型，但动作对世界的影响太小（被世界动力学淹没）→ 提高动作幅度或让世界更受动作影响",
+    "全阴性": "时间化信号无效 → 回到'单向工作空间'的更深结论：它连'我的动作有后果'都学不到"
+  },
+  "deviation_protocol": "任何计划外情况记 experiments/p4b/deviation_N.json；判据不得事后修改；阴性如实记录"
+}

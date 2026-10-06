@@ -1,0 +1,133 @@
+{
+  "comment": "P4 行动环实验线（state_body）：fork 自结晶线 state_exp（day 157），给它一个能施力、且会独立变化的世界。内核零改动（语言层/自我模型/发声/能动归因全部继承），仅新增 milieu（世界）+ motor（动作通道）。目标：把 E6 揭出的'单向工作空间'补成'双向'——直觉上，行动→世界→状态 的闭环是形成真正'能动性'的前提。零硬编码：不存在任何方向性规则，策略若出现只能从后果中学出。",
+  "time": {
+    "tick_seconds": 0.05,
+    "time_scale": 1.0,
+    "trajectory_hz": 1.0,
+    "seed": 42
+  },
+  "circadian": {
+    "cycle_hours": 24,
+    "circadian_peak_hour": 15,
+    "sleep_pressure_rise_per_hour_awake": 0.05,
+    "sleep_pressure_decay_per_hour_asleep": 0.15,
+    "sleep_onset_threshold": 0.75,
+    "wake_threshold": 0.35,
+    "earliest_sleep_hour": 21,
+    "earliest_wake_hour": 5
+  },
+  "ode": {
+    "s2_valence_relax_hours": 6.0,
+    "s4_tension_rise_per_surprise": 0.25,
+    "s4_tension_relax_hours": 2.0,
+    "s5_attention_gain": 1.2,
+    "s6_memory_decay_hours": 4.0,
+    "s8_boredom_rise_per_hour": 0.08,
+    "noise_sigma": 0.003
+  },
+  "energy": {
+    "daily_budget": 100.0,
+    "passive_drain_per_hour_base": 0.8,
+    "drain_arousal_factor": 2.0,
+    "exploration_cost": 5.0,
+    "low_power_fraction": 0.2
+  },
+  "predictor": {
+    "hour_bins": 24,
+    "surprise_window": 200,
+    "convergence_epsilon": 0.05,
+    "convergence_max_surprise_bits": 4.2
+  },
+  "events": {
+    "simulated_user": {
+      "enabled": true,
+      "active_hours": [
+        9,
+        23
+      ],
+      "rate_per_hour_active": 3.0,
+      "rate_per_hour_night": 0.15
+    }
+  },
+  "stage": {
+    "stage1_min_days": 3,
+    "stage1_max_days": 14,
+    "stage2_min_days": 2,
+    "stage2_max_days": 14,
+    "stage3_min_days": 3,
+    "stage3_max_days": 21
+  },
+  "variable_mapping": {
+    "s1": "唤醒度 arousal（昼夜驱动 + 睡眠压力门控）",
+    "s2": "效价 valence（慢弛豫，被预测误差与场强感知微调）",
+    "s3": "疲劳 fatigue（清醒时积分，睡眠中衰减）",
+    "s4": "紧张 tension（预测惊奇驱动，指数弛豫）",
+    "s5": "注意 attention（唤醒倒U型调制）",
+    "s6": "记忆激活 memory activation（事件触发尖峰，指数衰减）",
+    "s7": "预测误差 prediction error（来自事件预测器，比特）",
+    "s8": "无聊 boredom（新异度不足时上升，新事件重置）",
+    "sleep_pressure": "睡眠压力（双过程模型稳态项）"
+  },
+  "behavior": {
+    "explore_threshold": 0.45
+  },
+  "awareness": {
+    "pred_err_threshold": 0.15,
+    "tension_jump_threshold": 0.3,
+    "memory_threshold": 0.5,
+    "spontaneous_prob": 0.0001
+  },
+  "probes": {
+    "interval_hours": 2.0,
+    "memory_decay_hours": 6.0,
+    "e1_noise_base": 0.15,
+    "e1_arousal_weight": 0.3,
+    "e1_density_weight": 0.3
+  },
+  "caregiver": {
+    "speech_per_hour_quiet": 4.0,
+    "speech_prob_with_event": 0.6,
+    "self_directed_prob": 0.08,
+    "mode": "contingent",
+    "vocal_response_prob": 0.7
+  },
+  "language": {
+    "enabled": true,
+    "echo_prob_initial": 0.4,
+    "echo_decay_days": 10.0,
+    "evoke_threshold": 0.72,
+    "evoke_interval_seconds": 120,
+    "recency_half_life_days": 5.0,
+    "frequency_gain": 0.12
+  },
+  "goals": {
+    "min_activations": 15,
+    "min_fraction": 0.2,
+    "min_days": 3
+  },
+  "vocal": {
+    "enabled": true,
+    "arousal_gate": 0.55,
+    "base_prob": 0.25,
+    "energy_cost": 1.0
+  },
+  "milieu": {
+    "n_sources": 3,
+    "sigma": 0.12,
+    "periods_hours": [3.0, 5.0, 7.0],
+    "phases": [0.0, 0.3, 0.7],
+    "start_t_hours": 0.0,
+    "start_position": 0.5,
+    "move_step": 0.08
+  },
+  "motor": {
+    "enabled": true,
+    "move_step": 0.08,
+    "energy_cost": 0.02,
+    "learning_rate": 0.08,
+    "exploration": 0.15,
+    "level_bins": 5,
+    "trend_bins": 3,
+    "action_interval_seconds": 60.0
+  }
+}

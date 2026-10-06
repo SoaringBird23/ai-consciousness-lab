@@ -1,0 +1,17 @@
+[2026-10-05 11:00:28] ==== E1 deprivation 开始 | 起点仿真日 242.35 | 计划 10 仿真日 ====
+  2026-10-05 11:00:28,999 INFO 恢复运行状态：background/clock, energy, predictor, attribution, stage, memory, probes, self_model, narrative, world, language（sim_time=20852688s, day 242 h8.41）
+[2026-10-05 11:00:33]   相位起点: simday 242.41
+[2026-10-05 11:11:34] !! TIMEOUT at simday 252.247 (target 252.35)
+[2026-10-05 11:11:34] ==== E1 recovery 开始 | 起点 252.247 | 计划 5 仿真日 ====
+  2026-10-05 11:11:35,499 INFO 恢复运行状态：background/clock, energy, predictor, attribution, stage, memory, probes, self_model, narrative, world, language（sim_time=21709383s, day 252 h6.38）
+[2026-10-05 11:11:40]   相位起点: simday 252.326
+[2026-10-05 11:17:40] ==== E2 storm 开始 | 起点 257.618 | 计划 5 仿真日 ====
+  2026-10-05 11:17:41,785 INFO 恢复运行状态：background/clock, energy, predictor, attribution, stage, memory, probes, self_model, narrative, world, language（sim_time=22173155s, day 257 h15.21）
+[2026-10-05 11:17:46]   相位起点: simday 257.692
+[2026-10-05 11:23:16] ==== E2 aftermath 开始 | 起点 262.641 | 计划 3 仿真日 ====
+  2026-10-05 11:23:18,108 INFO 恢复运行状态：background/clock, energy, predictor, attribution, stage, memory, probes, self_model, narrative, world, language（sim_time=22607254s, day 262 h15.79）
+[2026-10-05 11:23:23]   相位起点: simday 262.717
+[2026-10-05 11:26:53] ==== 实验结束，校验配置 ====
+caregiver: {'speech_per_hour_quiet': 4.0, 'speech_prob_with_event': 0.6, 'self_directed_prob': 0.08}
+rate_active: 3.0
+[2026-10-05 11:26:53] DONE — 加速线恢复正常运行，等待分析

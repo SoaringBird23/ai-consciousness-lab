@@ -1,0 +1,10 @@
+{
+  "stage": "awaiting_P3",
+  "language_locked": false,
+  "days_elapsed": 23.823,
+  "exit_reason": "self_model_formed",
+  "entered_at": 18318631.676,
+  "explore_low_energy": 0,
+  "explore_high_energy": 101,
+  "self_model_formed": true
+}

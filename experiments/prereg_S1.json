@@ -1,0 +1,28 @@
+{
+  "experiment": "S1 复现（自我模型能否稳定从 null 形成）",
+  "created": "2026-10-05 23:45",
+  "preregistered_before_data": true,
+  "motivation": "审计发现：论文的核心主张（自我模型从 null 演化）只有单条线（N=1）支持，无种子复现、无方差、无区间。这是核心目标最薄弱的一环。",
+  "design": {
+    "instance": "3 条独立线，从 day 0 出生（state_repl_101/102/103）",
+    "controlled": "与结晶线同构同参（contingent 照护者 + 第一人称语料 + 门控含'我' + explore_threshold 0.45），唯一差异是随机种子（101/102/103）",
+    "duration": "60 仿真日（足够越过镜像期并稳定）"
+  },
+  "hypotheses": {
+    "HS1_form": {
+      "metric": "每条线是否在 60 仿真日内出现 self_model.version >= 3（镜像期出口判据）",
+      "positive": "3/3 都通过 → '自我模型能从 null 稳定形成'成立",
+      "partial": "2/3 → 有稳健性但非必然，如实报告比例",
+      "negative": "<=1/3 → 核心主张降级为个例，必须重估"
+    },
+    "HS1_shape": {
+      "metric": "各线自我模型版本演化的时序形状（首个碎片出现日、达到 v3/v6 的日龄）",
+      "purpose": "探索性：看形成路径是否跨种子一致（观察项，非判据）"
+    }
+  },
+  "predictions_registered": {
+    "HS1_form": "阳性（3/3）。理由：结晶线的形成机制是检索竞争 + 门控，不依赖特定随机流；若种子间差异大，说明形成高度偶然",
+    "HS1_shape": "不确定（观察项）"
+  },
+  "note": "本批只检验可复现性，不改任何机制。不需要 manipulation check（无消融）。"
+}

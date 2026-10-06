@@ -1,0 +1,48 @@
+{
+  "experiment": "E6 因果中介验证（J-space 金标准的移植）",
+  "created": "2026-10-05 17:40",
+  "preregistered_before_data": true,
+  "motivation": "Anthropic《Verbalizable Representations Form a Global Workspace in Language Models》(2026-07) 证明 J-space 因果承重的金标准是损伤+替换实验。我们的内言语（检索胜者→回流→目标/自我模型）从未做过同类检验：回流通道量级刻意微小（s2±0.02, s5+0.015），内言语可能是承重结构，也可能只是一份漂亮的日志（副现象）。这决定论文里我们敢写多强。",
+  "design": {
+    "p1_ablation": {
+      "instance": "state_e6（fork 自 state_exp day 87，SIGSTOP 安全复制）",
+      "duration": "30 仿真日（day 87-117）",
+      "manipulation": "config e6.ablation=true → bg.receive_inner_speech 不再被调用，回流通道物理切断。其余一切照常（竞争、目标、自我模型、发声）",
+      "control": "state_exp（XP 线）同期 day 87-117，未损伤。fork 后两者随机流独立——比较是统计性的，非轨迹配对",
+      "metrics": {
+        "M1_retrieval_rate": "检索念头次数/仿真日（inner_speech.jsonl, type=retrieval）",
+        "M2_diversity": "唯一片段数 / 检索总数（同窗口）",
+        "M3_selfmodel_growth": "自我模型版本增量（v_start→v_end）",
+        "M4_goal_emergence": "新目标数"
+      }
+    },
+    "p2_swap": {
+      "instance": "state_e6s（p1 结束后从 state_exp 当日状态重新 fork，避免消融历史混淆）",
+      "manipulation": "config e6.swap_text + swap_count=60 → 每次检索胜者文本被替换为指定片段（原胜者照常竞争并留痕，替换条目带 e6_swap=true），下游（回流/目标/自我模型/发声）读到的全是替换文本",
+      "expected_mechanics": "goal_window=300, min_fraction=0.2, min_activations=15, min_days=3。60 次连续注入占满滚动窗口 → 若目标系统读胜者流，注入片段必然涌现为目标",
+      "swap_target_rule": "选 state_exp 中 fragment_activations 计数为 0 且已听过的第一人称片段——零历史激活使因果链无歧义"
+    }
+  },
+  "hypotheses": {
+    "H6a_ablation": {
+      "positive": "≥2 项指标（M1-M4）损伤线 vs XP 同期差异 >20% → 内言语因果承重",
+      "negative": "全部指标差异 <10% → 内言语在当前参数下是副现象（报告通道，非工作空间）",
+      "ambiguous": "10%-20% → 边缘效应，报告但不定论"
+    },
+    "H6b_swap": {
+      "positive": "60 次注入完成后 10 仿真日内 goals.json 出现注入片段 → 目标涌现因果上读取胜者流（中介成立）",
+      "negative": "不涌现 → 目标系统另有数据源（或存在未知的过滤层）——将触发对 update_goals 数据流的排查",
+      "secondary": "自我模型是否也跟随（若注入片段 self_directed=true 且未被去重阈值拦截 → v+1）"
+    }
+  },
+  "predictions_registered": {
+    "H6a": "阴性（副现象）。理由：回流量级（±0.02）相对 ODE 动力学（弛豫小时级、噪声 σ=0.003/tick 累计）太小，30 日内难以产生 >20% 的可测行为差异。若阳性则是意外收获",
+    "H6b": "阳性（机制上应必然）。有信息量的部分是速度与自我模型是否跟随，而非目标本身"
+  },
+  "interpretation_ladder": {
+    "H6a阴性+H6b阳性": "内言语→目标 的通路存在，但念头→状态 的反馈太弱。诚实结论：当前是'弱工作空间'——下游读它，它推不动全局。后续决策点：调大回流量级（新实验）vs 接受报告通道定位",
+    "H6a阳性": "J-space 级别的因果证据——我们的内言语承重。论文可引用对照：他们靠透镜发现，我们靠日志审计",
+    "双阴性": "目标涌现不读胜者流——架构有未理解的解耦，先排查再谈意识层级"
+  },
+  "deviation_protocol": "任何计划外情况记 experiments/e6/deviation_N.json；判据不得事后修改"
+}

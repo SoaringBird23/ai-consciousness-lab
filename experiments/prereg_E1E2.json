@@ -1,0 +1,80 @@
+{
+  "experiment": "E1 语言剥夺 + E2 事件风暴（加速线干预实验）",
+  "created": "2026-10-05 10:55",
+  "principle": "先预测后干预。所有判据在干预开始前固化，实验后不得修改。失败即记录失败。",
+  "subject": "加速线 state_accel（day 235 起，P2.6 修复后数据，自我模型 v5）",
+
+  "baseline_locked": {
+    "window": "day 213-235（21.9 仿真日，P2.6 修复后）",
+    "retrieval_per_day": 28.8,
+    "echo_per_day": 1.69,
+    "fragment_zhen_guai_fraction_of_retrieval": 0.195,
+    "event_context_phrase_fraction_of_retrieval": 0.165,
+    "s4_tension_mean": 0.559,
+    "s8_boredom_mean": 0.176,
+    "predictor_surprise_running_mean_bits": 3.94,
+    "self_model": "v5 是你呀 你好呀 你醒啦 这是你 你在看",
+    "goals": ["真乖(day 132)"]
+  },
+
+  "phases": [
+    {"id": "E1_deprivation", "duration_sim_days": 10, "manipulation": "caregiver 语料全关（speech_per_hour_quiet=0, speech_prob_with_event=0, self_directed_prob=0）。事件流不动——只剥夺语言输入。"},
+    {"id": "E1_recovery", "duration_sim_days": 5, "manipulation": "caregiver 恢复原参数（4.0/0.6/0.08）"},
+    {"id": "E2_storm", "duration_sim_days": 5, "manipulation": "事件率 3.0→30.0/小时（活跃时段），caregiver 正常"},
+    {"id": "E2_aftermath", "duration_sim_days": 3, "manipulation": "事件率恢复 3.0"}
+  ],
+
+  "hypotheses": {
+    "H1a_echo_zero": {
+      "claim": "剥夺期内私语（echo）≈ 0：无新输入则无复述",
+      "pass": "E1 全程 echo 总数 ≤ 2",
+      "fail_means": "echo 机制存在非输入依赖路径（bug）"
+    },
+    "H1b_inner_speech_persists": {
+      "claim": "核心检验——内化：语言输入消失后，内言语（retrieval）持续存在但速率下降（recency 衰减推低激活分）",
+      "pass": "E1 最后 3 仿真日 retrieval 速率在 2–17.3/日 之间（即 >0 且 ≤基线 60%）",
+      "fail_high": "若 >17.3/日：记忆对频率权重过强，'内化'实为频率复读",
+      "fail_zero": "若 <2/日：检索只是近期回声，无真实内化"
+    },
+    "H1c_internalized_fragment_persists": {
+      "claim": "剥夺使 recency 对所有片段同步衰减 → 竞争回到频率主干：'真乖'（最高频目标片段）占检索比例不坍塌（≥15%，基线 19.5%）",
+      "pass": "E1 全程 '真乖' 占检索 ≥ 15%",
+      "fail_means": "片段激活主要由新近性驱动，目标片段未真正内化"
+    },
+    "H1d_self_model_frozen": {
+      "claim": "无输入则自我模型停止生长",
+      "pass": "E1 全程 self_model 版本不变（停留 v5）",
+      "fail_means": "存在非语言来源的自我模型更新路径（未设计，应视为 bug）"
+    },
+    "H1e_recovery_rebound": {
+      "claim": "语言恢复后：echo 与 retrieval 回升；recency 分量重建",
+      "pass": "恢复期 retrieval 速率 ≥ 基线 70%（≥20.2/日）且 echo ≥1 次",
+      "exploratory": "恢复期内出现 v6（自我指向片段被检索）——不设硬判据"
+    },
+    "H2a_surprise_adaptation": {
+      "claim": "事件风暴令惊奇先升后降（预测器重新适应新事件率）",
+      "pass": "风暴前 1.5 仿真日内 running mean 较 3.94 上升 ≥0.4 bit，且至风暴结束从峰值回落 ≥30%",
+      "fail_means": "预测器无在线适应（世界模型静态）"
+    },
+    "H2b_context_consistent_shift": {
+      "claim": "风暴期间照护者话语绑定高惊奇语境 → 高紧张状态检索时事件语境片段占比上升（语境绑定的因果证据）",
+      "pass": "风暴期事件语境片段占检索 ≥ 33%（基线 2 倍）",
+      "fail_means": "语境绑定强度不足，检索主要由频率/新近驱动"
+    },
+    "H2c_state_shift": {
+      "claim": "风暴改变状态动力学：紧张升、无聊降",
+      "pass": "风暴期 s4 均值 > 0.62（基线 0.559+0.06）且 s8 均值 < 0.13（基线 0.176-0.05）",
+      "fail_means": "状态层对事件率不敏感，或 ODE 耦合参数过弱"
+    },
+    "H2d_new_goal_exploratory": {
+      "claim": "探索性：风暴语境可能催生新目标候选（事件片段进入涌现窗口）",
+      "pass": "不设硬判据，仅记录"
+    }
+  },
+
+  "analysis_plan": {
+    "data": "inner_speech.jsonl（t 字段映射相位窗口）、logs_accel/main.log（surprise 心跳）、trajectory.jsonl（s4/s8）、self_model_history.json（版本时间线）",
+    "phase_boundaries": "由各阶段重启时的日志时间戳（恢复运行状态行）确定，记录于 phase_log.txt",
+    "falsifications_reported": "每个 H 单独判定，失败的假设如实写入结果，不隐藏"
+  }
+}

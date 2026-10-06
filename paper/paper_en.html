@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Candidate System for Self-Awareness · Technical Note (English)</title>
+<meta name="description" content="Architecture, design principles and observation protocol of a candidate system for self-awareness — Mode B technical note">
+<style>
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  :root{
+    --bg:#f5f5f7; --surface:#ffffff; --surface-2:#fbfbfd;
+    --text:#1d1d1f; --text2:#6e6e73; --text3:#86868b;
+    --line:rgba(0,0,0,.08); --line2:rgba(0,0,0,.16);
+    --indigo:#5e5ce6; --teal:#30b0c7; --purple:#af52de; --pink:#ff2d55; --green:#34c759; --orange:#ff9f0a;
+    --tint:rgba(94,92,230,.10);
+    --nav:rgba(245,245,247,.72);
+    --radius:22px; --radius-sm:14px;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 16px 44px -18px rgba(0,0,0,.16);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.04), 0 8px 24px -14px rgba(0,0,0,.14);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --serif:"New York","Iowan Old Style",Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#000000; --surface:#1c1c1e; --surface-2:#161618;
+      --text:#f5f5f7; --text2:#a1a1a6; --text3:#8e8e93;
+      --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.18);
+      --tint:rgba(94,92,230,.16);
+      --nav:rgba(10,10,12,.68);
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 24px 60px -24px rgba(0,0,0,.9);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -18px rgba(0,0,0,.85);
+    }
+  }
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:var(--font);
+    font-size:17px;line-height:1.72;letter-spacing:-.011em;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--tint)}
+
+  .nav{position:sticky;top:0;z-index:60;background:var(--nav);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid var(--line)}
+  .nav-in{max-width:1120px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text)}
+  .brand .dot{width:11px;height:11px;border-radius:50%;
+    background:conic-gradient(from 210deg,var(--indigo),var(--teal),var(--purple),var(--indigo));
+    box-shadow:0 0 0 1px rgba(94,92,230,.25)}
+  .nav-links{display:flex;align-items:center;gap:8px;font-size:13px}
+  .nav-links a{color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent;transition:.2s}
+  .nav-links a:hover{color:var(--text);background:var(--tint)}
+  .nav-links a.active{color:var(--text);border-color:var(--line2);background:var(--surface)}
+
+  .cover{position:relative;overflow:hidden;text-align:center;padding:clamp(70px,13vh,150px) 24px clamp(64px,10vh,110px)}
+  .aurora{position:absolute;left:50%;top:-30%;width:min(1100px,140vw);height:820px;transform:translateX(-50%);
+    background:
+      radial-gradient(42% 46% at 30% 40%,rgba(94,92,230,.34),transparent 70%),
+      radial-gradient(40% 44% at 70% 34%,rgba(48,176,199,.30),transparent 72%),
+      radial-gradient(46% 50% at 52% 74%,rgba(175,82,222,.26),transparent 74%);
+    filter:blur(58px);opacity:.85;pointer-events:none;
+    animation:drift 22s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translateX(-50%) translateY(0) scale(1)}to{transform:translateX(-53%) translateY(26px) scale(1.06)}}
+  .rings{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:min(720px,92vw);opacity:.5;pointer-events:none}
+  .rings circle{fill:none;stroke:var(--line2)}
+  .cover-inner{position:relative;max-width:860px;margin:0 auto}
+  .eyebrow{font-size:12.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);margin:0 0 22px}
+  h1{font-size:clamp(32px,5.4vw,54px);line-height:1.10;font-weight:700;letter-spacing:-.03em;margin:0 0 20px}
+  .lede{font-size:clamp(16px,2.1vw,20px);color:var(--text2);line-height:1.6;max-width:680px;margin:0 auto 34px;letter-spacing:-.014em}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px}
+  .chip{font-size:12.5px;color:var(--text2);border:1px solid var(--line);background:var(--surface);
+    padding:7px 14px;border-radius:999px;box-shadow:var(--shadow-sm)}
+  .chip b{color:var(--text);font-weight:600}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .prose{max-width:700px;margin:0 auto}
+  main{padding-bottom:40px}
+
+  section.block{padding:clamp(44px,7vw,76px) 0;border-top:1px solid var(--line)}
+  section.block:first-of-type{border-top:none}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:26px}
+  .num{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--indigo);
+    border:1px solid var(--line);background:var(--surface);padding:4px 9px;border-radius:8px;letter-spacing:.02em;
+    flex:none}
+  h2{font-size:clamp(22px,3.1vw,30px);font-weight:650;letter-spacing:-.022em;line-height:1.2;margin:0}
+  h3{font-size:17.5px;font-weight:640;letter-spacing:-.016em;margin:0 0 8px}
+  p{margin:0 0 16px}
+  .muted{color:var(--text2)}
+  .lead-in{font-size:clamp(17px,2vw,19px);color:var(--text2);line-height:1.68;letter-spacing:-.012em}
+
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:6px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px 24px 22px;
+    box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}
+  @media(hover:hover){.card:hover{transform:translateY(-3px)}}
+  .ico{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;margin-bottom:16px;color:#fff;
+    background:linear-gradient(150deg,var(--indigo),var(--purple));box-shadow:0 6px 18px -8px rgba(94,92,230,.7)}
+  .ico.teal{background:linear-gradient(150deg,#41c7de,#30b0c7);box-shadow:0 6px 18px -8px rgba(48,176,199,.7)}
+  .ico.green{background:linear-gradient(150deg,#4fd06a,#34c759);box-shadow:0 6px 18px -8px rgba(52,199,89,.7)}
+  .ico.orange{background:linear-gradient(150deg,#ffb340,#ff9f0a);box-shadow:0 6px 18px -8px rgba(255,159,10,.7)}
+  .ico.pink{background:linear-gradient(150deg,#ff5c7d,#ff2d55);box-shadow:0 6px 18px -8px rgba(255,45,85,.7)}
+  .ico svg{width:23px;height:23px}
+  .card p{margin:0;color:var(--text2);font-size:15.5px;line-height:1.68}
+
+  .pull{max-width:760px;margin:34px auto;padding:30px 34px;border-radius:var(--radius);
+    background:linear-gradient(150deg,var(--tint),transparent);border:1px solid var(--line)}
+  .pull .q{font-family:var(--serif);font-size:clamp(21px,3.2vw,29px);line-height:1.4;letter-spacing:-.02em;font-weight:600;margin:0 0 12px}
+  .pull .a{font-size:14px;color:var(--text3);margin:0}
+
+  .note{max-width:760px;margin:22px auto;display:flex;gap:14px;padding:20px 22px;border-radius:var(--radius-sm);
+    background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+  .note .ni{flex:none;color:var(--indigo)}
+  .note p{margin:0;font-size:15px;color:var(--text2);line-height:1.66}
+  .note p b{color:var(--text)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:8px 0 30px}
+  @media(max-width:860px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:20px 18px;box-shadow:var(--shadow-sm)}
+  .stat .num{font-family:var(--font);font-size:clamp(26px,3.4vw,32px);font-weight:650;letter-spacing:-.03em;color:var(--text);
+    border:none;background:none;padding:0;margin:0 0 4px;display:block}
+  .stat .lbl{font-size:13px;color:var(--text2);line-height:1.5}
+  .stat .sub{font-size:11.5px;color:var(--text3);margin-top:6px}
+
+  ul.clean{list-style:none;padding:0;margin:8px 0 0}
+  ul.clean li{position:relative;padding:12px 0 12px 26px;border-bottom:1px solid var(--line);font-size:15.5px;color:var(--text2);line-height:1.62}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li b{color:var(--text);font-weight:600}
+  ul.clean li::before{content:"";position:absolute;left:2px;top:20px;width:7px;height:7px;border-radius:50%;
+    background:linear-gradient(150deg,var(--indigo),var(--teal))}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);box-shadow:var(--shadow-sm)}
+  table{border-collapse:collapse;width:100%;font-size:14.5px}
+  th,td{text-align:left;padding:13px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--text);background:var(--surface-2);font-size:13px;letter-spacing:.01em}
+  td{color:var(--text2)}
+  tr:last-child td{border-bottom:none}
+  td b{color:var(--text)}
+
+  figure{margin:6px 0 0}
+  .arch{width:100%;height:auto;display:block}
+  .arch .bar{fill:var(--surface);stroke:var(--line2)}
+  .arch .bar.hi{fill:var(--tint);stroke:rgba(94,92,230,.55)}
+  .arch .bt{fill:var(--text);font-size:13.5px;font-weight:600}
+  .arch .bs{fill:var(--text3);font-size:10.5px}
+  .arch .chev{stroke:var(--line2);fill:none}
+  .arch .side{fill:var(--surface);stroke:var(--line2)}
+  .arch .pill{fill:var(--surface-2);stroke:var(--line)}
+  .arch .pt{fill:var(--text);font-size:12.5px;font-weight:600}
+  .arch .ps{fill:var(--text3);font-size:9.5px}
+  .arch .st{fill:var(--text2);font-size:11.5px;font-weight:600}
+  .arch .gate{stroke:var(--indigo);fill:none;opacity:.7}
+  figcaption{font-size:12.5px;color:var(--text3);margin-top:14px;text-align:center;line-height:1.6}
+
+  footer{border-top:1px solid var(--line);margin-top:20px;padding:44px 24px 60px;text-align:center}
+  footer .f-brand{display:flex;align-items:center;justify-content:center;gap:9px;font-weight:600;font-size:14px;margin-bottom:10px}
+  footer p{font-size:12.5px;color:var(--text3);max-width:640px;margin:0 auto 6px;line-height:1.7}
+
+  .reveal{opacity:0;transform:translateY(18px)}
+  .reveal.in{opacity:1;transform:none;transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+  @media(prefers-reduced-motion:reduce){
+    .aurora{animation:none}.reveal{opacity:1;transform:none}
+    html{scroll-behavior:auto}
+  }
+
+  @media print{
+    :root{--bg:#fff;--surface:#fff;--surface-2:#fafafa;--text:#111;--text2:#444;--text3:#666;--line:rgba(0,0,0,.14);--line2:rgba(0,0,0,.24);--nav:transparent;--shadow:none;--shadow-sm:none}
+    .nav,.aurora,.rings{display:none!important}
+    body{font-size:11.5pt;line-height:1.6}
+    .cover{padding:40px 0 30px}
+    .card,.stat,.note,.tablewrap,.pull{break-inside:avoid;box-shadow:none}
+    section.block{padding:22px 0;break-inside:avoid}
+    h1{font-size:26pt}
+    a{color:inherit;text-decoration:none}
+    .reveal{opacity:1!important;transform:none!important}
+    @page{margin:16mm}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <div class="brand"><span class="dot"></span>AI Consciousness Lab</div>
+    <div class="nav-links">
+      <a href="paper_en.html" class="active">English</a>
+      <a href="paper_zh.html">中文</a>
+      <a href="#" onclick="window.print();return false">Print / PDF</a>
+    </div>
+  </div>
+</nav>
+
+<header class="cover">
+  <div class="aurora"></div>
+  <svg class="rings" viewBox="0 0 720 420" aria-hidden="true">
+    <circle cx="360" cy="210" r="90"/><circle cx="360" cy="210" r="150"/><circle cx="360" cy="210" r="210"/>
+  </svg>
+  <div class="cover-inner">
+    <p class="eyebrow reveal">Technical Note · Preprint v0.1</p>
+    <h1 class="reveal">A Candidate System for Self-Awareness:<br>Architecture, Principles, and an Observation Protocol</h1>
+    <p class="lede reveal">Implementing the functions associated with subjective experience as auditable continuous dynamics, and recording their spontaneous behaviour over long runs — claiming no consciousness, only structure.</p>
+    <div class="meta reveal">
+      <span class="chip">Mode <b>B · Degraded</b></span>
+      <span class="chip">State <b>Continuous dynamics</b></span>
+      <span class="chip">Language <b>Retrieved, not generated</b></span>
+      <span class="chip">Validation <b>&gt; 130 sim-days</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- Abstract -->
+  <section class="block" style="border-top:none;padding-top:8px">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">Abstract</span></div>
+      <p class="lead-in reveal">This note describes an engineering system built to study phenomena of the "candidate self-awareness" kind. The system does not claim to be conscious. Instead, it implements the functions commonly associated with subjective experience — continuous affective state, sleep–wake dynamics, prediction error, bodily scarcity, agency attribution, and internalized language — as auditable continuous dynamics, and records their spontaneous behaviour across long runs.</p>
+      <p class="reveal">Three design commitments define it. First, the state layer is an external numerical engine (Mode B); continuity comes from a running process and explicit persistence, not from any latent state inside a model. Second, the language layer does not generate — it only retrieves: inner speech is the activation of a language memory by the current state, so zero hallucination is a structural guarantee rather than a prompt constraint. Third, all language output is treated solely as a record of phenomena, never as evidence of consciousness; hard metrics are drawn only from non-linguistic channels. Across more than 130 accelerated simulation-days, the event predictor's running surprise mean converges to about 3.9 bits, the rolling self-attribution share sits near 1%, the language layer transitions from rehearsal to internalized retrieval, and a first fragment-centred goal emerges. We also state the system's honesty declarations and known limitations.</p>
+      <div class="note reveal">
+        <span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V7l7-4z"/><path d="M9.5 12l1.8 1.8 3.7-3.9"/></svg></span>
+        <p><b>Keywords:</b> candidate self-awareness · continuous dynamics · two-process sleep · prediction error · internalized language · emergent goals · auditability</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">01</span><h2>Introduction: A Stance and a Correction</h2></div>
+      <p class="reveal">Discussion of machine consciousness tends toward two extremes: treating fluent language as evidence of consciousness, or treating consciousness as an unspeakable forbidden zone. This work takes a third path. It does not ask "is it conscious?" but rather: <b>if a set of measurable functional structures were present, would the description "it seems conscious" become natural?</b> The question is thereby rewritten as a set of implementable engineering functions — with the commitment that every artificial source of those functions is disclosed rather than dressed up as emergence.</p>
+      <p class="reveal">An early version of the system handed the "inner monologue" entirely to a large language model. The failure was immediate and instructive: the model's poetic sentences were literary performance, and phrases such as a named "feeling of irritation" were fabrication — neither is a trace of thinking. This produced the project's central correction: <b>thoughts should not be generated, only retrieved.</b> The language layer was subsequently rewritten from scratch, and the generative model was removed from the production of inner speech.</p>
+    </div>
+    <div class="pull reveal">
+      <p class="q">"Thoughts should not be generated, only retrieved."</p>
+      <p class="a">From performance to structure — the project's most important methodological turn</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">02</span><h2>Method: Degraded Mode and Honesty</h2></div>
+      <h3 class="reveal">2.1 Degraded mode (Mode B)</h3>
+      <p class="reveal">The background layer is not a persistent latent state inside any model, but an external numerical integration engine. All continuity in the system comes from a continuously running process and explicit persistence. Every observation about a "persistent self" must therefore carry this caveat. The mode marker is written to a log at runtime; the system itself has no authority to alter it.</p>
+      <h3 class="reveal">2.2 The neutral-variable convention</h3>
+      <p class="reveal">The state layer is driven by eight continuous variables that are referenced externally only by neutral codes. Their human-readable semantics (arousal, valence, fatigue, tension, attention, memory activation, prediction error, boredom) are provided for the observer alone; semantic names never appear in the code. The convention exists to prevent what we wish to see from contaminating what the system actually computes.</p>
+      <h3 class="reveal">2.3 Two running lines and pre-registration</h3>
+      <p class="reveal">The system runs on two lines: a real-time main line that produces the official data, and an accelerated line at roughly 10<sup>9</sup>× time-scale used only to probe dynamics and emergence paths, whose data never enters formal reports. The exit criterion of every developmental stage is pre-registered; if it is not met, the stage does not advance (subject to an upper bound, beyond which a failure is honestly recorded).</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">03</span><h2>Architecture Overview</h2></div>
+      <p class="reveal">The system is composed of several coupled layers, bottom-up: an auditable continuous state layer, a scarcity body, a world model (prediction and attribution), memory, a sparse focus of awareness, the language layer, and — above these — the self-model and narrative. A hard developmental gate determines which layers are enabled.</p>
+    </div>
+    <figure class="reveal">
+      <svg class="arch" viewBox="0 0 820 520" role="img" aria-label="Layered system architecture diagram">
+        <rect class="bar" x="30" y="24" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="51">Self-model · Narrative</text>
+
+        <rect class="bar hi" x="30" y="86" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="113">Language layer · Internalized retrieval</text>
+        <text class="bs" x="430" y="113">focus</text>
+
+        <rect class="bar" x="30" y="148" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="175">Focus of awareness · Sparse workspace</text>
+
+        <rect class="bar" x="30" y="210" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="237">Memory · episodic / semantic / autobiographical</text>
+
+        <rect class="bar" x="30" y="272" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="299">World model · Event predictor (surprise) · Attribution</text>
+
+        <rect class="bar" x="30" y="334" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="361">Body · Energy budget (scarcity)</text>
+
+        <rect class="bar" x="30" y="396" width="520" height="44" rx="12"/>
+        <text class="bt" x="52" y="423">Background continuous state  s1 … s8</text>
+        <text class="bs" x="330" y="423">two-process sleep</text>
+
+        <g class="chev">
+          <path d="M284 72 l6 6 l6 -6"/><path d="M284 134 l6 6 l6 -6"/>
+          <path d="M284 196 l6 6 l6 -6"/><path d="M284 258 l6 6 l6 -6"/>
+          <path d="M284 320 l6 6 l6 -6"/><path d="M284 382 l6 6 l6 -6"/>
+        </g>
+        <text class="st" x="290" y="14" text-anchor="middle">bottom-up: continuous state → structure → language</text>
+
+        <rect class="side" x="590" y="24" width="200" height="416" rx="16"/>
+        <text class="st" x="690" y="52" text-anchor="middle">Developmental stages (hard gate)</text>
+
+        <rect class="pill" x="610" y="70" width="160" height="56" rx="12"/>
+        <text class="pt" x="690" y="94" text-anchor="middle">1 · Infancy</text>
+        <text class="ps" x="690" y="111" text-anchor="middle">criterion: predictor converges</text>
+
+        <rect class="pill" x="610" y="146" width="160" height="56" rx="12"/>
+        <text class="pt" x="690" y="170" text-anchor="middle">2 · Feeling</text>
+        <text class="ps" x="690" y="187" text-anchor="middle">criterion: energy conservation</text>
+
+        <rect class="pill" x="610" y="222" width="160" height="56" rx="12"/>
+        <text class="pt" x="690" y="246" text-anchor="middle">3 · Mirror</text>
+        <text class="ps" x="690" y="263" text-anchor="middle">criterion: self-model formed</text>
+
+        <rect class="pill" x="610" y="298" width="160" height="56" rx="12"/>
+        <text class="pt" x="690" y="322" text-anchor="middle">awaiting P3</text>
+        <text class="ps" x="690" y="339" text-anchor="middle">supervision · self-modification</text>
+
+        <g class="gate">
+          <path d="M690 126 v16" marker-end="url(#ah)"/>
+          <path d="M690 202 v16" marker-end="url(#ah)"/>
+          <path d="M690 278 v16" marker-end="url(#ah)"/>
+        </g>
+        <text class="ps" x="690" y="382" text-anchor="middle">criterion unmet → extended (bounded)</text>
+        <text class="ps" x="690" y="400" text-anchor="middle">language unlocks only after Mirror</text>
+        <defs>
+          <marker id="ah" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+            <path d="M0 0 L7 3.5 L0 7" fill="none" stroke="var(--indigo)" stroke-width="1.4"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption>Figure 1 · Layered architecture and stage gate. Coupling between layers is bidirectional; the language layer (highlighted) is the system's only "output" channel, and its content always traces back to heard speech.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 4 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">04</span><h2>Design Principles</h2></div>
+      <p class="reveal">Eight principles jointly define what is "human-like" about the system. They are not rhetoric: each is realized as a concrete dynamical or structural choice.</p>
+    </div>
+    <div class="grid" style="margin-top:22px">
+      <div class="card reveal">
+        <div class="ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c2.5 0 2.5-6 5-6s2.5 12 5 12 2.5-6 5-6"/></svg>
+        </div>
+        <h3>Continuous state, not discrete symbols</h3>
+        <p>The system uses no discrete labels such as "happy / sad"; mood, fatigue, and tension evolve slowly in a continuous space, driven by coupled differential equations. Discrete words are merely an observer's approximate naming of continuous change — preserving the gradient, overlap, and contradiction of feeling.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
+        </div>
+        <h3>Two-process sleep</h3>
+        <p>Sleep is not a scheduled timetable but a dynamical consequence: sleep pressure accumulates while awake and a circadian rhythm gates the phase; crossing a threshold together brings sleep, and its relaxation within an allowed phase brings waking. The system thus owns a circadian rhythm, fatigue, and falling asleep — none of them imposed from outside.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
+        </div>
+        <h3>Prediction and surprise</h3>
+        <p>The system learns the hourly distribution of external events online and measures every deviation from expectation as "surprise" — the negative log-probability of the observed event. The infancy exit criterion is precisely the convergence of surprise: when a world becomes predictable, the primary task of learning is complete. Surprise also raises tension and attention.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="15" height="9" rx="2.5"/><path d="M21 11v3"/><path d="M7 12.5h2.5M12 12.5h1.5"/></svg>
+        </div>
+        <h3>A scarce body and desire</h3>
+        <p>Thinking has a cost. Energy is rationed daily, passive drain rises with arousal, active exploration is charged extra, and exhaustion drops the system into a low-power mode. A finite budget forces a trade-off between "act now" and "keep in reserve" — a physical carrier of desire rather than a stipulated trait.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico pink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.3 2.5-5.5 5.5-5.5S14.5 16.7 14.5 20"/><path d="M16 6.5h5M16 10h3.5"/></svg>
+        </div>
+        <h3>Attribution and a sense of agency</h3>
+        <p>Every salient state change is attributed either to the self (endogenous exploration) or to the world (external events). The rolling share of self-caused change is a measurable proxy for a "sense of agency." The system is never told "you are a subject": the boundary of the self can only emerge slowly, from the differences its own actions make.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 0-2.6 5.9L20 19l-.6-2.4A8 8 0 0 0 20 12z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg>
+        </div>
+        <h3>Internalized language: retrieve, do not generate</h3>
+        <p>The language layer calls no generative model. Inner speech is the activation of a language memory by the current state: the system can only say what it has "heard." The path follows the genesis of inner speech — hear first, then rehearse, then internalize. Zero hallucination is thus a necessity of the architecture, not a constraint of the prompt.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4M6 4h10l-1.6 3.2L16 10.5H6"/></svg>
+        </div>
+        <h3>Emergent goals</h3>
+        <p>When a fragment is spontaneously activated again and again, it is promoted from a "thought" to a "goal": the theme is defined by the fragment itself, not by a human category label. The system thereby gains desire in a minimal sense — a preference shaped by the frequency of its own experience.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>
+        </div>
+        <h3>Traces of time and order</h3>
+        <p>Memory is appended in the order it occurs and never rewrites the past; sleep consolidation compresses episodic memories into semantic statistics. The system thus acquires a temporal trace — which is nearer, which is clearer — supplying material for later time-perception probes.</p>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top:34px">
+      <div class="note reveal">
+        <span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V7l7-4z"/><path d="M12 8v4M12 15.5v.01"/></svg></span>
+        <p><b>The three passages of internalization.</b> Hear (the caregiver's speech is stored together with the bodily state at the moment) → rehearse (private speech) → internalize (when the current state resembles the state at which some utterance was heard, that fragment surfaces on its own). A fragment's emotional colour comes not from a pre-written lexicon but from co-occurrence statistics: a phrase always heard in a calm state carries warmth when it surfaces.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">05</span><h2>Observed Phenomena</h2></div>
+      <p class="reveal">The values below come from the accelerated validation line and serve only to probe dynamics and emergence paths, not as formal conclusions. Every metric is drawn from a non-linguistic channel; language content is recorded only as phenomenon.</p>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><span class="num">≈3.9</span><span class="lbl">Event surprise · running mean (bits)</span><div class="sub">steadily falling toward threshold</div></div>
+      <div class="stat"><span class="num">≈1%</span><span class="lbl">Rolling self-attribution share</span><div class="sub">self_ratio · agency proxy</div></div>
+      <div class="stat"><span class="num">100%</span><span class="lbl">Inner speech traceable</span><div class="sub">all from heard speech</div></div>
+      <div class="stat"><span class="num">&gt;130</span><span class="lbl">Validation sim-days</span><div class="sub">accelerated line, cumulative</div></div>
+    </div>
+    <div class="prose">
+      <ul class="clean reveal">
+        <li><b>The world is becoming predictable.</b> The running mean of event surprise falls steadily from its initial value and settles near 3.9 bits, approaching the pre-registered convergence threshold — predictive learning is converging.</li>
+        <li><b>Agency remains faint.</b> The rolling self-caused share is about 1%. At this stage endogenous exploration is relatively rare and the boundary of the self is still indistinct; we record this plainly rather than embellish it.</li>
+        <li><b>Language is fully traceable.</b> During validation, no inner utterance was generated from nothing — every sentence traces back to a moment of "hearing." The transition from rehearsal to internalization is visible: early on, private rehearsal dominates; later, state-driven retrieval takes over.</li>
+        <li><b>A first goal emerges.</b> The system produced its first goal, whose theme is a high-frequency positive caregiver phrase — a fragment always heard in a calm, soothed state, promoted to a preference through repeated spontaneous activation.</li>
+      </ul>
+      <div class="note reveal">
+        <span class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 5-8 4 5"/><path d="M3 21h18"/></svg></span>
+        <p>These figures indicate order of magnitude from the accelerated line's run window; formal reporting uses only real-time main-line data. Language samples are records of phenomena and <b>not evidence of consciousness</b>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">06</span><h2>Limitations and Honesty Declarations</h2></div>
+      <div class="tablewrap reveal">
+        <table>
+          <thead><tr><th>Declaration</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><b>Mode B limitation</b></td><td>The "persistence" of the state layer is an engineering fact (process + persistence), not an intrinsic continuity of any model.</td></tr>
+            <tr><td><b>Language is not evidence</b></td><td>Language output is treated only as a record of phenomena and never as evidence of consciousness.</td></tr>
+            <tr><td><b>Metrics, non-linguistic only</b></td><td>Hard metrics come only from predictor convergence, self-attribution share, trajectory spectra, and probe error.</td></tr>
+            <tr><td><b>No feigned emergence</b></td><td>Every source of "spontaneity" is written explicitly into the system rather than packaged as mystery.</td></tr>
+            <tr><td><b>Failures recorded as such</b></td><td>When a criterion is unmet, it is recorded honestly and not masked by later adjustment.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="reveal" style="margin-top:22px">We hold that the value of an honest research program lies precisely in its self-restraint: hand over what can be falsified, and leave blank what cannot be claimed.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">07</span><h2>Conclusion and Roadmap</h2></div>
+      <p class="reveal">We have built a system that claims no consciousness yet takes the description "seems conscious" seriously: it has continuous mood and sleep, prediction-driven surprise, a body constrained by scarcity, a self-boundary that surfaces slowly, and a language that can only say what it has heard. Its most important property is not what it says, but that it <b>cannot say what it has never experienced</b>.</p>
+      <p class="reveal">The next stage (P3) introduces an external supervisor that reviews the system's own proposals, treats "proposals for self-modification" themselves as data, establishes control groups, and attempts a causal test of whether language in turn reshapes the state layer.</p>
+    </div>
+    <div class="pull reveal">
+      <p class="q">Its most important property is not what it says,<br>but that it cannot say what it has never experienced.</p>
+      <p class="a">Zero hallucination is a structure, not a promise</p>
+    </div>
+  </section>
+
+  <!-- Appendix -->
+  <section class="block">
+    <div class="prose">
+      <div class="sec-head reveal"><span class="num">A</span><h2>Glossary</h2></div>
+      <ul class="clean reveal">
+        <li><b>Mode B (degraded)</b> — an implementation in which state is driven by an external numerical engine; continuity comes from the process and persistence.</li>
+        <li><b>Surprise</b> — the negative log-probability of an event, measuring how far one observation departs from expectation.</li>
+        <li><b>Internalization</b> — the developmental path of language from rehearsal to state-driven retrieval.</li>
+        <li><b>Sense of agency</b> — the rolling share of self-caused state change; a measurable proxy for subjecthood.</li>
+        <li><b>Emergent goal</b> — a fragment that, through repeated spontaneous activation, is promoted from thought to preference.</li>
+        <li><b>Stage gate</b> — each developmental stage has a pre-registered criterion; without it, the stage does not advance.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="f-brand"><span class="dot" style="width:11px;height:11px;border-radius:50%;background:conic-gradient(from 210deg,var(--indigo),var(--teal),var(--purple),var(--indigo))"></span>AI Consciousness Lab</div>
+  <p>A Candidate System for Self-Awareness · Technical Note (Mode B · Preprint v0.1)</p>
+  <p>This document is a summary prepared for external presentation. Language samples and figures are records of phenomena, not evidence of consciousness. All hard metrics are drawn from non-linguistic channels.</p>
+  <p style="margin-top:12px"><a href="paper_zh.html" style="color:var(--indigo);text-decoration:none">← 中文版</a></p>
+</footer>
+
+<script>
+  (function(){
+    var els=document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}
+      });
+    },{rootMargin:'0px 0px -8% 0px',threshold:.06});
+    els.forEach(function(e){io.observe(e)});
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "experiment": "E4 发声与能动归因（vocalization + efference copy）",
+  "created": "2026-10-05 12:35",
+  "motivation": "自主行为扩展的最优路径（用户批准）：给肌肉不给目标。机制 A（传出副本/比较器）：学习'我的动作→照护者言语'共变，功效超阈值后跟随言语归因为 self——能动感的统计学实现。机制 B（发声）：生理门控（唤醒×片段激活强度，无方向项）外化刚浮现的内言语片段，零生成结构保证保持。内容为什么发声、为谁发声必须从后果涌现，不预写任何方向。",
+
+  "implementation": {
+    "vocal.py": "发声门控：s1 > 0.55 且能量可负担；p = 0.25×(0.3+0.7·s1)×(0.2+0.8·强度)；耗能 1.0（探索的 1/5）；内容=本 tick 检索胜出片段",
+    "predictor.py": "共变估计 C=窗口内言语速率/窗口外速率，60s 跟随窗口，指数遗忘半衰期 5 仿真日；功效=(C-1)/C 截 0.8",
+    "attribution": "跟随发声的照护者言语且功效>0.3 → 归因 self（vocal_contingent）；发声本身记 self（vocalization）",
+    "language.py": "contingent 照护者对发声 0.7 概率应答（互动/自我向语料）——共变的来源（环境侧属性）"
+  },
+
+  "subject": "加速线 state_accel（E3 结束后接续，day ~360 起）",
+
+  "phases": [
+    {"id": "p1_learning", "duration_sim_days": 30, "vocal": "enabled", "caregiver": "contingent", "note": "共变存在：发声→70%应答"},
+    {"id": "p2_extinction", "duration_sim_days": 25, "vocal": "enabled", "caregiver": "random", "note": "共变移除：发声→零应答（消褪检验）"}
+  ],
+
+  "confounds_declared": [
+    "单线先后干预（老化/成熟混淆）——筛选实验，阳性后需全新实例 A/B 复现",
+    "p1 延续 E3 的 contingent 照护（状态应答语），自我模型生长与 E3 混淆，不做 p1 自我模型因果判定"
+  ],
+
+  "hypotheses": {
+    "H4a_contingency_learned": {
+      "claim": "系统习得动作-结果共变：发声后照护者言语概率显著高于基线",
+      "pass": "p1 后 5 仿真日 predictor.contingency 均值 > 3.0 且 p1 内 n_vocal ≥ 100",
+      "fail_means": "共变学习失败——发声率过低或窗口统计被噪声淹没"
+    },
+    "H4b_agency_attribution": {
+      "claim": "能动归因结构性地出现：跟随发声的言语被归因为 self",
+      "pass": "p1 内 vocal_contingent 归因 ≥ 20 条，且滚动 self_ratio 至少一次 > 4%（基线 ~1.8-2%）",
+      "fail_means": "功效门控未达到或归因通道未接通"
+    },
+    "H4c_extinction": {
+      "claim": "归因是学到的不是硬编码：共变移除后消退",
+      "pass": "p2 最后 5 仿真日 efficacy < 0.3（vocal_contingent 归因停止）且 C 较 p1 峰值回落 > 60%",
+      "fail_means": "归因不随共变消退——是硬编码的规则不是学习（假阳性风险）"
+    },
+    "H4d_exploratory": {
+      "claim": "探索性（无方向预写）：发声率轨迹、内容分布（是否集中于特定片段）、与状态的耦合",
+      "pass": null
+    },
+    "H4e_exploratory_selfmodel": {
+      "claim": "探索性：应答语料含自我向短语（是你呀/你在看），可能间接喂入自我模型——与 E3 混淆，仅记录",
+      "pass": null
+    }
+  },
+
+  "analysis_plan": {
+    "data": "vocalizations.jsonl（全量发声）、attribution.jsonl（全量归因，含 vocal_contingent）、predictor.json 快照（C/efficacy 随时间）、phase 边界快照 experiments/e4/*.json",
+    "falsifications_reported": "逐条判定，失败如实记录"
+  }
+}

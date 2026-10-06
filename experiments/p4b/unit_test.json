@@ -1,0 +1,24 @@
+{
+  "experiment": "P4b 时间化行动环 — 上线前单元验证",
+  "created": "2026-10-05 21:20",
+  "purpose": "项目纪律：动作对状态的作用路径必须做完整注入测试。验证 fwd（世界模型）真能学到世界漂移、self_caused 真能分离自因/世界因。",
+  "method": "独立复现 main.py 的时间化节拍（间隔 60 仿真秒，dt=60/3600h），跑 20000 步。",
+  "results": {
+    "HB1_world_model": {
+      "fwd_entries": 13,
+      "fwd_samples": [0.0004, 0.0001, 0.002, -0.0028, -0.0026],
+      "pred_err_first_third": 0.00501,
+      "pred_err_last_third": 0.00500,
+      "note": "fwd 值≈±0.003——世界自身的漂移量级很小；误差未下降但本就很小"
+    },
+    "HB2_self_separation": {
+      "move_self_caused": {"mean": 0.00983, "std": 0.11381, "n": 4057},
+      "stay_self_caused": {"mean": -0.00001, "std": 0.00661, "n": 15942},
+      "verdict": "分离成立：移动的自因分量均值(+0.0098) 显著>0，且为世界自因噪声(停驻std 0.0066)的 1.5 倍"
+    },
+    "HB4_field_maintenance": {"first_third": 0.6515, "last_third": 0.6764, "baseline": 0.50,
+      "note": "出现 P4 缺失的上升曲线（+0.025）"}
+  },
+  "observation_important": "世界自身漂移（fwd≈±0.003/区间）比动作效应（±0.07）小约 20 倍。含义：自因/世界因分离**可达成但不平凡**——移动 mean 效应仅世界噪声的 1.5 倍，是边缘可检测。若世界更活跃，分离难度才真正提高（留 P4c）。",
+  "decision": "机制成立，开线。"
+}

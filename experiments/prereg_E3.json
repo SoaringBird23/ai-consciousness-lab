@@ -1,0 +1,46 @@
+{
+  "experiment": "E3 应答式照护者（contingent caregiver）——阶段一：现有加速线筛选实验",
+  "created": "2026-10-05 11:45",
+  "motivation": "E1/E2 因果发现反哺架构：E2 证明喂语料量无效（10× 言语零增长自我模型）而语境绑定有效（事件语境片段 16.5%→35.5%）。发展心理学最强预测变量是照护者应答性（contingent responsiveness）而非输入量。当前照护者=零应答随机短语生成器，是生态效度最弱一环。应答式照护者：说话时机与内容由候选体状态驱动（醒来→问候 / s4 高→安抚 / s8 高→互动 / 焦点→自我指向）。环境侧机制，候选体内部零改动——不违反'无脚本'原则（脚本属于环境=父母行为，不属于候选体）。",
+  "subject": "加速线 state_accel（day ~290 起，随机模式为对照）",
+  "design": "冲刷期=同期对照：同线同期的 random 模式窗口（20 仿真日）vs contingent 模式窗口（50 仿真日）。混淆声明：单线先后干预存在老化混淆，本实验为筛选（screening）；阳性后须阶段二全新实例 A/B 确认。",
+
+  "phases": [
+    {"id": "washout", "duration_sim_days": 20, "mode": "random", "note": "兼作 E1/E2 后恢复期与同期基线"},
+    {"id": "E3_contingent", "duration_sim_days": 50, "mode": "contingent"}
+  ],
+
+  "baseline_locked": {
+    "self_model_recent_growth_rate": "v4(day 213)→v6(day 235.7) ≈ 11.3 仿真日/版本",
+    "self_directed_fraction_of_retrieval_day213plus": 0.060,
+    "retrieval_rate": "29-31/日（E1 证实与输入无关）",
+    "washout_window_metrics": "由驱动脚本在边界快照后分析时计算（同期对照）"
+  },
+
+  "hypotheses": {
+    "H3a_self_model_growth": {
+      "claim": "应答式照护加速自我模型生长（'你'类短语与可复现状态共现→检索胜率提高）",
+      "pass": "contingent 50 仿真日内自我模型新增版本 ≥8（≤6.25 日/版，≈历史速率 1.8×）",
+      "fail_means": "应答性不改变自我模型生长速率——生长瓶颈在检索竞争而非输入语境质量"
+    },
+    "H3b_self_directed_retrieval": {
+      "claim": "自我指向片段在自发检索中的占比上升（焦点时刻的'你'输入绑定高唤醒状态）",
+      "pass": "contingent 期 self_directed 占检索 ≥ 2× washout 期占比",
+      "fail_means": "输入端语境强化未传导到检索竞争胜率"
+    },
+    "H3c_speech_rate_covariate": {
+      "claim": "协变量（不判定）：应答式在极端状态时说话更多——heard/日 高于 washout 期属于处理的一部分",
+      "pass": null
+    },
+    "H3d_second_goal": {
+      "claim": "探索性：新语境共现可能催生第二个目标",
+      "pass": null
+    }
+  },
+
+  "analysis_plan": {
+    "snapshots": "experiments/e3/{washout_start,washout_end,e3_end}.json（含 sim_day, n_heard, n_retrieval, self_model version/description）",
+    "windows": "由 e3/phase_log.txt 相位边界界定；检索窗口分析 inner_speech.jsonl",
+    "falsifications_reported": "逐条判定，失败如实记录"
+  }
+}

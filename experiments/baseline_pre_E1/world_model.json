@@ -1,0 +1,18 @@
+{
+  "active_hours": [
+    9,
+    10,
+    11,
+    12,
+    18,
+    19,
+    20,
+    21,
+    22
+  ],
+  "event_rate_per_hour": 396.04,
+  "day_count": 236,
+  "learned_patterns": [
+    "事件主要发生在 9:00-22:00"
+  ]
+}

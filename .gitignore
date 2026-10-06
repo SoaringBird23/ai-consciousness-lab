@@ -1,0 +1,32 @@
+# ── 运行时状态：每个体一个目录，逐 tick 变化、体积大，不入库 ──
+state/
+state_*/
+
+# ── 日志 / 收件箱 / 运行期杂物 ──
+logs/
+logs_*/
+inbox/
+inbox_*/
+*.out
+*.pid
+chain.log
+watch.log
+batch_report.txt
+STOP.consumed
+.last_rogue_backup
+
+# ── Python ──
+venv/
+__pycache__/
+*.pyc
+
+# ── 编辑器 / 系统 ──
+.DS_Store
+.idea/
+.vscode/
+.trae-html-share-packages/
+
+# ── 手工备份与 LaTeX 中间产物（git 已提供历史）──
+*.bak_*
+*.aux
+*.log

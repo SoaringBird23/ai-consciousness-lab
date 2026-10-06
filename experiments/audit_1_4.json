@@ -1,0 +1,65 @@
+{
+  "audit": "1.4 论文数字对账（claim ↔ 原始结果文件）",
+  "audited_at": "2026-10-05 23:55",
+  "auditor_note": "逐条把 arXiv 稿里的每个数值与 experiments/ 下的原始结果文件核对。不改稿，只记录。",
+  "verdict_summary": "发现 1 处严重错标（E1 把失败的预注册预测写成了 pass）、3 处夸大、若干处口径问题。",
+
+  "critical": [
+    {
+      "id": "C1-E1",
+      "paper_says": "Table 1: 'E1 | pass | Ten days without caregiver speech. Retrieval rate did not fall (29.3/day vs. 28.8/day baseline). Once inner speech forms, it self-sustains.'  摘要亦称 E1 为 'strongly positive'",
+      "source": "experiments/results_E1E2.json",
+      "actual": "H1b 内化（retrieval 持续且衰减）: {\"pass\": false, \"detail\": \"E1 全程 31.2/日 → 最后3日 29.3/日（判据 2–17.3，基线 28.8）\"}",
+      "finding": "预注册的 H1b 预测是『检索率应衰减到 2–17.3/日』，实测 29.3/日 → **该预测 FAILED**（结果文件 pass=false）。论文把同一个数字（29.3）重新叙述为『没有下降 → 内言语自持』，把一个**失败的预测当作阳性发现**列入 Table 1 的 pass 行。",
+      "severity": "高——这正是本项目立规矩要杜绝的『事后重新叙事』。E1 的其余 4 条（H1a/H1c/H1d/H1e）确为 pass，但 H1b 是 E1 的两条主预测之一。"
+    }
+  ],
+
+  "overstated": [
+    {
+      "id": "O1-E4",
+      "paper_says": "摘要 'two strongly positive'，其一为 E4",
+      "actual": "H4a PASS（C=8.22）；H4b PASS（206 条，self_ratio 峰值 0.26）；H4c **PARTIAL**（C 回落 68% ✓ 但末段 efficacy=0.619 > 0.3 ✗，归因未完全熄灭）",
+      "finding": "E4 是『两 pass + 一 partial』，不是全阳。称『strongly positive』略过。"
+    },
+    {
+      "id": "O2-E6b",
+      "paper_says": "『Substituting the winning thought for sixty consecutive retrievals produced a matching goal』",
+      "actual": "results_E6p2.json 自己写着：『窗口占比恰达阈值 0.200=阈值』，且『涌现判据可被外部操纵——人为注入可以制造目标』",
+      "finding": "60 次注入 = 300 窗口的**恰好 20%**，卡在 `>=` 阈值的边界上。论文未提这一点，也未做对照（更少次数是否不涌现）。"
+    },
+    {
+      "id": "O3-nine",
+      "paper_says": "摘要 'Across nine pre-registered experiments' / 'including four that failed'",
+      "actual": "写稿时 experiments/ 下 prereg 文件 9 个（C1, E1E2, E3, E4, E6, P3, P4, P4b, fix_selfdirected），但 E1E2 与 E6 各含 2 个实验，且 P3 与 fix_selfdirected 不是独立实验",
+      "finding": "『nine experiments』口径不清（是文件数还是实验数）。逐条数应为：E1, E2, E3, E4, E6a, E6b, C1, P4, P4b = 9 个实验，**凑巧对**，但推导路径不成立。"
+    }
+  ],
+
+  "accurate_verified": [
+    {"claim": "语料 55 条不同短语", "check": "language.py 去重后 = 55", "ok": true},
+    {"claim": "E4 C=8.2 / 206 条归因 / self_ratio 峰值 26%", "check": "results_E4.json: 8.22 / 206 / 0.26", "ok": true},
+    {"claim": "E6a 四指标 −4.7% / +2.3% / 0 / 0", "check": "results_E6p1_C1b.json 完全一致", "ok": true},
+    {"claim": "E6b 目标涌现 day 142", "check": "results_E6p2.json 一致", "ok": true},
+    {"claim": "E2 语境绑定 35.5% vs 基线 16.5%", "check": "results_E1E2.json H2b 一致", "ok": true},
+    {"claim": "E2 惊奇只升 0.24 bit 且末段低于基线", "check": "H2a: 升 0.24，风暴末 3.59（回落 14%），判据未达 → 论文的叙述与数据一致", "ok": true},
+    {"claim": "C1b 第一人称检索 4.2%", "check": "results_E6p1_C1b.json: 4.2% (25/598)", "ok": true},
+    {"claim": "max 线龄 'hundreds of simulated days'", "check": "全库最大日龄 = 489", "ok": true},
+    {"claim": "E3 阴性（0 新版本，0.15×）", "check": "results_E3.json 一致", "ok": true}
+  ],
+
+  "known_wrong_already_logged": [
+    "加速倍数 10^9 → 实测 483–774×（已核，未改稿）",
+    "P4b '0.60×' 是均值÷另一组标准差；真实一样本效应量 d≈0.085、对停照组 Cohen's d≈0.18（已核）",
+    "results_P4b.json 记录窗口 70%，但 arXiv 稿已改为 97% —— 两处不一致，需统一",
+    "E6a 的耦合强度 ±0.02 未写进稿（原始结果文件里有，稿里没有）"
+  ],
+
+  "next_actions": [
+    "改稿时必须：E1 行从 'pass' 改为如实（H1b FAILED，其余 pass），摘要 'two strongly positive' 相应下调",
+    "E6b 段落补上'60=恰 20% 阈值 + 未做剂量对照'",
+    "E6a 段落补上耦合强度 ±0.02",
+    "P4b 结果文件与稿统一到同一窗口口径",
+    "（用户指令：现在不改稿，先优化实验。本审计仅存档。）"
+  ]
+}

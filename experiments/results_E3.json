@@ -1,0 +1,31 @@
+{
+  "experiment": "E3 应答式照护者 — 判定结果",
+  "judged_at": "2026-10-05 13:30",
+  "phases": {"washout": "day 289.24-309.38 (random)", "E3": "day 309.38-359.63 (contingent)"},
+  "results": {
+    "H3a_self_model_growth": {
+      "criterion": "contingent 50 仿真日内自我模型新增版本 ≥8",
+      "observed": "v6 → v6，新增 0 版本（washout 期同样 0）",
+      "verdict": "FAIL"
+    },
+    "H3b_self_directed_retrieval": {
+      "criterion": "contingent 期 self_directed 占检索 ≥ 2× washout",
+      "observed": "washout 4.0% (24/599) vs contingent 0.6% (9/1479) = 0.15×",
+      "verdict": "FAIL（反向：占比下降 6.7 倍）"
+    },
+    "H3c_speech_rate_covariate": {
+      "observed": "heard/日 86.7→176.6 (×2.04)；检索/日 29.8→29.5（不变，与 E1 一致）",
+      "verdict": "处理确实生效（输入加倍），但输出侧无响应"
+    },
+    "H3d_second_goal": {
+      "observed": "无新目标",
+      "verdict": "未出现（如实记录）"
+    }
+  },
+  "interpretation": [
+    "三次独立干预（E1 输入移除 / E2 输入×10 / E3 应答式输入×2）全部无法改变自我模型生长速率与念头频率——自我模型生长对输入侧操作不敏感，瓶颈在内部检索竞争端。'内生的自我生长'由内部动力学主导。",
+    "E3b 反向下降的机制候选：应答式照护者总语量 ×2 但自我指向语料占比被稀释（醒来问候每日 1 次远少于 random 模式 8%×87≈7 次/日）——竞争池变大、'你'类片段相对权重下降。",
+    "设计混淆声明：本实现测的是'时机应答性+语量膨胀'，不是'自我指向绑定质量提升'。发展心理学的应答性预测在此操作化下不成立，不能排除其他操作化（如恒定语量下提高状态匹配的'你'类输入）会阳性——记为 E3b 候选，优先级低于 E4。"
+  ],
+  "lesson": "照护者交互设计中：语量与时机不是杠杆；绑定质量（片段×状态的共现结构）才是。与 E2 语境绑定发现一致。"
+}

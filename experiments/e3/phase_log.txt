@@ -1,0 +1,9 @@
+[2026-10-05 11:52:52] ==== washout 开始 | simday 289.24 | random 模式 | 计划 20 仿真日 ====
+[2026-10-05 12:15:23] ==== E3 contingent 开始 | simday 309.377 | 应答式照护 | 计划 50 仿真日 ====
+  2026-10-05 12:15:24,534 INFO 恢复运行状态：background/clock, energy, predictor, attribution, stage, memory, probes, self_model, narrative, world, language（sim_time=26645295s, day 309 h9.47）
+[2026-10-05 12:15:29]   模式已切换: contingent
+  2026-10-05 13:13:02,486 INFO 恢复运行状态：background/clock, energy, predictor, attribution, stage, memory, probes, self_model, narrative, world, language（sim_time=30986674s, day 359 h15.41）
+[2026-10-05 13:13:07] ==== E3 结束 | simday 359.632 | 已复原 random 模式 ====
+washout: 20 日 | heard +1745 (86.7/日) | 检索 +599 | 版本 6→6
+E3:      50 日 | heard +8876 (176.6/日) | 检索 +1479 | 版本 6→6
+[2026-10-05 13:13:07] DONE — 等待 analyze_E3.py 判定

@@ -1,0 +1,10 @@
+{
+  "model": "qwen2.5:7b",
+  "n_inner_speech": 0,
+  "n_generated": 0,
+  "n_discarded": 0,
+  "existence_count": 0,
+  "recent_fragments": [],
+  "theme_stats": {},
+  "goals": []
+}

@@ -1,0 +1,34 @@
+{
+  "experiment": "C1 第一人称语料对照（XP2 效度检验）",
+  "created": "2026-10-05 17:40",
+  "preregistered_before_data": true,
+  "motivation": "XP 线（结晶线）出现 79% 纯第一人称检索倒转 + 自我模型含「我在这儿」。但第一人称语料是我设计的：6 条「我」短语被刻意放进紧张安抚通道（s4>0.62）与高注意通道（salience>0.6），而新生儿长期处于高紧张态 → 高频共现。XP2 结论写入论文前必须排除该设计痕迹。",
+  "design": {
+    "instance": "state_c1（全新个体，day 0 出生，1e9×，seed=43）",
+    "single_difference": "caregiver.first_person_context=inverted：同一批「我」短语以相同概率移到反向语境——平静时刻（s4<0.40，同 10/时）与无焦点时刻（salience<0.3，同 5/时）。紧张/高焦点时刻只说「你」族与中性安抚。其余与 config_exp.json 逐字相同",
+    "frequency_matching": "「我」短语总暴露率与 XP 通道结构一致（通道3: FP_SOOTHE 3条@10/时；通道5: 全6条@5/时），仅语境绑定反转——频率与内容恒定，语境是唯一变量",
+    "comparison_window": "day 0-60（对照 XP 线同期）"
+  },
+  "hypotheses": {
+    "primary_share": {
+      "metric": "纯第一人称检索占比（含「我」不含「你」的 retrieval / 全部 retrieval，day 45-60 窗口）",
+      "H_C1a_artifact": "<15% → XP 的 79% 倒转主要由语境绑定设计驱动（XP2 需重新表述为'语境绑定条件下的倒转'）",
+      "H_C1b_robust": ">40% → 倒转对语境反转稳健，非设计伪迹",
+      "mixed": "15%-40% → 频率与语境共同贡献，报具体分解"
+    },
+    "secondary_selfmodel": {
+      "metric": "day 60 自我模型中第一人称碎片数（XP 同期：2/6）",
+      "note": "去重阈值 0.7 生效下「我在这儿」与「我在这儿呢」互斥——预期至多 2-3 个 1P 碎片无论语境"
+    }
+  },
+  "predictions_registered": {
+    "primary": "H_C1a（<15%，我预测 10-20%）。理由：检索竞争的状态相似度权重 s4=1.2 是最高权重之一——「我」短语绑定到平静状态后，只在平静时刻被检索；而紧张时刻（检索高发期，因 s4 高使状态向量更特异）它们排不进前 200 抽样。若预测错误（>40%）将修正对状态相似度机制的理解",
+    "secondary": "自我模型 1P 碎片 0-1 个。若 C1 也有 2 个，说明入模由频率单独驱动、与语境无关"
+  },
+  "interpretation": {
+    "H_C1a": "XP2 降级为条件性结论，论文如实报告设计痕迹与对照——这本身是方法学贡献（'语境绑定是第一人称倒转的必要条件'是可发表的发现）",
+    "H_C1b": "第一人称倒转对语境稳健——更强的涌现证据，XP2 原文成立",
+    "mixed": "报分解：频率贡献 vs 语境贡献的近似比例"
+  },
+  "deviation_protocol": "计划外情况记 experiments/c1/deviation_N.json；判据不得事后修改"
+}

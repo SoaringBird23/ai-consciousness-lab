@@ -1,0 +1,126 @@
+{
+  "self_ratio_rolling": 0.014,
+  "n_records": 500,
+  "recent": [
+    {
+      "t": 20341315.56,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20341831.81,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20344131.71,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20344980.61,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20345000.76,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20347046.86,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20347893.46,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20348461.61,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20348986.46,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20351527.31,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20354376.71,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20359569.51,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20359590.56,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20360588.31,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20362771.11,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20366372.61,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20366690.71,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20372719.16,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20373619.01,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    },
+    {
+      "t": 20375600.06,
+      "cause": "other",
+      "source": "simulated_user(sim)",
+      "effect": "activity"
+    }
+  ]
+}

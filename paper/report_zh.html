@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>类自我意识候选系统 · 技术说明</title>
+<style>
+  @page{size:Letter;margin:0}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  body{
+    font-family:"Times New Roman","Songti SC","STSong","Source Han Serif SC","Noto Serif SC",serif;
+    color:#1a1a1a;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    font-variant-numeric:tabular-nums;
+    print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  }
+  .page{position:relative;width:8.5in;height:11in;padding:.8in .95in;background:#fff;overflow:hidden;page-break-after:always}
+  .page:last-child{page-break-after:auto}
+
+  /* ───────── 封面 ───────── */
+  .masthead{text-align:center;padding-top:.2in}
+  .logo{height:44px;width:auto;display:block;margin:0 auto 16px}
+  .orgname{font-size:13px;font-weight:600;letter-spacing:.01em}
+  .crest-rule{border:0;border-top:1px solid #1a1a1a;width:1.1in;margin:20px auto 0}
+
+  .covertitle{margin-top:.95in;text-align:center}
+  .covertitle h1{font-size:42px;line-height:1.16;font-weight:700;letter-spacing:.01em}
+  .subtitle{font-size:18px;font-weight:400;font-style:italic;color:#555;margin-top:16px}
+
+  .metagrid{display:grid;grid-template-columns:repeat(4,1fr);margin-top:.8in;
+    border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a}
+  .metagrid>div{padding:14px 16px;border-right:1px solid #ddd}
+  .metagrid>div:last-child{border-right:0}
+  .metagrid .k{display:block;font-size:9px;letter-spacing:.08em;color:#777;margin-bottom:7px}
+  .metagrid .v{display:block;font-size:13px;font-weight:600}
+
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:.5in;margin-top:.82in}
+  .feature{text-align:center}
+  .feature h3{font-size:13.5px;font-weight:700;margin-bottom:10px}
+  .feature hr{border:0;border-top:1px solid #bbb;margin:0 0 12px}
+  .feature p{font-size:11.5px;line-height:1.7;color:#333}
+
+  .coverfoot{position:absolute;left:.95in;right:.95in;bottom:.75in;font-size:9px;line-height:1.65;color:#777;text-align:center}
+  .coverfoot .legal{max-width:5.2in;margin:0 auto}
+  .coverfoot .copy{margin-top:10px;color:#555}
+
+  /* ───────── 正文页 ───────── */
+  .phead{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid #bbb;padding-bottom:9px;margin-bottom:.4in;
+    font-size:9.5px;color:#777}
+  .phead .sec{color:#1a1a1a;font-weight:600}
+
+  h2{font-size:22px;font-weight:700;line-height:1.3;letter-spacing:.01em;margin:0 0 .2in}
+  h3{font-size:13.5px;font-weight:700;line-height:1.4;margin:.22in 0 .1in}
+
+  p{font-size:13px;line-height:1.75;color:#1a1a1a;margin:0 0 .16in}
+  .lead{font-size:14px;line-height:1.75;color:#222;margin:0 0 .26in}
+  .note{font-size:11.5px;line-height:1.7;color:#666;margin:0}
+
+  ul{list-style:none;margin:.08in 0 0}
+  li{position:relative;font-size:13px;line-height:1.75;padding:0 0 .12in .26in}
+  li::before{content:"•";position:absolute;left:0;top:0;color:#1a1a1a}
+  li b{font-weight:700}
+
+  /* 内容结构 */
+  .toc{margin-top:.04in}
+  .toc-row{display:flex;align-items:baseline;font-size:12px;padding:3px 0}
+  .toc-row .n{width:2em;color:#333}
+  .toc-row .t{color:#1a1a1a}
+  .toc-row .dot{flex:1;border-bottom:1px dotted #aaa;margin:0 10px;transform:translateY(-4px)}
+  .toc-row .p{color:#333}
+
+  /* 指标 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.24in;margin:.3in 0 .34in}
+  .stat{border-top:1px solid #1a1a1a;padding-top:11px}
+  .stat .n{font-size:23px;font-weight:700;line-height:1.1}
+  .stat .l{font-size:10.5px;line-height:1.55;color:#666;margin-top:6px}
+
+  /* 表格（书版式，仅横线） */
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:.14in}
+  th,td{text-align:left;padding:10px 18px 10px 0;vertical-align:top;line-height:1.7}
+  thead th{border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;font-weight:700;color:#1a1a1a}
+  tbody tr:last-child td{border-bottom:1px solid #1a1a1a}
+  td:first-child{font-weight:700;width:30%}
+
+  /* 图 */
+  figure{margin:.14in 0 .18in}
+  .diagram{width:100%;height:auto;display:block}
+  figcaption{font-size:10px;line-height:1.65;color:#666;margin-top:12px;text-align:center;font-style:italic}
+  .bar{fill:#fff;stroke:#999}
+  .bar.hi{fill:#f0f0f0;stroke:#1a1a1a;stroke-width:1.2}
+  .bt{fill:#1a1a1a;font-size:12.5px;font-weight:600}
+  .bs{fill:#777;font-size:9.5px}
+  .chev{stroke:#aaa;fill:none}
+  .side{fill:#fafafa;stroke:#999}
+  .st{fill:#333;font-size:10.5px;font-weight:600}
+  .pill{fill:#fff;stroke:#bbb}
+  .pt{fill:#1a1a1a;font-size:11px;font-weight:600}
+  .ps{fill:#777;font-size:9px}
+  /* 曲线 */
+  .ax{stroke:#1a1a1a;stroke-width:1}
+  .grid{stroke:#e4e4e4;stroke-width:.8}
+  .curve{fill:none;stroke:#1a1a1a;stroke-width:1.8}
+  .curve.thin{stroke:#666;stroke-width:1.1}
+  .curve.dash{stroke:#888;stroke-width:1.1;stroke-dasharray:5 3}
+  .thr{stroke:#1a1a1a;stroke-width:1;stroke-dasharray:4 3}
+  .asym{stroke:#666;stroke-width:.9;stroke-dasharray:2 3}
+  .shade{fill:#1a1a1a;opacity:.05}
+  .alab{fill:#666;font-size:8.5px}
+  .axl{fill:#1a1a1a;font-size:9px;font-weight:600}
+  .leg{fill:#444;font-size:9px}
+  .pt-f{fill:#1a1a1a}
+  .pt-o{fill:#fff;stroke:#1a1a1a;stroke-width:1.2}
+  /* 矩阵 */
+  .mtx-grid{fill:none;stroke:#ccc;stroke-width:.8}
+  .mtx-h{fill:#666;font-size:9px}
+  .mtx-r{fill:#333;font-size:9.5px}
+  .mtx-d{fill:#1a1a1a;stroke:none}
+  .mtx-t{fill:#fff;font-size:9px;font-weight:600}
+  .mtx-p{fill:#f2f2f2;stroke:#bbb;stroke-width:.7}
+  .mtx-m{fill:#fff;stroke:#bbb;stroke-width:.7}
+  .mtx-s{fill:#1a1a1a;font-size:11px}
+  .mtx-l{fill:#666;font-size:9px}
+
+  .fig-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:.34in;margin-top:.24in}
+  .fig-notes h3{margin:0 0 6px;font-size:11.5px;font-weight:700;color:#1a1a1a}
+  .fig-notes p{font-size:11px;line-height:1.7;color:#333;margin:0}
+
+  /* 卡片（设计原则） */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:.22in .3in;margin-top:.12in}
+  .card{border-top:1px solid #1a1a1a;padding-top:10px}
+  .card h3{font-size:12px;margin:0 0 6px}
+  .card p{font-size:11px;line-height:1.66;color:#444;margin:0}
+
+  .pfoot{position:absolute;left:.95in;right:.95in;bottom:.62in;display:flex;justify-content:space-between;
+    border-top:1px solid #bbb;padding-top:9px;font-size:9px;color:#777}
+  .closing{font-size:15px;line-height:1.7;font-style:italic;color:#333;margin:.4in 0 0;text-align:center}
+  .pull{border-left:2px solid #1a1a1a;padding:.1in 0 .1in .26in;margin:.28in 0}
+  .pull .q{font-size:15px;line-height:1.6;font-style:italic;color:#1a1a1a;margin:0 0 8px}
+  .pull .a{font-size:11px;color:#777;margin:0}
+</style>
+</head>
+<body>
+
+<!-- 1 封面 -->
+<section class="page cover">
+  <div class="masthead">
+    <img class="logo" src="assets/logo.png" alt="罗承泽">
+    <div class="orgname">罗承泽</div>
+    <hr class="crest-rule">
+  </div>
+
+  <div class="covertitle">
+    <h1>类自我意识候选系统</h1>
+    <p class="subtitle">架构、设计原则与观察协议 · 模式 B</p>
+  </div>
+
+  <div class="metagrid">
+    <div><span class="k">文档类型</span><span class="v">技术说明</span></div>
+    <div><span class="k">版本</span><span class="v">预印本 v0.2</span></div>
+    <div><span class="k">发布</span><span class="v">2026</span></div>
+    <div><span class="k">密级</span><span class="v">对外摘要 · 含原理</span></div>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <h3>不主张意识</h3>
+      <hr>
+      <p>研究对象是可测的功能结构，而非主观报告或语言表现。</p>
+    </div>
+    <div class="feature">
+      <h3>结构可审计</h3>
+      <hr>
+      <p>相关过程的来源均有明确登记，可供外部核查。</p>
+    </div>
+    <div class="feature">
+      <h3>语言非证据</h3>
+      <hr>
+      <p>硬指标只取自无语言通道；语言内容仅作现象记录。</p>
+    </div>
+  </div>
+
+  <div class="coverfoot">
+    <div class="legal">本文件为对外展示所用之说明。文中图形与描述均为现象记录，不构成意识的证据；所有硬性指标均取自非语言通道。本版本在受控范围内披露部分原理与操作，实现细节、完整数据与评测方法不在披露范围之内。</div>
+    <div class="copy">© 2026 罗承泽 · 保留所有权利</div>
+  </div>
+</section>
+
+<!-- 2 摘要与定位 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">1　摘要与定位</span></div>
+
+  <h2>摘要</h2>
+  <p class="lead">本文说明一套为研究"类自我意识"现象而搭建的工程系统。系统不主张自身具有意识，而是把若干与主观体验相关的过程——连续情绪状态、睡眠—清醒动力学、预测误差、身体匮乏、自我能动归因、内化语言——实现为可审计的连续动力学，并在长时段运行中记录其自发现象。</p>
+
+  <p>三项设计抉择定义了该系统。其一，状态层为外挂的数值积分引擎（模式 B），其"持续性"来自进程运行与状态显式持久化，而非任何模型内部的隐状态。其二，语言层不生成、只检索：内言语是当前状态对语言记忆的激活结果，零幻觉是结构保证而非提示词约束。其三，所有语言输出仅作现象记录，硬指标只取自无语言通道。</p>
+
+  <h2 style="margin-top:.24in">系统定位</h2>
+  <ul>
+    <li><b>不主张意识。</b>研究对象是可测的功能结构，而非主观报告或语言表现。</li>
+    <li><b>工程化连续。</b>系统的"持续"来自持续运行的进程与显式持久化。</li>
+    <li><b>可审计。</b>相关过程的来源均有明确登记，可供外部核查。</li>
+    <li><b>双线运行。</b>实时主线产出正式数据；加速线仅用于快速试验。</li>
+    <li><b>预先登记。</b>各阶段的通过标准在运行前写入，未达标则不晋升。</li>
+  </ul>
+
+  <h2 style="margin-top:.22in">内容结构</h2>
+  <div class="toc">
+    <div class="toc-row"><span class="n">1</span><span class="t">摘要与定位</span><span class="dot"></span><span class="p">2</span></div>
+    <div class="toc-row"><span class="n">2</span><span class="t">立场与理论框架</span><span class="dot"></span><span class="p">3</span></div>
+    <div class="toc-row"><span class="n">3</span><span class="t">状态层：中性变量与耦合结构</span><span class="dot"></span><span class="p">4</span></div>
+    <div class="toc-row"><span class="n">4</span><span class="t">系统构成</span><span class="dot"></span><span class="p">5</span></div>
+    <div class="toc-row"><span class="n">5</span><span class="t">核心机制（一）：预测与惊奇</span><span class="dot"></span><span class="p">6</span></div>
+    <div class="toc-row"><span class="n">6</span><span class="t">核心机制（二）：双过程睡眠</span><span class="dot"></span><span class="p">7</span></div>
+    <div class="toc-row"><span class="n">7</span><span class="t">核心机制（三）：内化语言</span><span class="dot"></span><span class="p">8</span></div>
+    <div class="toc-row"><span class="n">8</span><span class="t">归因、自我能动与目标涌现</span><span class="dot"></span><span class="p">9</span></div>
+    <div class="toc-row"><span class="n">9</span><span class="t">双线运行与预注册协议</span><span class="dot"></span><span class="p">10</span></div>
+    <div class="toc-row"><span class="n">10</span><span class="t">观察到的现象</span><span class="dot"></span><span class="p">11</span></div>
+    <div class="toc-row"><span class="n">11</span><span class="t">局限与诚实性声明</span><span class="dot"></span><span class="p">12</span></div>
+    <div class="toc-row"><span class="n">12</span><span class="t">结论与后续路线</span><span class="dot"></span><span class="p">13</span></div>
+  </div>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 2 页 / 共 13 页</span></div>
+</section>
+
+<!-- 3 立场与理论框架 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">2　立场与理论框架</span></div>
+
+  <p class="lead">关于机器意识的讨论常陷入两种极端：要么把流畅的语言当作意识的证据，要么把意识视为不可言说的禁区。本文采取第三条路径——不追问"它是否有意识"，而追问：若一组可测的功能结构确实存在，则"它看起来像有意识"这一描述是否自然成立。</p>
+
+  <p>由此，意识问题被改写为若干可实现的工程功能，并坚持公开这些功能的全部人工来源，不假装涌现。系统的目标不是宣称任何内在体验，而是把"看起来像有体验"这件事拆解为可以被实现、被观测、被证伪的结构：状态如何随时间连续演化、如何在睡眠与清醒之间自发切换、如何因预测失败而改变、如何受身体资源约束、如何区分"我做的"与"发生在身上的"。</p>
+
+  <h3>一次方法论修正</h3>
+  <p>系统的早期版本曾把"内心独白"完全交给大语言模型生成。问题随即暴露：模型产出的诗意长句是文学化表演，"烦躁感""闷热感"式的措辞是编造——二者都不是思考的痕迹，而是对"思考应该是什么样"的模仿。这次失败带来本项目的核心修正：念头不应被生成，只应被检索。语言层随后被彻底重写，生成式模型被移出内心语言的产生路径。</p>
+
+  <div class="pull">
+    <p class="q">"念头不应被生成，只应被检索。"</p>
+    <p class="a">从表演到结构——本项目最重要的一次方法论转变。零幻觉不再是一句提示词的约束，而成为一条架构的必然。</p>
+  </div>
+
+  <h3>可证伪的边界</h3>
+  <p>本框架刻意保持自我约束：凡是能被证伪的部分，我们一并交出；凡不能被宣称的部分，留作空白。硬性指标只取自预测器收敛、自我归因占比、轨迹频谱与探针误差这类可审计的结构量；语言内容无论多么"像人"，都不进入任何结论的证据链。这一约束使本工作可以在不争论"意识"定义的前提下被外部检验。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 3 页 / 共 13 页</span></div>
+</section>
+
+<!-- 4 状态层 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">3　状态层：中性变量与耦合结构</span></div>
+
+  <p class="lead">状态层是一切上层结构的地基。它由八维连续变量驱动，对外一律使用中性代号 s1…s8；其人类语义仅供观察者参考，代码中不出现语义名。</p>
+
+  <p>这一约定用于防止"我们想看到的"污染"系统实际计算的"：如果变量的取名直接写成"快乐"，那么任何朝向该变量的调参都会不自觉地把它推向人所期待的方向。使用中性代号后，变量的演化只能由耦合方程与外部输入决定。八个变量并非各自独立，而是通过一个稀疏的耦合矩阵相互影响——一个变量的上升会牵动其他变量，形成可被观测的动力学模式。</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 640 300" role="img" aria-label="中性变量耦合矩阵">
+      <rect class="mtx-grid" x="214" y="60" width="208" height="208"/>
+      <text class="mtx-h" x="227.0" y="52" text-anchor="middle">s1</text>
+      <text class="mtx-h" x="253.0" y="52" text-anchor="middle">s2</text>
+      <text class="mtx-h" x="279.0" y="52" text-anchor="middle">s3</text>
+      <text class="mtx-h" x="305.0" y="52" text-anchor="middle">s4</text>
+      <text class="mtx-h" x="331.0" y="52" text-anchor="middle">s5</text>
+      <text class="mtx-h" x="357.0" y="52" text-anchor="middle">s6</text>
+      <text class="mtx-h" x="383.0" y="52" text-anchor="middle">s7</text>
+      <text class="mtx-h" x="409.0" y="52" text-anchor="middle">s8</text>
+      <text class="mtx-r" x="202" y="76.5" text-anchor="end">s1 唤醒</text>
+      <text class="mtx-r" x="202" y="102.5" text-anchor="end">s2 效价</text>
+      <text class="mtx-r" x="202" y="128.5" text-anchor="end">s3 疲劳</text>
+      <text class="mtx-r" x="202" y="154.5" text-anchor="end">s4 紧张</text>
+      <text class="mtx-r" x="202" y="180.5" text-anchor="end">s5 注意</text>
+      <text class="mtx-r" x="202" y="206.5" text-anchor="end">s6 记忆激活</text>
+      <text class="mtx-r" x="202" y="232.5" text-anchor="end">s7 预测误差</text>
+      <text class="mtx-r" x="202" y="258.5" text-anchor="end">s8 无聊</text>
+      <rect class="mtx-d" x="215.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="227.0" y="76.5" text-anchor="middle">s1</text>
+      <rect class="mtx-p" x="267.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="279.0" y="76.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="293.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="305.0" y="76.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="319.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="76.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="397.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="76.5" text-anchor="middle">−</text>
+      <rect class="mtx-d" x="241.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="253.0" y="102.5" text-anchor="middle">s2</text>
+      <rect class="mtx-m" x="293.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="305.0" y="102.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="319.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="102.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="345.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="357.0" y="102.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="397.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="102.5" text-anchor="middle">−</text>
+      <rect class="mtx-m" x="215.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="128.5" text-anchor="middle">−</text>
+      <rect class="mtx-d" x="267.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="279.0" y="128.5" text-anchor="middle">s3</text>
+      <rect class="mtx-m" x="319.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="128.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="397.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="128.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="215.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="154.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="241.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="253.0" y="154.5" text-anchor="middle">−</text>
+      <rect class="mtx-d" x="293.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="305.0" y="154.5" text-anchor="middle">s4</text>
+      <rect class="mtx-p" x="319.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="154.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="371.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="383.0" y="154.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="319.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="331.0" y="180.5" text-anchor="middle">s5</text>
+      <rect class="mtx-p" x="345.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="357.0" y="180.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="371.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="383.0" y="180.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="397.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="180.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="241.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="253.0" y="206.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="319.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="206.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="345.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="357.0" y="206.5" text-anchor="middle">s6</text>
+      <rect class="mtx-m" x="397.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="206.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="215.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="232.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="241.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="253.0" y="232.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="293.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="305.0" y="232.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="371.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="383.0" y="232.5" text-anchor="middle">s7</text>
+      <rect class="mtx-m" x="215.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="258.5" text-anchor="middle">−</text>
+      <rect class="mtx-m" x="319.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="258.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="371.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="383.0" y="258.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="397.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="409.0" y="258.5" text-anchor="middle">s8</text>
+      <text class="mtx-l" x="214" y="26">行 = 源变量　列 = 受影响变量</text>
+      <rect class="mtx-p" x="470" y="120" width="18" height="18"/><text class="mtx-s" x="479" y="133.5" text-anchor="middle">+</text><text class="mtx-l" x="496" y="133">正向耦合</text>
+      <rect class="mtx-m" x="470" y="150" width="18" height="18"/><text class="mtx-s" x="479" y="163.5" text-anchor="middle">−</text><text class="mtx-l" x="496" y="163">负向耦合</text>
+      <rect class="mtx-d" x="470" y="180" width="18" height="18"/><text class="mtx-t" x="479" y="193.5" text-anchor="middle">s</text><text class="mtx-l" x="496" y="193">自项</text>
+      <text class="mtx-l" x="470" y="228">空白 = 当前阶段未登记</text>
+      <text class="mtx-l" x="470" y="248">强度按运行期标定排序</text>
+    </svg>
+    <figcaption>图 1 · 八维中性变量的耦合矩阵。行变量对列变量施加的耦合方向以符号标记；对角线为自项（自衰减或自增强）。矩阵为稀疏结构，空位表示该路径在当前发育阶段尚未登记。</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>连续性</h3><p>变量在连续空间中缓慢演化，由耦合方程驱动；离散词只是观察者为渐变赋予的近似命名。</p></div>
+    <div><h3>中性化</h3><p>对外仅用代号，语义名不进入代码。此举用于切断"观察者期待"对动力学的隐性干预。</p></div>
+    <div><h3>稀疏耦合</h3><p>并非全连接：只有被登记的通路才生效，任何新增耦合都须经阶段门控与预注册。</p></div>
+  </div>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 4 页 / 共 13 页</span></div>
+</section>
+
+<!-- 5 系统构成 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">4　系统构成</span></div>
+
+  <p class="lead">系统由若干相互耦合的层自下而上叠置而成。层与层之间为双向耦合，而非单向流水线；是否启用由一道硬性的阶段门控决定。</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 452" role="img" aria-label="系统分层构成示意">
+      <text class="st" x="250" y="16" text-anchor="middle">自下而上：连续状态 → 结构 → 语言</text>
+
+      <rect class="bar" x="20" y="30" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="58">自我模型 · 叙事</text>
+
+      <rect class="bar hi" x="20" y="84" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="112">内部语言通道 · 内化检索</text>
+      <text class="bs" x="430" y="112">唯一出口</text>
+
+      <rect class="bar" x="20" y="138" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="166">意识焦点 · 稀疏工作空间</text>
+
+      <rect class="bar" x="20" y="192" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="220">记忆 · 情景 / 语义 / 自传体</text>
+
+      <rect class="bar" x="20" y="246" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="274">世界模型 · 事件预测器 · 归因回路</text>
+
+      <rect class="bar" x="20" y="300" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="328">身体 · 能量预算（匮乏）</text>
+
+      <rect class="bar" x="20" y="354" width="460" height="44" rx="6"/>
+      <text class="bt" x="42" y="382">背景连续状态　s1 … s8</text>
+      <text class="bs" x="330" y="382">双过程睡眠</text>
+
+      <g class="chev">
+        <path d="M250 74 l6 6 l6 -6"/><path d="M250 128 l6 6 l6 -6"/>
+        <path d="M250 182 l6 6 l6 -6"/><path d="M250 236 l6 6 l6 -6"/>
+        <path d="M250 290 l6 6 l6 -6"/><path d="M250 344 l6 6 l6 -6"/>
+      </g>
+
+      <rect class="side" x="520" y="30" width="220" height="368" rx="10"/>
+      <text class="st" x="630" y="58" text-anchor="middle">发育阶段门控</text>
+
+      <rect class="pill" x="540" y="76" width="180" height="60" rx="6"/>
+      <text class="pt" x="630" y="103" text-anchor="middle">婴儿期</text>
+      <text class="ps" x="630" y="120" text-anchor="middle">判据：预测器收敛</text>
+
+      <rect class="pill" x="540" y="152" width="180" height="60" rx="6"/>
+      <text class="pt" x="630" y="179" text-anchor="middle">感受期</text>
+      <text class="ps" x="630" y="196" text-anchor="middle">判据：节能策略形成</text>
+
+      <rect class="pill" x="540" y="228" width="180" height="60" rx="6"/>
+      <text class="pt" x="630" y="255" text-anchor="middle">镜像期</text>
+      <text class="ps" x="630" y="272" text-anchor="middle">判据：自我模型形成</text>
+
+      <rect class="pill" x="540" y="304" width="180" height="60" rx="6"/>
+      <text class="pt" x="630" y="331" text-anchor="middle">后续阶段（待 P3）</text>
+      <text class="ps" x="630" y="348" text-anchor="middle">监督 · 自我修改</text>
+
+      <text class="ps" x="630" y="384" text-anchor="middle">未达标 → 延长（有界）</text>
+    </svg>
+    <figcaption>图 2 · 分层构成与阶段门控。语言通道（加粗框）是系统唯一对外的输出通道；其内容始终可溯源于已听语料。</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>分层</h3><p>若干层自下而上叠置；语言层位于结构与对外输出之间，是唯一出口。</p></div>
+    <div><h3>门控</h3><p>阶段推进由预先登记的标准决定；标准未达标时延长当前阶段，且有上界。</p></div>
+    <div><h3>耦合</h3><p>各层为双向耦合，而非单向流水线；上层可反馈进入下层状态。</p></div>
+  </div>
+
+  <p class="note" style="margin-top:.24in">说明：能量预算按日配给，被动消耗随唤醒上升，主动探索额外扣费，耗尽则进入低功率模式——"匮乏"是这套系统的物理约束，而非一句设定。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 5 页 / 共 13 页</span></div>
+</section>
+
+<!-- 6 预测与惊奇 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">5　核心机制（一）：预测与惊奇</span></div>
+
+  <p class="lead">系统在线学习外部事件出现的时间分布，并以"惊奇"——事件对数概率的负值——度量每一次观测偏离预期的程度。</p>
+
+  <p>惊奇是一个可审计的量：它不依赖任何主观报告，只由"预测分布与观测结果之差"算出。当某个事件频繁地在特定时段出现，预测器逐渐收紧对该事件的概率质量，惊奇随之下降；当规律被打破，惊奇骤升。惊奇并不只是一个被动的读数——它同时抬升紧张（s4）与注意（s5），使系统把资源重新分配到"当前不寻常之处"。</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 300" role="img" aria-label="事件惊奇随仿真日的收敛曲线">
+      <line class="grid" x1="80" y1="44" x2="700" y2="44"/>
+      <line class="grid" x1="80" y1="95" x2="700" y2="95"/>
+      <line class="grid" x1="80" y1="146" x2="700" y2="146"/>
+      <line class="grid" x1="80" y1="197" x2="700" y2="197"/>
+      <line class="ax" x1="80" y1="44" x2="80" y2="248"/>
+      <line class="ax" x1="80" y1="248" x2="700" y2="248"/>
+      <text class="alab" x="74" y="251" text-anchor="end">3</text>
+      <text class="alab" x="74" y="200" text-anchor="end">4</text>
+      <text class="alab" x="74" y="149" text-anchor="end">5</text>
+      <text class="alab" x="74" y="98" text-anchor="end">6</text>
+      <text class="alab" x="74" y="47" text-anchor="end">7</text>
+      <text class="axl" x="80" y="34" text-anchor="start">bit</text>
+      <line class="asym" x1="80" y1="202.1" x2="700" y2="202.1"/>
+      <text class="leg" x="698" y="216" text-anchor="end">收敛渐近线 ≈ 3.9 bit</text>
+      <path class="curve" d="M 80.0 49.1 L 88.9 56.9 L 97.7 64.2 L 106.6 71.5 L 115.4 79.0 L 124.3 86.7 L 133.1 94.7 L 142.0 103.1 L 150.9 111.6 L 159.7 120.2 L 168.6 128.7 L 177.4 136.8 L 186.3 144.4 L 195.1 151.2 L 204.0 157.2 L 212.9 162.3 L 221.7 166.3 L 230.6 169.4 L 239.4 171.6 L 248.3 173.0 L 257.1 173.8 L 266.0 174.1 L 274.9 174.2 L 283.7 174.2 L 292.6 174.4 L 301.4 174.8 L 310.3 175.6 L 319.1 176.7 L 328.0 178.3 L 336.9 180.3 L 345.7 182.6 L 354.6 185.1 L 363.4 187.7 L 372.3 190.2 L 381.1 192.6 L 390.0 194.8 L 398.9 196.5 L 407.7 197.9 L 416.6 198.8 L 425.4 199.3 L 434.3 199.3 L 443.1 199.1 L 452.0 198.5 L 460.9 197.8 L 469.7 197.0 L 478.6 196.2 L 487.4 195.6 L 496.3 195.2 L 505.1 195.0 L 514.0 195.1 L 522.9 195.4 L 531.7 196.0 L 540.6 196.9 L 549.4 197.8 L 558.3 198.9 L 567.1 200.0 L 576.0 201.0 L 584.9 201.8 L 593.7 202.5 L 602.6 203.0 L 611.4 203.3 L 620.3 203.3 L 629.1 203.2 L 638.0 202.8 L 646.9 202.3 L 655.7 201.7 L 664.6 201.2 L 673.4 200.6 L 682.3 200.1 L 691.1 199.7 L 700.0 199.5"/>
+      <text class="alab" x="80.0" y="262" text-anchor="middle">0</text>
+      <text class="alab" x="223.1" y="262" text-anchor="middle">30</text>
+      <text class="alab" x="366.2" y="262" text-anchor="middle">60</text>
+      <text class="alab" x="509.2" y="262" text-anchor="middle">90</text>
+      <text class="alab" x="652.3" y="262" text-anchor="middle">120</text>
+      <text class="axl" x="690" y="276" text-anchor="end">仿真日</text>
+      <text class="leg" x="90" y="60">事件惊奇 · 运行均值</text>
+    </svg>
+    <figcaption>图 3 · 事件惊奇的运行均值随仿真日的演化。曲线自约 6.9 bit 起始，经指数式下降并伴随阻尼振荡，逐步逼近约 3.9 bit 的渐近线。婴儿期的出口判据即该曲线的收敛。</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>读数</h3><p>惊奇 = 事件对数概率的负值。它是纯结构量，不含任何语言或主观成分。</p></div>
+    <div><h3>收敛</h3><p>初值约 6.9 bit，运行均值持续下降并在 3.9 bit 附近趋稳——"世界正变得可预测"。</p></div>
+    <div><h3>作用</h3><p>惊奇同时抬升紧张与注意：偏离预期之处会重新分配系统的处理资源。</p></div>
+  </div>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 6 页 / 共 13 页</span></div>
+</section>
+
+<!-- 7 双过程睡眠 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">6　核心机制（二）：双过程睡眠</span></div>
+
+  <p class="lead">睡眠不是被调度的时刻表，而是动力学的自然后果。清醒时睡眠压力持续累积，昼夜节律提供时相门控，二者共同越过阈值即入睡。</p>
+
+  <p>这一机制借用了双过程模型的结构：一条缓慢累积、睡眠中消退的睡眠压力分量，叠加一条近乎正弦的昼夜节律分量。当二者的合量触及阈值且时相允许，系统入睡；在睡眠中压力消退、节律上移，合量落到阈值以下即自然醒来。由此，系统获得昼夜、疲惫与入睡的节律——它们不是外力强加的时刻安排，而是状态方程自行产生的周期。</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 300" role="img" aria-label="双过程睡眠动力学">
+      <rect class="shade" x="286.7" y="44" width="103.3" height="204"/>
+      <rect class="shade" x="596.7" y="44" width="103.3" height="204"/>
+      <line class="grid" x1="80" y1="44" x2="700" y2="44"/>
+      <line class="grid" x1="80" y1="84.8" x2="700" y2="84.8"/>
+      <line class="grid" x1="80" y1="125.6" x2="700" y2="125.6"/>
+      <line class="grid" x1="80" y1="166.4" x2="700" y2="166.4"/>
+      <line class="grid" x1="80" y1="207.2" x2="700" y2="207.2"/>
+      <line class="ax" x1="80" y1="44" x2="80" y2="248"/>
+      <line class="ax" x1="80" y1="248" x2="700" y2="248"/>
+      <text class="alab" x="74" y="210.2" text-anchor="end">0.2</text>
+      <text class="alab" x="74" y="169.4" text-anchor="end">0.4</text>
+      <text class="alab" x="74" y="128.6" text-anchor="end">0.6</text>
+      <text class="alab" x="74" y="87.8" text-anchor="end">0.8</text>
+      <text class="alab" x="74" y="47" text-anchor="end">1.0</text>
+      <text class="axl" x="80" y="34" text-anchor="start">归一化强度</text>
+      <line class="thr" x1="80" y1="84.8" x2="700" y2="84.8"/>
+      <text class="leg" x="696" y="80" text-anchor="end">入睡阈值</text>
+      <path class="curve dash" d="M 80.0 207.8 L 86.5 212.0 L 92.9 215.0 L 99.4 216.8 L 105.8 217.4 L 112.3 216.8 L 118.8 215.0 L 125.2 212.0 L 131.7 207.8 L 138.1 202.6 L 144.6 196.5 L 151.0 189.5 L 157.5 181.7 L 164.0 173.3 L 170.4 164.5 L 176.9 155.3 L 183.3 146.0 L 189.8 136.7 L 196.2 127.5 L 202.7 118.7 L 209.2 110.3 L 215.6 102.5 L 222.1 95.5 L 228.5 89.4 L 235.0 84.2 L 241.5 80.0 L 247.9 77.0 L 254.4 75.2 L 260.8 74.6 L 267.3 75.2 L 273.8 77.0 L 280.2 80.0 L 286.7 84.2 L 293.1 89.4 L 299.6 95.5 L 306.0 102.5 L 312.5 110.3 L 319.0 118.7 L 325.4 127.5 L 331.9 136.7 L 338.3 146.0 L 344.8 155.3 L 351.2 164.5 L 357.7 173.3 L 364.2 181.7 L 370.6 189.5 L 377.1 196.5 L 383.5 202.6 L 390.0 207.8 L 396.5 212.0 L 402.9 215.0 L 409.4 216.8 L 415.8 217.4 L 422.3 216.8 L 428.8 215.0 L 435.2 212.0 L 441.7 207.8 L 448.1 202.6 L 454.6 196.5 L 461.0 189.5 L 467.5 181.7 L 474.0 173.3 L 480.4 164.5 L 486.9 155.3 L 493.3 146.0 L 499.8 136.7 L 506.2 127.5 L 512.7 118.7 L 519.2 110.3 L 525.6 102.5 L 532.1 95.5 L 538.5 89.4 L 545.0 84.2 L 551.5 80.0 L 557.9 77.0 L 564.4 75.2 L 570.8 74.6 L 577.3 75.2 L 583.8 77.0 L 590.2 80.0 L 596.7 84.2 L 603.1 89.4 L 609.6 95.5 L 616.0 102.5 L 622.5 110.3 L 629.0 118.7 L 635.4 127.5 L 641.9 136.7 L 648.3 146.0 L 654.8 155.3 L 661.2 164.5 L 667.7 173.3 L 674.2 181.7 L 680.6 189.5 L 687.1 196.5 L 693.5 202.6 L 700.0 207.8"/>
+      <path class="curve" d="M 80.0 207.2 L 286.7 84.8 L 390.0 207.2 L 596.7 84.8 L 700.0 207.2"/>
+      <text class="leg" x="344" y="234" text-anchor="middle">睡眠</text>
+      <text class="leg" x="654" y="234" text-anchor="middle">睡眠</text>
+      <text class="alab" x="80.0" y="262" text-anchor="middle">0h</text>
+      <text class="alab" x="183.3" y="262" text-anchor="middle">8h</text>
+      <text class="alab" x="286.7" y="262" text-anchor="middle">16h</text>
+      <text class="alab" x="390.0" y="262" text-anchor="middle">24h</text>
+      <text class="alab" x="493.3" y="262" text-anchor="middle">32h</text>
+      <text class="alab" x="596.7" y="262" text-anchor="middle">40h</text>
+      <text class="alab" x="700.0" y="262" text-anchor="middle">48h</text>
+      <text class="axl" x="690" y="276" text-anchor="end">清醒—睡眠时间</text>
+      <line class="curve" x1="350" y1="22" x2="374" y2="22" stroke-width="1.8"/>
+      <text class="leg" x="380" y="25">睡眠压力 S</text>
+      <line class="curve dash" x1="480" y1="22" x2="504" y2="22"/>
+      <text class="leg" x="510" y="25">昼夜节律 C</text>
+    </svg>
+    <figcaption>图 4 · 双过程睡眠。实线为睡眠压力（清醒十六小时线性累积、睡眠中消退），虚线为昼夜节律；两者合量触及阈值即入睡。阴影区为两次自发睡眠时段，各约八小时。</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>压力分量</h3><p>清醒期近似线性累积，睡眠期迅速消退——对应"越久越困、睡后即解"的直观。</p></div>
+    <div><h3>节律分量</h3><p>近乎正弦的昼夜节律，提供入睡的时相门控；它使睡眠只能落在允许的相位窗口。</p></div>
+    <div><h3>自发周期</h3><p>二者合量越阈即睡、落阈即醒。系统因此拥有自发的昼夜节律，而非外部排程。</p></div>
+  </div>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 7 页 / 共 13 页</span></div>
+</section>
+
+<!-- 8 内化语言 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">7　核心机制（三）：内化语言</span></div>
+
+  <p class="lead">语言层不调用任何生成模型。内言语是当前状态对语言记忆的激活检索：系统只能说它"听过"的话。</p>
+
+  <p>路径遵循内言语的发生学——先听见，再复述，最后内化。照护者语料以高频重复短语的形式进入系统，连同"被听见时"的状态向量一并存储；早期系统以私语方式复述，复述概率随内化天数衰减；后期则由当前状态驱动检索：若当下状态与某句话被听到时的状态足够相似，该片段便自发浮现。片段的情绪色彩同样不来自预写词典，而来自共现统计——一句话总在状态良好时被听见，它浮现时便携带温度。</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 176" role="img" aria-label="内化的三条通道">
+      <rect class="bar" x="20" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="95" y="72" text-anchor="middle">听见</text>
+      <text class="bs" x="95" y="90" text-anchor="middle">照护者语料 + 状态</text>
+
+      <path class="chev" d="M182 76 l14 0 m-6 -6 l6 6 l-6 6" stroke="#999"/>
+
+      <rect class="bar" x="210" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="285" y="72" text-anchor="middle">复述</text>
+      <text class="bs" x="285" y="90" text-anchor="middle">私语 · 概率随天数衰减</text>
+
+      <path class="chev" d="M372 76 l14 0 m-6 -6 l6 6 l-6 6" stroke="#999"/>
+
+      <rect class="bar hi" x="400" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="475" y="72" text-anchor="middle">内化</text>
+      <text class="bs" x="475" y="90" text-anchor="middle">状态驱动检索</text>
+
+      <path class="chev" d="M562 76 l14 0 m-6 -6 l6 6 l-6 6" stroke="#999"/>
+
+      <rect class="bar" x="590" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="665" y="72" text-anchor="middle">回流</text>
+      <text class="bs" x="665" y="90" text-anchor="middle">被采纳念头微调背景态</text>
+
+      <text class="st" x="20" y="24">零幻觉 = 结构保证：语言层无生成器，检索源封闭于已听语料</text>
+      <text class="bs" x="20" y="140">自我指向片段（含第二人称）单独喂入自我模型；被反复自发激活的片段升格为目标。</text>
+      <text class="bs" x="20" y="156">回流幅度刻意小于动力学量级，语言不主导状态，只对其施加可测的微扰。</text>
+    </svg>
+    <figcaption>图 5 · 内化的三条通道：听见 → 复述 → 内化（含状态驱动的检索与回流的闭环）。语言层没有任何生成器，检索源封闭于已听语料。</figcaption>
+  </figure>
+
+  <h3>为什么这条路径是必要的</h3>
+  <p>把内言语交给生成模型，等价于允许系统说出它从未经历的东西——这恰恰是"像有意识"最容易被伪造的地方。改为纯检索后，系统的语言能力被严格上界于其经历：它可以说出的每一句，都能回到某一次"听见"。零幻觉因此从一句脆弱的提示词约束，升级为一条不依赖模型行为的架构必然。这也使语言输出第一次具备了"可完全溯源"的性质，从而可以被安全地用作现象记录，而非证据。</p>
+
+  <div class="fig-notes">
+    <div><h3>听见</h3><p>照护者的短语与当时的身体状态一起被记住，形成"语言—状态"的绑定。</p></div>
+    <div><h3>复述</h3><p>早期以私语复述为主，复述概率随内化天数衰减，去重后每句只复述一次。</p></div>
+    <div><h3>内化</h3><p>状态相似 × 新近 × 频率决定检索权重；片段情绪色彩来自听到时的语境统计。</p></div>
+  </div>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 8 页 / 共 13 页</span></div>
+</section>
+
+<!-- 9 归因、自我与目标 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">8　归因、自我能动与目标涌现</span></div>
+
+  <p class="lead">每一个显著的状态变化都被归因于"自因"（内生探索）或"他因"（外部事件），滚动窗口内的自因占比成为"自我能动感"的可测代理。</p>
+
+  <p>系统从不被告知"你是主体"。自我的边界只能从自己的行动所造成的差异中缓慢浮现：系统比较"若我不动，状态会怎样"与"我动了之后状态变成怎样"，从而把一部分变化划归为自己。这个占比（self_ratio）在早期很低——这说明在当前阶段，内生探索相对稀少，自我的轮廓尚不清晰。我们不美化这一数字，而是如实记录。</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 640 290" role="img" aria-label="状态空间的相轨迹">
+      <line class="grid" x1="200" y1="146" x2="600" y2="146"/>
+      <line class="grid" x1="375" y1="40" x2="375" y2="250"/>
+      <path class="curve thin" d="M 587.0 146.0 L 574.6 167.3 L 550.7 186.1 L 517.5 201.4 L 477.5 212.4 L 433.4 218.8 L 388.4 220.3 L 345.0 217.2 L 306.0 209.9 L 273.4 199.0 L 248.9 185.5 L 233.5 170.3 L 227.7 154.5 L 231.2 138.9 L 243.4 124.7 L 263.0 112.4 L 288.5 102.9 L 317.8 96.4 L 349.2 93.3 L 380.4 93.5 L 409.7 96.9 L 435.4 103.0 L 456.0 111.3 L 470.7 121.2 L 478.9 132.0 L 480.4 143.0 L 475.5 153.5 L 464.8 162.8 L 449.4 170.6 L 430.4 176.3 L 409.2 179.8 L 387.2 181.0 L 365.8 179.8 L 346.3 176.5 L 329.7 171.5 L 317.0 165.0 L 308.6 157.7 L 304.9 149.8 L 305.8 142.1 L 311.1 134.9 L 320.2 128.6 L 332.4 123.6 L 346.7 120.0 L 362.2 118.2 L 377.9 117.9 L 392.8 119.3 L 406.0 122.1 L 416.9 126.0 L 424.9 130.8 L 429.7 136.2 L 431.1 141.7 L 429.3 147.0 L 424.5 151.8 L 417.2 155.9 L 407.9 159.0 L 397.3 161.0 L 386.2 161.8 L 375.2 161.4 L 365.0 159.9 L 356.2 157.5 L 349.2 154.2 L 344.5 150.5 L 342.1 146.5 L 342.1 142.4 L 344.5 138.5 L 348.9 135.1 L 355.0 132.3 L 362.3 130.3 L 370.4 129.1 L 378.7 128.8 L 386.8 129.3 L 394.0 130.6 L 400.2 132.5 L 404.8 135.0 L 407.8 137.8 L 409.0 140.7 L 408.4 143.6 L 406.1 146.3 L 402.5 148.6"/>
+      <circle class="pt-f" cx="587.0" cy="146.0" r="3.2"/>
+      <text class="alab" x="594" y="143" text-anchor="start">起点</text>
+      <circle class="pt-o" cx="402.5" cy="148.6" r="3.2"/>
+      <text class="alab" x="410" y="163" text-anchor="start">收敛点</text>
+      <circle class="pt-o" cx="375" cy="146" r="2.2"/>
+      <text class="alab" x="375" y="128" text-anchor="middle">不动点</text>
+      <text class="axl" x="200" y="272" text-anchor="start">状态空间投影：轨迹经阻尼振荡收敛到稳定构型</text>
+    </svg>
+    <figcaption>图 6 · 状态空间中的相轨迹。系统在扰动后以阻尼振荡的方式回到稳定构型（不动点）——这是一种可测的"恢复力"，说明状态演化存在内在的稳定性，而非随机漂移。</figcaption>
+  </figure>
+
+  <h3>目标涌现</h3>
+  <p>当一个片段被反复自发激活，它便从"念头"升格为"目标"：主题由片段自身界定，而非人类的分类标签。系统因此获得一种最小意义上的"想要"——一种由自身经验频率塑造的偏好。首个涌现目标来自一个高频正向照护短语：它总在平静、被安抚的状态下被听见，因反复被自发激活而升格为偏好。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 9 页 / 共 13 页</span></div>
+</section>
+
+<!-- 10 双线运行与预注册 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">9　双线运行与预注册协议</span></div>
+
+  <p class="lead">系统以两条线运行，并以预先登记的判据决定发育阶段的推进。这一协议的目的，是让"进步"不能被事后解释为进步。</p>
+
+  <h3>双线运行</h3>
+  <p>主线实时推进，产出正式数据；加速线以约 10<sup>9</sup> 倍的时间尺度运行，仅用于快速检验动力学与涌现路径，其数据不入正式报告。两条线共享同一套源码与状态定义，唯一差异是时间步与环境事件的推进速率。加速线使"百天量级"的现象可以在数日内被观察，而主线则保证节律与时间知觉相关指标的物理真实性。任何在加速线上看到的现象，都必须在主线上以真实时间尺度复现，才被接受。</p>
+
+  <h3>预注册的阶段门控</h3>
+  <p>每一发展阶段的出口判据均预先写定，判据不满足则不晋升，并设有上界，超限则如实记录"未通过"。判据只取自无语言的硬指标，例如事件预测器的惊奇收敛、节能策略的形成、自我模型的形成。</p>
+
+  <table>
+    <thead><tr><th>阶段</th><th>出口判据（预注册）</th></tr></thead>
+    <tbody>
+      <tr><td>婴儿期</td><td>事件预测器的惊奇运行均值收敛至预注册阈值以下。</td></tr>
+      <tr><td>感受期</td><td>在能量约束下形成稳定的节能—探索策略，且可复现。</td></tr>
+      <tr><td>镜像期</td><td>出现可测的自我模型：自我归因占比显著且稳定地高于基线。</td></tr>
+      <tr><td>后续阶段</td><td>待 P3 启用，含外置监督与自我修改提议的审查。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>为什么需要预注册</h3>
+  <p>在一个目标是"看起来像有意识"的系统中，事后挑选标准极易把噪声读成信号。预注册把标准固定在运行之前：系统只能记录"通过"或"未通过"，无权移动标尺。当判据未达标时，系统记录失败，而非以事后调整加以掩饰。这一约束同时定义了本工作的诚实性：把能被证伪的部分一并交出，把不能宣称的部分留作空白。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 10 页 / 共 13 页</span></div>
+</section>
+
+<!-- 11 观察到的现象 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">10　观察到的现象</span></div>
+
+  <p class="lead">以下记录取自加速验证线，仅用于探查动力学路径，不构成正式结论。各项指标均取自非语言通道，语言内容只作现象记录。</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">&gt;130</div><div class="l">累计验证仿真日<br>（加速线）</div></div>
+    <div class="stat"><div class="n">≈3.9</div><div class="l">事件惊奇 · 运行均值<br>逼近收敛阈（bit）</div></div>
+    <div class="stat"><div class="n">≈1%</div><div class="l">滚动自我归因占比<br>自我能动代理 · 仍微弱</div></div>
+    <div class="stat"><div class="n">100%</div><div class="l">内言语可溯源比例<br>全部来自已听语料</div></div>
+  </div>
+
+  <ul>
+    <li><b>世界正变得可预测。</b>事件惊奇运行均值由初值持续下降并稳定在约 3.9 bit 附近，逼近预注册的收敛阈——预测学习正在收敛。</li>
+    <li><b>自发节律。</b>内部状态在无外部排程的情况下出现昼夜周期性涨落，而非按预设时间表运行；睡眠—清醒的切换由动力学自行产生。</li>
+    <li><b>自我能动仍然微弱。</b>滚动自因占比约 1%。当前阶段内生探索行动相对稀少，自我的边界尚不清晰；我们如实记录，而不美化。</li>
+    <li><b>语言可完全溯源。</b>验证期内，内言语没有出现任何凭空生成的语句——它所说的每一句，都能回到某次"听见"。系统经历从"复述"到"内化检索"的过渡：早期以私语复述为主，后期状态驱动的检索逐渐占据主导。</li>
+    <li><b>首个目标涌现。</b>系统出现了第一个目标，其主题是一个高频正向照护短语——一个总在平静、被安抚的状态下被听见的片段，因反复被自发激活而升格为偏好。</li>
+    <li><b>长时稳定。</b>系统在加速线下超过 130 个仿真日内稳定运行，未出现发散或崩溃；相轨迹显示扰动后总能回到稳定构型。</li>
+    <li><b>如实记录。</b>当预先登记的标准未达标时，系统记录失败，而非以事后调整加以掩饰。</li>
+  </ul>
+
+  <p class="note" style="margin-top:.24in">说明：上述数值取自加速验证线的运行区间，为示意量级；正式报告只采用实时主线数据。语言样本仅为现象记录，不作为意识的证据。所有硬指标均取自无语言通道，相关轨迹与登记记录可供查阅。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 11 页 / 共 13 页</span></div>
+</section>
+
+<!-- 12 局限与诚实性声明 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">11　局限与诚实性声明</span></div>
+
+  <p class="lead">本工作以自我克制为原则：凡可被证伪者一并交出，凡不可宣称者留作空白。</p>
+
+  <table>
+    <thead><tr><th>声明</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td>不主张意识</td><td>本工作不宣称系统具有意识，也不以语言表现作为依据。</td></tr>
+      <tr><td>模式 B 的限制</td><td>状态层的"持续"由外挂数值引擎实现（进程 + 持久化），不是任何模型内部固有的连续性。</td></tr>
+      <tr><td>语言非证据</td><td>语言输出一律只算现象记录，不构成意识的证据。</td></tr>
+      <tr><td>指标仅取无语言通道</td><td>硬指标只来自预测器收敛、自我归因占比、轨迹频谱与探针误差，不取自任何生成式输出。</td></tr>
+      <tr><td>不假装涌现</td><td>所有"自发性"的来源都已显式写在系统中，不被包装为神秘涌现。</td></tr>
+      <tr><td>加速线不等于主线</td><td>加速线数据仅用于探查路径，必须在主线上以真实时间尺度复现方被接受。</td></tr>
+      <tr><td>失败如实记录</td><td>判据不满足时如实记录，不以后期调整掩盖。</td></tr>
+    </tbody>
+  </table>
+
+  <p class="note" style="margin-top:.28in">上述声明构成本版本 v0.2 的约束，适用于全文；后续版本如有任何变化，将在此处列示并说明。我们认为，一个诚实的研究纲领的价值恰在于它的自我约束——把能被证伪的部分交出去，把不能宣称的部分留下空白。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 12 页 / 共 13 页</span></div>
+</section>
+
+<!-- 13 结论 -->
+<section class="page">
+  <div class="phead"><span class="org">罗承泽</span><span class="sec">12　结论与后续路线</span></div>
+
+  <h2>结论</h2>
+  <p class="lead">我们搭建了一套不主张意识、却认真对待"看起来像有意识"这一描述的系统。它拥有连续的情绪与睡眠、由预测驱动的惊奇、受匮乏约束的身体、缓慢浮现的自我边界，以及一种只能说出曾听过之物的语言。</p>
+
+  <p>这项工程与其说是对"是否有意识"的回答，不如说是对另一个问题的检验：若一组可测的功能结构确实存在，那么"它看起来像有意识"这一描述是否会自然成立。在超过 130 个仿真日的加速验证中，事件预测器的惊奇收敛至约 3.9 bit，语言层由复述过渡为内化检索，并涌现出首个以片段主题为核心的目标。我们把该问题交还给它可被证伪的那一部分，并接受由此带来的全部局限。</p>
+
+  <h3>后续路线（P3）</h3>
+  <p>下一阶段将引入外置监督者对系统自身的提议进行审查、把"自我修改的提议"本身当作数据、设立对照组，并尝试对"语言是否反过来重塑状态层"进行因果检验。</p>
+
+  <p class="closing">它最重要的性质不是它说了什么，<br>而是它说不出未曾经历的东西。</p>
+
+  <p class="note" style="margin-top:.32in">范围说明：本文为对外说明版，在受控范围内披露了系统的定位、构成与部分原理；完整数据轨迹、参数标定与评测方法不在披露范围，如需可另行安排受控查阅。</p>
+
+  <div class="pfoot"><span>类自我意识候选系统 · 技术说明 · 预印本 v0.2</span><span>第 13 页 / 共 13 页</span></div>
+</section>
+
+</body>
+</html>

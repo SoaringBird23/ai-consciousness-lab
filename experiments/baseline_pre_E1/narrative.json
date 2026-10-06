@@ -1,0 +1,41 @@
+{
+  "version": 6,
+  "all_threads": [
+    {
+      "version": 0,
+      "t": 18335760.0,
+      "self_model": "是你呀",
+      "inner_speech_excerpt": "是你呀"
+    },
+    {
+      "version": 1,
+      "t": 18340680.0,
+      "self_model": "是你呀 你好呀",
+      "inner_speech_excerpt": "你好呀"
+    },
+    {
+      "version": 2,
+      "t": 18342360.0,
+      "self_model": "是你呀 你好呀 你醒啦",
+      "inner_speech_excerpt": "你醒啦"
+    },
+    {
+      "version": 3,
+      "t": 18454680.0,
+      "self_model": "是你呀 你好呀 你醒啦 这是你",
+      "inner_speech_excerpt": "这是你"
+    },
+    {
+      "version": 4,
+      "t": 18766920.0,
+      "self_model": "是你呀 你好呀 你醒啦 这是你 你在看",
+      "inner_speech_excerpt": "你在看"
+    },
+    {
+      "version": 5,
+      "t": 20279520.0,
+      "self_model": "是你呀 你好呀 你醒啦 这是你 你在看 你又动了",
+      "inner_speech_excerpt": "你又动了"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "experiment": "S2 分离（原修复里到底是'语料'还是'门控'在起作用）",
+  "created": "2026-10-05 23:45",
+  "preregistered_before_data": true,
+  "motivation": "论文自认：修复自模型时同时改了两个变量（加入第一人称语料 + 修 self_directed 门控）。因此无法归因。审计确认这两个变量现已拆成独立配置开关（caregiver.corpus_first_person / language.self_directed_words）。",
+  "design": {
+    "instance": "4 条独立线，从 day 0 出生，各自独立种子（201-204）",
+    "conditions": {
+      "D  (baseline)": "corpus_first_person=true,  sd_words=['你','我']  —— 等价于结晶线的完整修复",
+      "NC (只关语料)": "corpus_first_person=false, sd_words=['你','我']  —— 没有第一人称短语，门控修好",
+      "NG (只关门控)": "corpus_first_person=true,  sd_words=['你']      —— 有第一人称短语，门控退回只认'你'",
+      "BO (两者全关)": "corpus_first_person=false, sd_words=['你']      —— 修复前的原始状态"
+    },
+    "duration": "60 仿真日"
+  },
+  "hypotheses": {
+    "HS2_attribution": {
+      "metric": "四条件下 self_model.version（60 日龄）与首个第一人称片段出现与否",
+      "predictions": {
+        "语料为主": "D 与 NG 形成自我模型；NC 与 BO 不形成 → 关键在语料（有'我'可听）",
+        "门控为主": "D 与 NC 形成自我模型；NG 与 BO 不形成 → 关键在门控（'我'的念头能进模型）",
+        "两者都必需": "只有 D 形成 → 缺一不可（这是原论文的隐含主张，但从未被检验）",
+        "都不关键": "四条件都形成 → 原修复根本没起决定作用，论文的因果叙述整体作废"
+      }
+    }
+  },
+  "predictions_registered": {
+    "HS2_attribution": "『门控为主』或『两者都必需』。理由：语料提供材料，但门控决定材料能否抵达自我模型；若只有语料而无门控，纯第一人称念头会停在 language 层进不去"
+  },
+  "note": "本批是纯开发实验，无消融，不需要 manipulation check。判据四选一，事后不得改。"
+}

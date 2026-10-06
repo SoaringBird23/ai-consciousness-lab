@@ -1,0 +1,40 @@
+{
+  "experiment": "P4b 时间化行动环",
+  "judged_at": "2026-10-05 22:35",
+  "window": "day 202-232（预注册 30 仿真日）",
+  "window_coverage_at_judgment": "70%（day 223）",
+  "note_window": "判据在 70% 窗口给出。HB2 的核心统计量（自因分量均值 vs 世界噪声底）在 50%→70% 之间已收敛（信噪比 0.65→0.57），但完整 30 日窗口尚未跑完。如实记录此偏差。",
+  "hypotheses": {
+    "HB1_world_model": {
+      "result": "inconclusive",
+      "evidence": "fwd 表已建立（12 条目），但预测误差未显示清晰下降趋势"
+    },
+    "HB2_self_separation": {
+      "result": "weak_pass",
+      "evidence": {
+        "move_self_caused_mean": 0.00892,
+        "move_n": 4490,
+        "stay_self_caused_mean": -0.00001,
+        "stay_std": 0.01559,
+        "signal_to_noise": 0.57
+      },
+      "interpretation": "自因分量均值可靠地非零（大样本），系统确实区分了'我造成的'与'世界自己变的'；但效应量小于世界自身波动，分离存在但微弱。"
+    },
+    "HB3_agency_behavior": {
+      "result": "not_evaluated",
+      "note": "q 值与实测 self_caused 的相关性未在本次判定中计算"
+    },
+    "HB4_learning_curve": {
+      "result": "weak_pass",
+      "evidence": {"field_first_5d": 0.6489, "field_last_5d": 0.6801},
+      "interpretation": "P4 中缺失的学习曲线出现（+0.031），时间化信号恢复了改进"
+    }
+  },
+  "important_deviation": {
+    "type": "估计不稳定（如实记录）",
+    "detail": "23% 窗口时信噪比为 1.5×，50% 时降到 0.65×，70% 时 0.57×。原因：停驻试次的标准差（世界噪声底）随样本增加从 0.0066 升到 0.0156——更多天数的世界相位差异被纳入。早期 1.5× 的估计来自四分之一数据，未站住。",
+    "lesson": "中途定稿会出错。任何'通路/效应'结论必须等窗口走完或明确标注覆盖率。"
+  },
+  "action_distribution": {"p0": 2657, "p1": 1833, "p2": 16378},
+  "verdict": "弱阳性：自因/世界因分离成立但效应小于环境自身波动。P4b 的预期目标（让行动在世界上'有分量'）只达成了一半。后续需要世界动力学与动作效应量级匹配的 P4c。"
+}

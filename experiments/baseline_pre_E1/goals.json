@@ -1,0 +1,21 @@
+[
+  {
+    "goal": "真乖",
+    "created_at": 11348296.7,
+    "created_day": 132,
+    "evidence": {
+      "activations": 60,
+      "fraction": 0.335,
+      "days": 7,
+      "day_list": [
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132
+      ]
+    }
+  }
+]

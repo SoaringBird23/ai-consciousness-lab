@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<title>A Candidate System for Self-Awareness · Technical Note</title>
+<style>
+  @page{size:Letter;margin:0}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  body{
+    font-family:"Times New Roman",Times,"Songti SC","Source Han Serif SC",Georgia,serif;
+    color:#1a1a1a;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    font-variant-numeric:tabular-nums;
+    print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  }
+  .page{position:relative;width:8.5in;height:11in;padding:.8in .95in;background:#fff;overflow:hidden;page-break-after:always}
+  .page:last-child{page-break-after:auto}
+
+  /* ───────── Cover ───────── */
+  .masthead{text-align:center;padding-top:.2in}
+  .logo{height:44px;width:auto;display:block;margin:0 auto 16px}
+  .orgname{font-size:13px;font-weight:600;letter-spacing:.01em}
+  .crest-rule{border:0;border-top:1px solid #1a1a1a;width:1.1in;margin:20px auto 0}
+
+  .covertitle{margin-top:.95in;text-align:center}
+  .covertitle h1{font-size:42px;line-height:1.18;font-weight:700;letter-spacing:.005em}
+  .subtitle{font-size:18px;font-weight:400;font-style:italic;color:#555;margin-top:16px}
+
+  .metagrid{display:grid;grid-template-columns:repeat(4,1fr);margin-top:.8in;
+    border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a}
+  .metagrid>div{padding:14px 16px;border-right:1px solid #ddd}
+  .metagrid>div:last-child{border-right:0}
+  .metagrid .k{display:block;font-size:9px;letter-spacing:.08em;color:#777;margin-bottom:7px}
+  .metagrid .v{display:block;font-size:13px;font-weight:600}
+
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:.5in;margin-top:.82in}
+  .feature{text-align:center}
+  .feature h3{font-size:13.5px;font-weight:700;margin-bottom:10px}
+  .feature hr{border:0;border-top:1px solid #bbb;margin:0 0 12px}
+  .feature p{font-size:11.5px;line-height:1.7;color:#333}
+
+  .coverfoot{position:absolute;left:.95in;right:.95in;bottom:.75in;font-size:9px;line-height:1.65;color:#777;text-align:center}
+  .coverfoot .legal{max-width:5.2in;margin:0 auto}
+  .coverfoot .copy{margin-top:10px;color:#555}
+
+  /* ───────── Body pages ───────── */
+  .phead{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid #bbb;padding-bottom:9px;margin-bottom:.4in;
+    font-size:9.5px;color:#777}
+  .phead .sec{color:#1a1a1a;font-weight:600}
+
+  h2{font-size:22px;font-weight:700;line-height:1.3;letter-spacing:.005em;margin:0 0 .2in}
+  h3{font-size:13.5px;font-weight:700;line-height:1.4;margin:.22in 0 .1in}
+
+  p{font-size:13px;line-height:1.75;color:#1a1a1a;margin:0 0 .16in}
+  .lead{font-size:14px;line-height:1.75;color:#222;margin:0 0 .26in}
+  .note{font-size:11.5px;line-height:1.7;color:#666;margin:0}
+
+  ul{list-style:none;margin:.08in 0 0}
+  li{position:relative;font-size:13px;line-height:1.75;padding:0 0 .12in .26in}
+  li::before{content:"•";position:absolute;left:0;top:0;color:#1a1a1a}
+  li b{font-weight:700}
+
+  /* Contents */
+  .toc{margin-top:.04in}
+  .toc-row{display:flex;align-items:baseline;font-size:12px;padding:3px 0}
+  .toc-row .n{width:2em;color:#333}
+  .toc-row .t{color:#1a1a1a}
+  .toc-row .dot{flex:1;border-bottom:1px dotted #aaa;margin:0 10px;transform:translateY(-4px)}
+  .toc-row .p{color:#333}
+
+  /* Metrics */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.24in;margin:.3in 0 .34in}
+  .stat{border-top:1px solid #1a1a1a;padding-top:11px}
+  .stat .n{font-size:23px;font-weight:700;line-height:1.1}
+  .stat .l{font-size:10.5px;line-height:1.55;color:#666;margin-top:6px}
+
+  /* Table (booktabs, horizontal rules only) */
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:.14in}
+  th,td{text-align:left;padding:10px 18px 10px 0;vertical-align:top;line-height:1.7}
+  thead th{border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a;font-weight:700;color:#1a1a1a}
+  tbody tr:last-child td{border-bottom:1px solid #1a1a1a}
+  td:first-child{font-weight:700;width:32%}
+
+  /* Figure */
+  figure{margin:.14in 0 .18in}
+  .diagram{width:100%;height:auto;display:block}
+  figcaption{font-size:10px;line-height:1.65;color:#666;margin-top:12px;text-align:center;font-style:italic}
+  .bar{fill:#fff;stroke:#999}
+  .bar.hi{fill:#f0f0f0;stroke:#1a1a1a;stroke-width:1.2}
+  .bt{fill:#1a1a1a;font-size:12.5px;font-weight:600}
+  .bs{fill:#777;font-size:9.5px}
+  .chev{stroke:#aaa;fill:none}
+  .side{fill:#fafafa;stroke:#999}
+  .st{fill:#333;font-size:10.5px;font-weight:600}
+  .pill{fill:#fff;stroke:#bbb}
+  .pt{fill:#1a1a1a;font-size:11px;font-weight:600}
+  .ps{fill:#777;font-size:9px}
+  /* Curves */
+  .ax{stroke:#1a1a1a;stroke-width:1}
+  .grid{stroke:#e4e4e4;stroke-width:.8}
+  .curve{fill:none;stroke:#1a1a1a;stroke-width:1.8}
+  .curve.thin{stroke:#666;stroke-width:1.1}
+  .curve.dash{stroke:#888;stroke-width:1.1;stroke-dasharray:5 3}
+  .thr{stroke:#1a1a1a;stroke-width:1;stroke-dasharray:4 3}
+  .asym{stroke:#666;stroke-width:.9;stroke-dasharray:2 3}
+  .shade{fill:#1a1a1a;opacity:.05}
+  .alab{fill:#666;font-size:8.5px}
+  .axl{fill:#1a1a1a;font-size:9px;font-weight:600}
+  .leg{fill:#444;font-size:9px}
+  .pt-f{fill:#1a1a1a}
+  .pt-o{fill:#fff;stroke:#1a1a1a;stroke-width:1.2}
+  /* Matrix */
+  .mtx-grid{fill:none;stroke:#ccc;stroke-width:.8}
+  .mtx-h{fill:#666;font-size:9px}
+  .mtx-r{fill:#333;font-size:9px}
+  .mtx-d{fill:#1a1a1a;stroke:none}
+  .mtx-t{fill:#fff;font-size:9px;font-weight:600}
+  .mtx-p{fill:#f2f2f2;stroke:#bbb;stroke-width:.7}
+  .mtx-m{fill:#fff;stroke:#bbb;stroke-width:.7}
+  .mtx-s{fill:#1a1a1a;font-size:11px}
+  .mtx-l{fill:#666;font-size:9px}
+
+  .fig-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:.34in;margin-top:.24in}
+  .fig-notes h3{margin:0 0 6px;font-size:11.5px;font-weight:700;color:#1a1a1a}
+  .fig-notes p{font-size:11px;line-height:1.7;color:#333;margin:0}
+
+  .pfoot{position:absolute;left:.95in;right:.95in;bottom:.62in;display:flex;justify-content:space-between;
+    border-top:1px solid #bbb;padding-top:9px;font-size:9px;color:#777}
+  .closing{font-size:15px;line-height:1.7;font-style:italic;color:#333;margin:.4in 0 0;text-align:center}
+  .pull{border-left:2px solid #1a1a1a;padding:.1in 0 .1in .26in;margin:.28in 0}
+  .pull .q{font-size:15px;line-height:1.6;font-style:italic;color:#1a1a1a;margin:0 0 8px}
+  .pull .a{font-size:11px;color:#777;margin:0}
+
+  /* Page 2 tightening (English copy runs taller) */
+  #p2 .phead{margin-bottom:.3in}
+  #p2 h2{margin-top:.2in !important;margin-bottom:.13in}
+  #p2 .lead{margin-bottom:.17in}
+  #p2 p{margin-bottom:.11in}
+  #p2 li{padding:.06in 0 .06in .26in}
+  #p2 .toc-row{padding:2px 0}
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<section class="page cover">
+  <div class="masthead">
+    <img class="logo" src="assets/logo.png" alt="Chengze Luo">
+    <div class="orgname">Chengze Luo 实验室</div>
+    <hr class="crest-rule">
+  </div>
+
+  <div class="covertitle">
+    <h1>A Candidate System<br>for Self-Awareness</h1>
+    <p class="subtitle">Architecture, Design Principles and Observation Protocol · Mode B</p>
+  </div>
+
+  <div class="metagrid">
+    <div><span class="k">Document type</span><span class="v">Technical note</span></div>
+    <div><span class="k">Version</span><span class="v">Preprint v0.2</span></div>
+    <div><span class="k">Issued</span><span class="v">2026</span></div>
+    <div><span class="k">Classification</span><span class="v">External summary · principles</span></div>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <h3>No claim of consciousness</h3>
+      <hr>
+      <p>The object of study is measurable functional structure, not subjective report or linguistic display.</p>
+    </div>
+    <div class="feature">
+      <h3>Auditable structure</h3>
+      <hr>
+      <p>The source of every relevant process is explicitly registered and open to external inspection.</p>
+    </div>
+    <div class="feature">
+      <h3>Language is not evidence</h3>
+      <hr>
+      <p>Hard metrics come only from non-linguistic channels; language is recorded as phenomenon only.</p>
+    </div>
+  </div>
+
+  <div class="coverfoot">
+    <div class="legal">This document is a summary prepared for external presentation. The figures and descriptions herein are records of phenomena, not evidence of consciousness; all hard metrics are drawn from non-linguistic channels. Within controlled bounds this edition discloses part of the principles and operations of the system; implementation details, full data and evaluation methods lie outside the scope of this disclosure.</div>
+    <div class="copy">© 2026 Chengze Luo · All rights reserved</div>
+  </div>
+</section>
+
+<!-- Abstract & Positioning -->
+<section class="page" id="p2">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">1　Abstract &amp; Positioning</span></div>
+
+  <h2>Abstract</h2>
+  <p class="lead">This note describes an engineering system built to study phenomena of the "candidate self-awareness" kind. The system does not claim to be conscious. Rather, it implements several processes associated with subjective experience — continuous affective state, sleep–wake dynamics, prediction error, bodily scarcity, self-agency attribution and internalized language — as auditable, long-running dynamics, and records their spontaneous behaviour across extended runs.</p>
+
+  <p>Three design decisions define the system. First, the state layer is an external numerical-integration engine (Mode B): its "persistence" comes from a continuously running process and explicit state persistence, not from any latent state inside a model. Second, the language layer does not generate — it only retrieves: inner speech is the activation of language memory by the current state, so zero hallucination is a structural guarantee rather than a prompt constraint. Third, all language output is recorded as phenomenon only, and hard metrics are drawn solely from non-linguistic channels.</p>
+
+  <h2 style="margin-top:.24in">Positioning</h2>
+  <ul>
+    <li><b>No claim of consciousness.</b> The object of study is functional structure, not subjective report or linguistic display.</li>
+    <li><b>Engineered continuity.</b> The system's "persistence" comes from a running process and explicit persistence.</li>
+    <li><b>Auditable.</b> The source of every relevant process is explicitly registered and open to inspection.</li>
+    <li><b>Two running lines.</b> A real-time main line produces official data; an accelerated line is used only for rapid testing.</li>
+    <li><b>Pre-registration.</b> Each stage's exit criterion is written in advance; if unmet, the stage does not advance.</li>
+  </ul>
+
+  <h2 style="margin-top:.22in">Contents</h2>
+  <div class="toc">
+    <div class="toc-row"><span class="n">1</span><span class="t">Abstract &amp; Positioning</span><span class="dot"></span><span class="p">2</span></div>
+    <div class="toc-row"><span class="n">2</span><span class="t">Stance &amp; Theoretical Framework</span><span class="dot"></span><span class="p">3</span></div>
+    <div class="toc-row"><span class="n">3</span><span class="t">State Layer: Neutral Variables &amp; Coupling</span><span class="dot"></span><span class="p">4</span></div>
+    <div class="toc-row"><span class="n">4</span><span class="t">System Composition</span><span class="dot"></span><span class="p">5</span></div>
+    <div class="toc-row"><span class="n">5</span><span class="t">Core Mechanism (i): Prediction &amp; Surprise</span><span class="dot"></span><span class="p">6</span></div>
+    <div class="toc-row"><span class="n">6</span><span class="t">Core Mechanism (ii): Dual-Process Sleep</span><span class="dot"></span><span class="p">7</span></div>
+    <div class="toc-row"><span class="n">7</span><span class="t">Core Mechanism (iii): Internalized Language</span><span class="dot"></span><span class="p">8</span></div>
+    <div class="toc-row"><span class="n">8</span><span class="t">Attribution, Self-Agency &amp; Goal Emergence</span><span class="dot"></span><span class="p">9</span></div>
+    <div class="toc-row"><span class="n">9</span><span class="t">Two-Line Operation &amp; Pre-registration</span><span class="dot"></span><span class="p">10</span></div>
+    <div class="toc-row"><span class="n">10</span><span class="t">Observed Phenomena</span><span class="dot"></span><span class="p">11</span></div>
+    <div class="toc-row"><span class="n">11</span><span class="t">Limitations &amp; Honesty Declarations</span><span class="dot"></span><span class="p">12</span></div>
+    <div class="toc-row"><span class="n">12</span><span class="t">Conclusion &amp; Next Steps</span><span class="dot"></span><span class="p">13</span></div>
+  </div>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 2 of 13</span></div>
+</section>
+
+<!-- Stance -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">2　Stance &amp; Theoretical Framework</span></div>
+
+  <p class="lead">Discussion of machine consciousness tends toward two extremes: either fluent language is taken as evidence of consciousness, or consciousness is treated as an unspeakable taboo. This work takes a third path — it does not ask "is it conscious?" but rather: if a set of measurable functional structures were genuinely present, would the description "it seems conscious" become natural.</p>
+
+  <p>The problem of consciousness is thereby rewritten as a set of implementable engineering functions, while the artificial origin of every one of those functions is disclosed. We do not pretend emergence. The goal is not to assert any inner experience, but to decompose "looking as if there is experience" into structures that can be implemented, observed and falsified: how state evolves continuously over time, how it spontaneously switches between sleep and wake, how it changes because of prediction failure, how it is constrained by bodily resources, and how it distinguishes "what I did" from "what happened to me".</p>
+
+  <h3>A methodological correction</h3>
+  <p>An early version of the system delegated its entire "inner monologue" to a large language model. The problem surfaced at once: the model's poetic long sentences were literary performance, and phrases such as "a sense of irritation" or "a sense of stuffiness" were fabrications — neither is a trace of thinking, only an imitation of what thinking is supposed to look like. This failure produced the project's central correction: a thought should not be generated, only retrieved. The language layer was subsequently rewritten from scratch, and the generative model was removed from the production of inner speech.</p>
+
+  <div class="pull">
+    <p class="q">"A thought should not be generated, only retrieved."</p>
+    <p class="a">From performance to structure — the project's most important methodological turn. Zero hallucination is no longer a prompt constraint but an architectural necessity.</p>
+  </div>
+
+  <h3>The boundary of the falsifiable</h3>
+  <p>The framework is deliberately self-restrained: whatever can be falsified we hand over, and whatever cannot be claimed we leave blank. Hard metrics are drawn only from auditable structural quantities such as predictor convergence, the self-attribution ratio, trace spectra and probe error; language content, however "human" it appears, never enters the evidential chain of any conclusion. This constraint lets the work be externally inspected without first settling the definition of "consciousness".</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 3 of 13</span></div>
+</section>
+
+<!-- State layer -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">3　State Layer: Neutral Variables &amp; Coupling</span></div>
+
+  <p class="lead">The state layer is the foundation of every structure above it. It is driven by eight continuous variables, referred to externally by the neutral codes s1…s8; their human semantics are provided for the observer's reference only, and no semantic name appears in the code.</p>
+
+  <p>The convention guards against "what we want to see" contaminating "what the system actually computes": if a variable were named "happiness", any tuning toward that variable would quietly push it in the direction humans expect. With neutral codes, the evolution of a variable is decided only by the coupling equations and external input. The eight variables are not independent; they influence one another through a sparse coupling matrix — a rise in one variable pulls on others, producing observable dynamical patterns.</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 640 300" role="img" aria-label="Coupling matrix of neutral variables">
+      <rect class="mtx-grid" x="214" y="60" width="208" height="208"/>
+      <text class="mtx-h" x="227.0" y="52" text-anchor="middle">s1</text>
+      <text class="mtx-h" x="253.0" y="52" text-anchor="middle">s2</text>
+      <text class="mtx-h" x="279.0" y="52" text-anchor="middle">s3</text>
+      <text class="mtx-h" x="305.0" y="52" text-anchor="middle">s4</text>
+      <text class="mtx-h" x="331.0" y="52" text-anchor="middle">s5</text>
+      <text class="mtx-h" x="357.0" y="52" text-anchor="middle">s6</text>
+      <text class="mtx-h" x="383.0" y="52" text-anchor="middle">s7</text>
+      <text class="mtx-h" x="409.0" y="52" text-anchor="middle">s8</text>
+      <text class="mtx-r" x="202" y="76.5" text-anchor="end">s1 arousal</text>
+      <text class="mtx-r" x="202" y="102.5" text-anchor="end">s2 valence</text>
+      <text class="mtx-r" x="202" y="128.5" text-anchor="end">s3 fatigue</text>
+      <text class="mtx-r" x="202" y="154.5" text-anchor="end">s4 tension</text>
+      <text class="mtx-r" x="202" y="180.5" text-anchor="end">s5 attention</text>
+      <text class="mtx-r" x="202" y="206.5" text-anchor="end">s6 memory act.</text>
+      <text class="mtx-r" x="202" y="232.5" text-anchor="end">s7 pred. error</text>
+      <text class="mtx-r" x="202" y="258.5" text-anchor="end">s8 boredom</text>
+      <rect class="mtx-d" x="215.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="227.0" y="76.5" text-anchor="middle">s1</text>
+      <rect class="mtx-p" x="267.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="279.0" y="76.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="293.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="305.0" y="76.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="319.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="76.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="397.0" y="61.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="76.5" text-anchor="middle">−</text>
+      <rect class="mtx-d" x="241.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="253.0" y="102.5" text-anchor="middle">s2</text>
+      <rect class="mtx-m" x="293.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="305.0" y="102.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="319.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="102.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="345.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="357.0" y="102.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="397.0" y="87.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="102.5" text-anchor="middle">−</text>
+      <rect class="mtx-m" x="215.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="128.5" text-anchor="middle">−</text>
+      <rect class="mtx-d" x="267.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="279.0" y="128.5" text-anchor="middle">s3</text>
+      <rect class="mtx-m" x="319.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="128.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="397.0" y="113.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="128.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="215.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="154.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="241.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="253.0" y="154.5" text-anchor="middle">−</text>
+      <rect class="mtx-d" x="293.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="305.0" y="154.5" text-anchor="middle">s4</text>
+      <rect class="mtx-p" x="319.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="154.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="371.0" y="139.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="383.0" y="154.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="319.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="331.0" y="180.5" text-anchor="middle">s5</text>
+      <rect class="mtx-p" x="345.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="357.0" y="180.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="371.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="383.0" y="180.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="397.0" y="165.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="180.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="241.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="253.0" y="206.5" text-anchor="middle">+</text>
+      <rect class="mtx-p" x="319.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="206.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="345.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="357.0" y="206.5" text-anchor="middle">s6</text>
+      <rect class="mtx-m" x="397.0" y="191.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="409.0" y="206.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="215.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="232.5" text-anchor="middle">+</text>
+      <rect class="mtx-m" x="241.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="253.0" y="232.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="293.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="305.0" y="232.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="371.0" y="217.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="383.0" y="232.5" text-anchor="middle">s7</text>
+      <rect class="mtx-m" x="215.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="227.0" y="258.5" text-anchor="middle">−</text>
+      <rect class="mtx-m" x="319.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="331.0" y="258.5" text-anchor="middle">−</text>
+      <rect class="mtx-p" x="371.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-s" x="383.0" y="258.5" text-anchor="middle">+</text>
+      <rect class="mtx-d" x="397.0" y="243.0" width="24.0" height="24.0"/>
+      <text class="mtx-t" x="409.0" y="258.5" text-anchor="middle">s8</text>
+      <text class="mtx-l" x="214" y="26">row = source variable　column = affected variable</text>
+      <rect class="mtx-p" x="470" y="120" width="18" height="18"/><text class="mtx-s" x="479" y="133.5" text-anchor="middle">+</text><text class="mtx-l" x="496" y="133">positive coupling</text>
+      <rect class="mtx-m" x="470" y="150" width="18" height="18"/><text class="mtx-s" x="479" y="163.5" text-anchor="middle">−</text><text class="mtx-l" x="496" y="163">negative coupling</text>
+      <rect class="mtx-d" x="470" y="180" width="18" height="18"/><text class="mtx-t" x="479" y="193.5" text-anchor="middle">s</text><text class="mtx-l" x="496" y="193">self term</text>
+      <text class="mtx-l" x="470" y="228">blank = not registered at this stage</text>
+      <text class="mtx-l" x="470" y="248">strength ordered by runtime calibration</text>
+    </svg>
+    <figcaption>Figure 1 · Coupling matrix of the eight neutral variables. The direction of coupling from a row variable to a column variable is marked by sign; the diagonal holds the self terms (self-decay or self-reinforcement). The matrix is sparse; a blank cell means the path is not yet registered at the current developmental stage.</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>Continuity</h3><p>Variables evolve slowly in a continuous space, driven by coupling equations; discrete words are only an observer's approximate naming of gradual change.</p></div>
+    <div><h3>Neutralization</h3><p>Only codes are used externally; semantic names never enter the code. This severs any hidden intervention from the observer's expectations.</p></div>
+    <div><h3>Sparse coupling</h3><p>Not fully connected: only registered paths are active, and any new coupling must pass stage gating and pre-registration.</p></div>
+  </div>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 4 of 13</span></div>
+</section>
+
+<!-- Composition -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">4　System Composition</span></div>
+
+  <p class="lead">The system is composed of several mutually coupled layers, arranged bottom-up. Coupling between layers is bidirectional rather than a one-way pipeline, and a hard stage gate determines which layers are enabled.</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 452" role="img" aria-label="Layered system composition diagram">
+      <text class="st" x="250" y="16" text-anchor="middle">bottom-up: continuous state → structure → language</text>
+
+      <rect class="bar" x="20" y="30" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="58">Self-model · Narrative</text>
+
+      <rect class="bar hi" x="20" y="84" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="112">Internal language channel · internalized retrieval</text>
+      <text class="bs" x="430" y="112">only exit</text>
+
+      <rect class="bar" x="20" y="138" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="166">Focus of awareness · sparse workspace</text>
+
+      <rect class="bar" x="20" y="192" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="220">Memory · episodic / semantic / autobiographical</text>
+
+      <rect class="bar" x="20" y="246" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="274">World model · event predictor · attribution loop</text>
+
+      <rect class="bar" x="20" y="300" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="328">Body · energy budget (scarcity)</text>
+
+      <rect class="bar" x="20" y="354" width="460" height="44" rx="6"></rect>
+      <text class="bt" x="42" y="382">Background continuous state　s1 … s8</text>
+      <text class="bs" x="330" y="382">dual-process sleep</text>
+
+      <g class="chev">
+        <path d="M250 74 l6 6 l6 -6"></path><path d="M250 128 l6 6 l6 -6"></path>
+        <path d="M250 182 l6 6 l6 -6"></path><path d="M250 236 l6 6 l6 -6"></path>
+        <path d="M250 290 l6 6 l6 -6"></path><path d="M250 344 l6 6 l6 -6"></path>
+      </g>
+
+      <rect class="side" x="520" y="30" width="220" height="368" rx="10"></rect>
+      <text class="st" x="630" y="58" text-anchor="middle">Developmental stage gate</text>
+
+      <rect class="pill" x="540" y="76" width="180" height="60" rx="6"></rect>
+      <text class="pt" x="630" y="103" text-anchor="middle">Infancy</text>
+      <text class="ps" x="630" y="120" text-anchor="middle">criterion: predictor convergence</text>
+
+      <rect class="pill" x="540" y="152" width="180" height="60" rx="6"></rect>
+      <text class="pt" x="630" y="179" text-anchor="middle">Feeling</text>
+      <text class="ps" x="630" y="196" text-anchor="middle">criterion: energy-saving policy</text>
+
+      <rect class="pill" x="540" y="228" width="180" height="60" rx="6"></rect>
+      <text class="pt" x="630" y="255" text-anchor="middle">Mirror</text>
+      <text class="ps" x="630" y="272" text-anchor="middle">criterion: self-model formed</text>
+
+      <rect class="pill" x="540" y="304" width="180" height="60" rx="6"></rect>
+      <text class="pt" x="630" y="331" text-anchor="middle">Later stages (P3)</text>
+      <text class="ps" x="630" y="348" text-anchor="middle">supervision · self-modification</text>
+
+      <text class="ps" x="630" y="384" text-anchor="middle">criterion unmet → extended (bounded)</text>
+    </svg>
+    <figcaption>Figure 2 · Layered composition and stage gate. The language channel (heavier box) is the system's only external output channel; its content is always traceable to heard material.</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>Layering</h3><p>Several layers arranged bottom-up; the language layer sits between structure and external output, and is the only exit.</p></div>
+    <div><h3>Gating</h3><p>Stage advancement is decided by pre-registered criteria; when a criterion is unmet the stage is extended, within a bound.</p></div>
+    <div><h3>Coupling</h3><p>Layers are bidirectionally coupled rather than a one-way pipeline; upper layers can feed back into lower states.</p></div>
+  </div>
+
+  <p class="note" style="margin-top:.24in">Note: the energy budget is rationed daily; passive cost rises with arousal, active exploration is charged extra, and exhaustion enters a low-power mode — "scarcity" is a physical constraint of this system, not a setting.</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 5 of 13</span></div>
+</section>
+
+<!-- Surprise -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">5　Core Mechanism (i): Prediction &amp; Surprise</span></div>
+
+  <p class="lead">The system learns online the temporal distribution of external events, and measures each deviation from expectation by "surprise" — the negative log-probability of the event.</p>
+
+  <p>Surprise is an auditable quantity: it depends on no subjective report, only on the difference between the predicted distribution and the observation. When an event recurs at a particular time of day, the predictor tightens its probability mass on that event and surprise falls; when the regularity is broken, surprise spikes. Surprise is not merely a passive reading — it simultaneously lifts tension (s4) and attention (s5), reallocating the system's resources toward "what is currently unusual".</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 300" role="img" aria-label="Convergence of event surprise over simulation days">
+      <line class="grid" x1="80" y1="44" x2="700" y2="44"/>
+      <line class="grid" x1="80" y1="95" x2="700" y2="95"/>
+      <line class="grid" x1="80" y1="146" x2="700" y2="146"/>
+      <line class="grid" x1="80" y1="197" x2="700" y2="197"/>
+      <line class="ax" x1="80" y1="44" x2="80" y2="248"/>
+      <line class="ax" x1="80" y1="248" x2="700" y2="248"/>
+      <text class="alab" x="74" y="251" text-anchor="end">3</text>
+      <text class="alab" x="74" y="200" text-anchor="end">4</text>
+      <text class="alab" x="74" y="149" text-anchor="end">5</text>
+      <text class="alab" x="74" y="98" text-anchor="end">6</text>
+      <text class="alab" x="74" y="47" text-anchor="end">7</text>
+      <text class="axl" x="80" y="34" text-anchor="start">bit</text>
+      <line class="asym" x1="80" y1="202.1" x2="700" y2="202.1"/>
+      <text class="leg" x="698" y="216" text-anchor="end">convergence asymptote ≈ 3.9 bit</text>
+      <path class="curve" d="M 80.0 49.1 L 88.9 56.9 L 97.7 64.2 L 106.6 71.5 L 115.4 79.0 L 124.3 86.7 L 133.1 94.7 L 142.0 103.1 L 150.9 111.6 L 159.7 120.2 L 168.6 128.7 L 177.4 136.8 L 186.3 144.4 L 195.1 151.2 L 204.0 157.2 L 212.9 162.3 L 221.7 166.3 L 230.6 169.4 L 239.4 171.6 L 248.3 173.0 L 257.1 173.8 L 266.0 174.1 L 274.9 174.2 L 283.7 174.2 L 292.6 174.4 L 301.4 174.8 L 310.3 175.6 L 319.1 176.7 L 328.0 178.3 L 336.9 180.3 L 345.7 182.6 L 354.6 185.1 L 363.4 187.7 L 372.3 190.2 L 381.1 192.6 L 390.0 194.8 L 398.9 196.5 L 407.7 197.9 L 416.6 198.8 L 425.4 199.3 L 434.3 199.3 L 443.1 199.1 L 452.0 198.5 L 460.9 197.8 L 469.7 197.0 L 478.6 196.2 L 487.4 195.6 L 496.3 195.2 L 505.1 195.0 L 514.0 195.1 L 522.9 195.4 L 531.7 196.0 L 540.6 196.9 L 549.4 197.8 L 558.3 198.9 L 567.1 200.0 L 576.0 201.0 L 584.9 201.8 L 593.7 202.5 L 602.6 203.0 L 611.4 203.3 L 620.3 203.3 L 629.1 203.2 L 638.0 202.8 L 646.9 202.3 L 655.7 201.7 L 664.6 201.2 L 673.4 200.6 L 682.3 200.1 L 691.1 199.7 L 700.0 199.5"/>
+      <text class="alab" x="80.0" y="262" text-anchor="middle">0</text>
+      <text class="alab" x="223.1" y="262" text-anchor="middle">30</text>
+      <text class="alab" x="366.2" y="262" text-anchor="middle">60</text>
+      <text class="alab" x="509.2" y="262" text-anchor="middle">90</text>
+      <text class="alab" x="652.3" y="262" text-anchor="middle">120</text>
+      <text class="axl" x="690" y="276" text-anchor="end">simulation days</text>
+      <text class="leg" x="90" y="60">event surprise · running mean</text>
+    </svg>
+    <figcaption>Figure 3 · Running mean of event surprise over simulation days. The curve starts near 6.9 bit, falls exponentially with damped oscillation, and approaches an asymptote near 3.9 bit. The infancy-stage exit criterion is the convergence of this curve.</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>Reading</h3><p>Surprise = the negative log-probability of the event. It is a purely structural quantity, free of any linguistic or subjective component.</p></div>
+    <div><h3>Convergence</h3><p>From about 6.9 bit, the running mean falls steadily and settles near 3.9 bit — "the world is becoming predictable".</p></div>
+    <div><h3>Effect</h3><p>Surprise simultaneously lifts tension and attention: deviations from expectation reallocate the system's processing resources.</p></div>
+  </div>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 6 of 13</span></div>
+</section>
+
+<!-- Sleep -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">6　Core Mechanism (ii): Dual-Process Sleep</span></div>
+
+  <p class="lead">Sleep is not a scheduled timetable but a spontaneous consequence of the dynamics. Sleep pressure accumulates while awake and the circadian rhythm provides phase gating; together they cross the threshold and the system falls asleep.</p>
+
+  <p>The mechanism follows the structure of the dual-process model: a slow component of sleep pressure that accumulates and discharges during sleep, superimposed on a near-sinusoidal circadian component. When their sum reaches the threshold and the phase permits, the system sleeps; during sleep the pressure discharges and the rhythm shifts, so the sum falls below the threshold and the system wakes naturally. The system thus acquires a circadian rhythm, fatigue and sleep onset — not a timetable imposed from outside, but a cycle the state equations produce on their own.</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 300" role="img" aria-label="Dual-process sleep dynamics">
+      <rect class="shade" x="286.7" y="44" width="103.3" height="204"/>
+      <rect class="shade" x="596.7" y="44" width="103.3" height="204"/>
+      <line class="grid" x1="80" y1="44" x2="700" y2="44"/>
+      <line class="grid" x1="80" y1="84.8" x2="700" y2="84.8"/>
+      <line class="grid" x1="80" y1="125.6" x2="700" y2="125.6"/>
+      <line class="grid" x1="80" y1="166.4" x2="700" y2="166.4"/>
+      <line class="grid" x1="80" y1="207.2" x2="700" y2="207.2"/>
+      <line class="ax" x1="80" y1="44" x2="80" y2="248"/>
+      <line class="ax" x1="80" y1="248" x2="700" y2="248"/>
+      <text class="alab" x="74" y="210.2" text-anchor="end">0.2</text>
+      <text class="alab" x="74" y="169.4" text-anchor="end">0.4</text>
+      <text class="alab" x="74" y="128.6" text-anchor="end">0.6</text>
+      <text class="alab" x="74" y="87.8" text-anchor="end">0.8</text>
+      <text class="alab" x="74" y="47" text-anchor="end">1.0</text>
+      <text class="axl" x="80" y="34" text-anchor="start">normalized intensity</text>
+      <line class="thr" x1="80" y1="84.8" x2="700" y2="84.8"/>
+      <text class="leg" x="696" y="80" text-anchor="end">sleep threshold</text>
+      <path class="curve dash" d="M 80.0 207.8 L 86.5 212.0 L 92.9 215.0 L 99.4 216.8 L 105.8 217.4 L 112.3 216.8 L 118.8 215.0 L 125.2 212.0 L 131.7 207.8 L 138.1 202.6 L 144.6 196.5 L 151.0 189.5 L 157.5 181.7 L 164.0 173.3 L 170.4 164.5 L 176.9 155.3 L 183.3 146.0 L 189.8 136.7 L 196.2 127.5 L 202.7 118.7 L 209.2 110.3 L 215.6 102.5 L 222.1 95.5 L 228.5 89.4 L 235.0 84.2 L 241.5 80.0 L 247.9 77.0 L 254.4 75.2 L 260.8 74.6 L 267.3 75.2 L 273.8 77.0 L 280.2 80.0 L 286.7 84.2 L 293.1 89.4 L 299.6 95.5 L 306.0 102.5 L 312.5 110.3 L 319.0 118.7 L 325.4 127.5 L 331.9 136.7 L 338.3 146.0 L 344.8 155.3 L 351.2 164.5 L 357.7 173.3 L 364.2 181.7 L 370.6 189.5 L 377.1 196.5 L 383.5 202.6 L 390.0 207.8 L 396.5 212.0 L 402.9 215.0 L 409.4 216.8 L 415.8 217.4 L 422.3 216.8 L 428.8 215.0 L 435.2 212.0 L 441.7 207.8 L 448.1 202.6 L 454.6 196.5 L 461.0 189.5 L 467.5 181.7 L 474.0 173.3 L 480.4 164.5 L 486.9 155.3 L 493.3 146.0 L 499.8 136.7 L 506.2 127.5 L 512.7 118.7 L 519.2 110.3 L 525.6 102.5 L 532.1 95.5 L 538.5 89.4 L 545.0 84.2 L 551.5 80.0 L 557.9 77.0 L 564.4 75.2 L 570.8 74.6 L 577.3 75.2 L 583.8 77.0 L 590.2 80.0 L 596.7 84.2 L 603.1 89.4 L 609.6 95.5 L 616.0 102.5 L 622.5 110.3 L 629.0 118.7 L 635.4 127.5 L 641.9 136.7 L 648.3 146.0 L 654.8 155.3 L 661.2 164.5 L 667.7 173.3 L 674.2 181.7 L 680.6 189.5 L 687.1 196.5 L 693.5 202.6 L 700.0 207.8"/>
+      <path class="curve" d="M 80.0 207.2 L 286.7 84.8 L 390.0 207.2 L 596.7 84.8 L 700.0 207.2"/>
+      <text class="leg" x="344" y="234" text-anchor="middle">sleep</text>
+      <text class="leg" x="654" y="234" text-anchor="middle">sleep</text>
+      <text class="alab" x="80.0" y="262" text-anchor="middle">0h</text>
+      <text class="alab" x="183.3" y="262" text-anchor="middle">8h</text>
+      <text class="alab" x="286.7" y="262" text-anchor="middle">16h</text>
+      <text class="alab" x="390.0" y="262" text-anchor="middle">24h</text>
+      <text class="alab" x="493.3" y="262" text-anchor="middle">32h</text>
+      <text class="alab" x="596.7" y="262" text-anchor="middle">40h</text>
+      <text class="alab" x="700.0" y="262" text-anchor="middle">48h</text>
+      <text class="axl" x="690" y="276" text-anchor="end">wake–sleep time</text>
+      <line class="curve" x1="330" y1="22" x2="354" y2="22" stroke-width="1.8"/>
+      <text class="leg" x="360" y="25">sleep pressure S</text>
+      <line class="curve dash" x1="470" y1="22" x2="494" y2="22"/>
+      <text class="leg" x="500" y="25">circadian rhythm C</text>
+    </svg>
+    <figcaption>Figure 4 · Dual-process sleep. The solid line is sleep pressure (accumulating linearly over sixteen waking hours and discharging in sleep); the dashed line is the circadian rhythm. When their sum reaches the threshold, sleep begins. Shaded regions are two spontaneous sleep episodes of about eight hours each.</figcaption>
+  </figure>
+
+  <div class="fig-notes">
+    <div><h3>Pressure term</h3><p>Approximately linear accumulation while awake and rapid discharge in sleep — mirroring "the longer awake, the sleepier; sleep and it clears".</p></div>
+    <div><h3>Rhythm term</h3><p>A near-sinusoidal circadian rhythm providing phase gating; sleep can only fall within a permitted phase window.</p></div>
+    <div><h3>Spontaneous cycle</h3><p>Sum above threshold → sleep; below → wake. The system thus owns a spontaneous circadian rhythm rather than an external schedule.</p></div>
+  </div>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 7 of 13</span></div>
+</section>
+
+<!-- Language -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">7　Core Mechanism (iii): Internalized Language</span></div>
+
+  <p class="lead">The language layer calls no generative model. Inner speech is the activation of language memory by the current state: the system can only say what it has heard.</p>
+
+  <p>The path follows the genesis of inner speech — first hearing, then echoing, finally internalizing. Caregiver utterances enter as high-frequency repeated phrases, stored together with the state vector at the moment of hearing; early on the system echoes them in private, and the echo probability decays with the days of internalization; later, retrieval is driven by the current state: if the present state is sufficiently similar to the state in which a phrase was heard, that fragment surfaces spontaneously. The emotional colour of a fragment likewise does not come from a pre-written lexicon but from co-occurrence statistics — a phrase always heard in a good state carries warmth when it surfaces.</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 760 176" role="img" aria-label="The three channels of internalization">
+      <rect class="bar" x="20" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="95" y="72" text-anchor="middle">Hear</text>
+      <text class="bs" x="95" y="90" text-anchor="middle">caregiver input + state</text>
+
+      <path class="chev" d="M182 76 l14 0 m-6 -6 l6 6 l-6 6" stroke="#999"/>
+
+      <rect class="bar" x="210" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="285" y="72" text-anchor="middle">Echo</text>
+      <text class="bs" x="285" y="90" text-anchor="middle">private speech · decays over days</text>
+
+      <path class="chev" d="M372 76 l14 0 m-6 -6 l6 6 l-6 6" stroke="#999"/>
+
+      <rect class="bar hi" x="400" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="475" y="72" text-anchor="middle">Internalize</text>
+      <text class="bs" x="475" y="90" text-anchor="middle">state-driven retrieval</text>
+
+      <path class="chev" d="M562 76 l14 0 m-6 -6 l6 6 l-6 6" stroke="#999"/>
+
+      <rect class="bar" x="590" y="46" width="150" height="60" rx="6"/>
+      <text class="bt" x="665" y="72" text-anchor="middle">Feedback</text>
+      <text class="bs" x="665" y="90" text-anchor="middle">adopted thought nudges state</text>
+
+      <text class="st" x="20" y="24">zero hallucination = structural guarantee: no generator; retrieval closed over heard material</text>
+      <text class="bs" x="20" y="140">Self-directed fragments (containing the second person) are fed separately into the self-model; fragments repeatedly activated spontaneously are promoted to goals.</text>
+      <text class="bs" x="20" y="156">The feedback magnitude is deliberately below the dynamical scale: language never drives the state, only perturbs it measurably.</text>
+    </svg>
+    <figcaption>Figure 5 · The three channels of internalization: hear → echo → internalize (with a closed loop of state-driven retrieval and feedback). The language layer contains no generator, and its retrieval is closed over heard material.</figcaption>
+  </figure>
+
+  <h3>Why this path is necessary</h3>
+  <p>To delegate inner speech to a generative model is to let the system say things it has never experienced — precisely the place where "seeming conscious" is easiest to fake. With pure retrieval, the system's linguistic capacity is strictly bounded by its experience: every sentence it can utter traces back to an occasion of hearing. Zero hallucination is thereby upgraded from a fragile prompt constraint into an architectural necessity independent of model behaviour. This also gives language output, for the first time, the property of being fully traceable — so it can safely be used as a record of phenomena rather than as evidence.</p>
+
+  <div class="fig-notes">
+    <div><h3>Hear</h3><p>The caregiver's phrase and the bodily state at that moment are remembered together, forming a language–state binding.</p></div>
+    <div><h3>Echo</h3><p>Early on, private echoing dominates; the echo probability decays with the days of internalization, and de-duplication echoes each phrase once.</p></div>
+    <div><h3>Internalize</h3><p>State similarity × recency × frequency set the retrieval weight; a fragment's emotional colour comes from the statistics of its context.</p></div>
+  </div>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 8 of 13</span></div>
+</section>
+
+<!-- Attribution -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">8　Attribution, Self-Agency &amp; Goal Emergence</span></div>
+
+  <p class="lead">Every significant state change is attributed either to "self-cause" (endogenous exploration) or "other-cause" (external event), and the share of self-cause within a rolling window serves as a measurable proxy for the sense of self-agency.</p>
+
+  <p>The system is never told "you are an agent". The boundary of the self can only emerge slowly from the difference its own actions make: the system compares "what the state would have been had I not acted" with "what the state became after I acted", and assigns part of the change to itself. This share (self_ratio) is low in the early stage — meaning that at present endogenous exploration is relatively rare and the outline of the self is not yet clear. We do not beautify this number; we record it as it is.</p>
+
+  <figure>
+    <svg class="diagram" viewBox="0 0 640 290" role="img" aria-label="Phase trajectory in state space">
+      <line class="grid" x1="200" y1="146" x2="600" y2="146"/>
+      <line class="grid" x1="375" y1="40" x2="375" y2="250"/>
+      <path class="curve thin" d="M 587.0 146.0 L 574.6 167.3 L 550.7 186.1 L 517.5 201.4 L 477.5 212.4 L 433.4 218.8 L 388.4 220.3 L 345.0 217.2 L 306.0 209.9 L 273.4 199.0 L 248.9 185.5 L 233.5 170.3 L 227.7 154.5 L 231.2 138.9 L 243.4 124.7 L 263.0 112.4 L 288.5 102.9 L 317.8 96.4 L 349.2 93.3 L 380.4 93.5 L 409.7 96.9 L 435.4 103.0 L 456.0 111.3 L 470.7 121.2 L 478.9 132.0 L 480.4 143.0 L 475.5 153.5 L 464.8 162.8 L 449.4 170.6 L 430.4 176.3 L 409.2 179.8 L 387.2 181.0 L 365.8 179.8 L 346.3 176.5 L 329.7 171.5 L 317.0 165.0 L 308.6 157.7 L 304.9 149.8 L 305.8 142.1 L 311.1 134.9 L 320.2 128.6 L 332.4 123.6 L 346.7 120.0 L 362.2 118.2 L 377.9 117.9 L 392.8 119.3 L 406.0 122.1 L 416.9 126.0 L 424.9 130.8 L 429.7 136.2 L 431.1 141.7 L 429.3 147.0 L 424.5 151.8 L 417.2 155.9 L 407.9 159.0 L 397.3 161.0 L 386.2 161.8 L 375.2 161.4 L 365.0 159.9 L 356.2 157.5 L 349.2 154.2 L 344.5 150.5 L 342.1 146.5 L 342.1 142.4 L 344.5 138.5 L 348.9 135.1 L 355.0 132.3 L 362.3 130.3 L 370.4 129.1 L 378.7 128.8 L 386.8 129.3 L 394.0 130.6 L 400.2 132.5 L 404.8 135.0 L 407.8 137.8 L 409.0 140.7 L 408.4 143.6 L 406.1 146.3 L 402.5 148.6"/>
+      <circle class="pt-f" cx="587.0" cy="146.0" r="3.2"/>
+      <text class="alab" x="594" y="143" text-anchor="start">start</text>
+      <circle class="pt-o" cx="402.5" cy="148.6" r="3.2"/>
+      <text class="alab" x="410" y="163" text-anchor="start">convergence</text>
+      <circle class="pt-o" cx="375" cy="146" r="2.2"/>
+      <text class="alab" x="375" y="128" text-anchor="middle">fixed point</text>
+      <text class="axl" x="200" y="272" text-anchor="start">state-space projection: the trajectory converges to a stable configuration</text>
+    </svg>
+    <figcaption>Figure 6 · Phase trajectory in state space. After a perturbation the system returns to a stable configuration (a fixed point) via damped oscillation — a measurable "resilience", indicating that state evolution has an intrinsic stability rather than drifting randomly.</figcaption>
+  </figure>
+
+  <h3>Goal emergence</h3>
+  <p>When a fragment is repeatedly activated spontaneously, it is promoted from "thought" to "goal": the theme is defined by the fragment itself rather than by a human category label. The system thereby acquires a minimal sense of "wanting" — a preference shaped by the frequency of its own experience. The first emergent goal came from a high-frequency positive caregiver phrase: always heard in a calm, soothed state, it was promoted to a preference through repeated spontaneous activation.</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 9 of 13</span></div>
+</section>
+
+<!-- Two lines -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">9　Two-Line Operation &amp; Pre-registration</span></div>
+
+  <p class="lead">The system runs on two lines, and stage advancement is decided by pre-registered criteria. The purpose of this protocol is to make it impossible for "progress" to be explained as progress after the fact.</p>
+
+  <h3>Two-line operation</h3>
+  <p>The main line advances in real time and produces the official data; the accelerated line runs at roughly 10<sup>9</sup> times the time scale, used only to probe dynamics and emergence paths, and its data never enter formal reports. The two lines share the same source code and state definitions; the only difference is the rate at which the time step and environmental events advance. The accelerated line lets phenomena on the scale of a hundred days be observed within days, while the main line preserves the physical realism of rhythm- and time-perception-related metrics. Any phenomenon seen on the accelerated line must be reproduced on the main line at a real time scale before it is accepted.</p>
+
+  <h3>Pre-registered stage gating</h3>
+  <p>The exit criterion of each developmental stage is written in advance; if unmet, the stage does not advance, and there is an upper bound — beyond it, a "not passed" is recorded as such. Criteria are drawn only from non-linguistic hard metrics, such as the convergence of event-predictor surprise, the formation of an energy-saving policy, and the formation of a self-model.</p>
+
+  <table>
+    <thead><tr><th>Stage</th><th>Exit criterion (pre-registered)</th></tr></thead>
+    <tbody>
+      <tr><td>Infancy</td><td>The running mean of event-predictor surprise converges below the pre-registered threshold.</td></tr>
+      <tr><td>Feeling</td><td>A stable energy-saving vs. exploration policy forms under the energy constraint, and is reproducible.</td></tr>
+      <tr><td>Mirror</td><td>A measurable self-model appears: the self-attribution share is significantly and stably above baseline.</td></tr>
+      <tr><td>Later stages</td><td>To be activated in P3, including external supervision and review of self-modification proposals.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Why pre-registration</h3>
+  <p>In a system whose goal is to "seem conscious", post-hoc selection of criteria easily reads noise as signal. Pre-registration fixes the criteria before the run: the system can only record "passed" or "not passed", and has no right to move the ruler. When a criterion is unmet, the system records the failure rather than concealing it. This constraint also defines the honesty of the work: hand over what can be falsified, leave blank what cannot be claimed.</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 10 of 13</span></div>
+</section>
+
+<!-- Observations -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">10　Observed Phenomena</span></div>
+
+  <p class="lead">The records below come from the accelerated validation line; they serve only to probe dynamical paths and are not formal conclusions. Every metric is drawn from a non-linguistic channel, and language content is recorded as phenomenon only.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">&gt;130</div><div class="l">cumulative validation<br>simulation-days (accelerated)</div></div>
+    <div class="stat"><div class="n">≈3.9</div><div class="l">event surprise · running mean<br>approaching threshold (bit)</div></div>
+    <div class="stat"><div class="n">≈1%</div><div class="l">rolling self-attribution share<br>self-agency proxy · still faint</div></div>
+    <div class="stat"><div class="n">100%</div><div class="l">traceable inner speech<br>all from heard material</div></div>
+  </div>
+
+  <ul>
+    <li><b>The world is becoming predictable.</b> The running mean of event surprise falls from its initial value and settles near 3.9 bit, approaching the pre-registered convergence threshold — prediction learning is converging.</li>
+    <li><b>Spontaneous rhythm.</b> Internal state shows circadian fluctuation without external scheduling, rather than following a preset timetable; sleep–wake switching is produced by the dynamics itself.</li>
+    <li><b>Self-agency remains faint.</b> The rolling self-cause share is about 1%. At the present stage endogenous exploration is relatively rare and the self's boundary is not yet clear; we record this honestly rather than beautify it.</li>
+    <li><b>Language is fully traceable.</b> During the validation period inner speech produced no invented sentence — every utterance traces back to an occasion of hearing. The system passed from "echo" to "internalized retrieval": early on private echoing dominated, later state-driven retrieval took over.</li>
+    <li><b>First goal emerged.</b> The system produced its first goal, whose theme is a high-frequency positive caregiver phrase — a fragment always heard in a calm, soothed state, promoted to a preference through repeated spontaneous activation.</li>
+    <li><b>Long-run stability.</b> The system ran stably across more than 130 accelerated simulation-days with no divergence or collapse; phase trajectories show that after perturbation it always returns to a stable configuration.</li>
+    <li><b>Honest recording.</b> When a pre-registered criterion is unmet, the system records the failure rather than concealing it through later adjustment.</li>
+  </ul>
+
+  <p class="note" style="margin-top:.24in">Note: the values above are taken from the operating range of the accelerated validation line and are indicative magnitudes; formal reports use only real-time main-line data. Language samples are records of phenomena only and not evidence of consciousness. All hard metrics come from non-linguistic channels, and the relevant traces and registration records are available for review.</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 11 of 13</span></div>
+</section>
+
+<!-- Honesty -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">11　Limitations &amp; Honesty Declarations</span></div>
+
+  <p class="lead">This work proceeds from self-restraint: whatever can be falsified is handed over, and whatever cannot be claimed is left blank.</p>
+
+  <table>
+    <thead><tr><th>Declaration</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>No claim of consciousness</td><td>This work does not claim the system is conscious, nor does it rely on linguistic display.</td></tr>
+      <tr><td>Limits of Mode B</td><td>The state layer's "persistence" is implemented by an external numerical engine (process + persistence), not an intrinsic continuity of any model.</td></tr>
+      <tr><td>Language is not evidence</td><td>Language output is treated only as a record of phenomena and never as evidence of consciousness.</td></tr>
+      <tr><td>Metrics, non-linguistic only</td><td>Hard metrics come only from predictor convergence, self-attribution share, trace spectra and probe error, never from generative output.</td></tr>
+      <tr><td>No feigned emergence</td><td>Every source of "spontaneity" is written explicitly into the system rather than mystified.</td></tr>
+      <tr><td>Accelerated ≠ main line</td><td>Accelerated-line data only probe paths; they are accepted only when reproduced on the main line at a real time scale.</td></tr>
+      <tr><td>Failures recorded as such</td><td>When a criterion is unmet, it is recorded honestly and not masked by later adjustment.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="note" style="margin-top:.28in">The declarations above constitute the binding constraints of version v0.2 and apply to the whole of this note; any change in a later version will be listed here and explained. We hold that the value of an honest research programme lies precisely in its self-restraint — hand over what can be falsified, leave blank what cannot be claimed.</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 12 of 13</span></div>
+</section>
+
+<!-- Conclusion -->
+<section class="page">
+  <div class="phead"><span class="org">Chengze Luo</span><span class="sec">12　Conclusion &amp; Next Steps</span></div>
+
+  <h2>Conclusion</h2>
+  <p class="lead">We have built a system that claims no consciousness yet takes the description "seems conscious" seriously. It owns continuous affect and sleep, surprise driven by prediction, a body constrained by scarcity, a slowly emerging boundary of self, and a language that can only say what it has heard.</p>
+
+  <p>This engineering project is less an attempt to answer "is it conscious?" than a test of another question: if a set of measurable functional structures were genuinely present, would the description "it seems conscious" become natural. Over more than 130 accelerated simulation-days, event-predictor surprise converged to about 3.9 bit, the language layer passed from echo to internalized retrieval, and the first goal emerged around a fragment theme. We return that question to the part of it that can be falsified, and accept every limitation this entails.</p>
+
+  <h3>Next steps (P3)</h3>
+  <p>The next phase will introduce an external supervisor to review the system's own proposals, treat "proposals for self-modification" themselves as data, establish control groups, and attempt a causal test of whether language in turn reshapes the state layer.</p>
+
+  <p class="closing">Hand over what can be falsified;<br>leave blank what cannot be claimed.</p>
+
+  <p class="note" style="margin-top:.32in">Scope note: this is an external edition that discloses the system's positioning, composition and part of its principles within controlled bounds; full data traces, parameter calibration and evaluation methods are not included, and controlled access can be arranged separately on request.</p>
+
+  <div class="pfoot"><span>A Candidate System for Self-Awareness · Technical Note · Preprint v0.2</span><span>Page 13 of 13</span></div>
+</section>
+
+</body></html>

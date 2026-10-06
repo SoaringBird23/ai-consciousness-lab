@@ -1,0 +1,10 @@
+[2026-10-05 12:29:41] 等待 E3 完成（phase_log 出现 DONE）...
+[2026-10-05 13:13:41] E3 已完成，E4 启动。
+[2026-10-05 13:14:07] ==== p1 习得开始 | simday 360.555 | vocal=on caregiver=contingent | 计划 30 仿真日 ====
+[2026-10-05 13:26:13] ==== E4 重跑启动（修复：每窗口一次应答；清洗见 deviation_1.json） ====
+[2026-10-05 13:26:38] ==== p1 习得开始 | simday 368.908 | vocal=on caregiver=contingent | 计划 30 仿真日 ====
+[2026-10-05 14:02:36] ==== p2 消退开始 | simday 399.7 | vocal=on caregiver=random | 计划 25 仿真日 ====
+[2026-10-05 14:32:13] ==== E4 结束 | simday 424.83 | vocal 保留，caregiver=random ====
+p1 习得(30.8日): 发声 +172 (5.6/日) | C: 5.337→8.217 | eff: 0.8 | self_ratio见attribution | sm v6→v6
+p2 消退(25.0日): 发声 +106 | C: 2.624 | eff: 0.619 | sm v6→v6
+[2026-10-05 14:32:13] DONE

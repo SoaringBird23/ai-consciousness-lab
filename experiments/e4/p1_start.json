@@ -1,0 +1,11 @@
+{
+  "sim_day": 368.90791666666667,
+  "n_heard": 27047,
+  "n_retrieval": 6813,
+  "n_echo": 7441,
+  "n_vocal": 5,
+  "contingency": 5.337,
+  "efficacy": 0.8,
+  "self_model_version": 6,
+  "self_model_desc": "是你呀 你好呀 你醒啦 这是你 你在看 你又动了"
+}
