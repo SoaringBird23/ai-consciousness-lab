@@ -1,0 +1,91 @@
+{
+  "experiment": "R2 写回通道的两因子判定：『只读』来自门不开，还是来自目标变量无人消费",
+  "created": "2026-10-06",
+  "preregistered_before_data": true,
+  "supersedes": "prereg_R.json（R 阶梯）——原设计在采集前被审计判定为无效，见其 amendments#1",
+
+  "why_this_replaces_R": "R 设计的是扫『念头→状态』耦合的剂量阶梯。采集前审计发现该通道**双重失效**，任何剂量都测不出东西：(1) 门控开不了（第一层）；(2) 就算开了，写进的目标变量在系统里没有任何行为读取者（第二层）。继续跑 R 只会得到一个关于『从未打开、且打开也没人看』的通道的零结果，而这个零结果最危险的读法是『真·无反馈，核心主张保住』。故 R 撤出，改为本实验：把『门』与『目标』各自变成自变量，直接判定零结果的真正来源。",
+
+  "audit_evidence": {
+    "level1_gate_never_opens": {
+      "mechanism": "background.py —— valence = language.valence_of() = (heard_s2 − 当前s2) × 2；门为 |valence| > valence_threshold，默认 0.05",
+      "measured": "state_exp 全期 6859 次检索的 valence 实测：标准差 0.00768，绝对中位 0.00460，p90 0.01280，**最大 0.03280**",
+      "firing_rate_at_default": "阈值 0.05 → **开火率 0.00%**（最大值都够不到）",
+      "root_cause": "s2 动力学 s2_t = −s2/relax + 0.01·(2 − surprise_bits)：典型惊奇约 4 bit 时驱动力为负，s2 被压在 0 附近贴地（全期 56763 tick 实测极差仅 0.0187）"
+    },
+    "level2_target_has_no_consumer": {
+      "s2_index1": "写入点仅 background.py:174/176（本通道）、main.py:417-418（行动环 write-back，输入取自 milieu.field 而非 s2）；读取者：valence 自身计算（language.py:464）、日志（awareness.py）。**无任何行为路径读它**。关键：检索相似度 SIM_WEIGHTS = {0:s1, 3:s4, 6:s7, 7:s8} —— **不含 s2**",
+      "s5_index4": "写入点 background.py:178（疑问类分支）；**除序列化与日志外无任何读取者**",
+      "consumed_variables": "s1（vocal/probes/注意目标）、s4（检索相似度 1.2、照护者紧张分支、affect）、s6（相似度）、s7（相似度）、s8（相似度、探索阈值、照护者无聊分支）"
+    },
+    "consequence_for_E6a": "E6a 消融的是一条开火率 0.00%（另一分支 0.41%）且目标无人消费的通道。『四指标移动 <5%』是该通道双重失效的机械必然，**不是关于反馈强度的证据**。论文中 E6a 的阴性结论必须补这条限制。"
+  },
+
+  "design": {
+    "instance": "6 条线，SIGSTOP 安全 fork 自成熟线 state_exp（同一心智，day 255），30 仿真日",
+    "factors": {
+      "gate": "closed（valence_threshold 0.05，即原样）/ open（0.008 = 该分布 1 个标准差，实测开火率 26%）",
+      "target": "s2（原设计，孤岛）/ s4（被检索相似度消费）",
+      "dose": "s2 幅度 0.02 / 0.10 / 0.30，s5 通道按 0.75 比例同步"
+    },
+    "arms": {
+      "ctl_none": "e6.ablation=true，通道全切 —— 零参照",
+      "dead_gate": "原样（门 0.05，目标 s2）—— 复现 E6a 的死通道",
+      "open_dead_target": "门开(0.008)·目标 s2·hi(0.30) —— **活门 + 孤岛目标**",
+      "open_s4_lo": "门开·目标 s4·0.02",
+      "open_s4_mid": "门开·目标 s4·0.10",
+      "open_s4_hi": "门开·目标 s4·0.30 —— **活门 + 被消费目标**"
+    },
+    "why_this_ordering": "ctl_none → dead_gate → open_dead_target → open_s4_* 构成一条因果链：逐步把『没通道』『门不开』『门开了但没人读』『门开了且有人读』拆开。任一环的零结果都能定位到具体环节，而不是笼统的『无反馈』。",
+    "metrics": "沿用 E6 四项：M1 检索率/日、M2 检索多样性、M3 自我模型版本增量、M4 新增目标数；另记录 M5 s4 的均值与方差"
+  },
+
+  "manipulation_check": {
+    "MC0_channel_actually_fires": {
+      "rule": "**每条臂运行期内通道实际开火次数必须 >0**。计数由 background.reflow_fires 落盘（valence_neg / valence_pos / question）。",
+      "arms_expected": {
+        "ctl_none": "0（通道被切，符合预期，作零参照用）",
+        "dead_gate": "valence 分支应为 0，question 分支少量 —— **这正是要复现的失效**",
+        "open_*": "valence 分支应约 26% 的检索次数，question 分支同原样"
+      },
+      "void_condition": "任何『本应开火』的臂若实测开火率为 0，该臂作废 —— 不得把『没打开』读成『打开无效』。"
+    },
+    "lesson_recorded": "原 R 的 audits 只验了『receive_inner_speech 调用点唯一』= 接线正确，没验通道是否真的激活，据此判 manipulation_check 通过属**过度自信**。操纵检查必须验激活，不能只验接线。"
+  },
+
+  "hypotheses": {
+    "HR2_gate": {
+      "test": "dead_gate vs ctl_none（四指标差异）",
+      "prediction": "≈0 差异。**这是预期而非发现** —— 因为该臂的门开火率为 0，等于没接通道。此臂的作用是把 E6a 的零结果复现为一个机械事实。"
+    },
+    "HR2_target": {
+      "test": "open_dead_target vs ctl_none",
+      "prediction": "仍无差异。因为目标 s2 无人消费。**若此臂出现差异，则说明我们漏查了一条 s2 的消费路径，审计需重做**（这是本臂真正的作用：证伪自己的审计）。"
+    },
+    "HR2_functional": {
+      "test": "open_s4_hi vs ctl_none；并看 dose 是否单调（lo < mid < hi）",
+      "positive": "四指标差异 >10% 且随剂量单调 → **功能性写回通道存在**，『只读』确系接线问题而非架构结论，论文核心主张必须重写",
+      "negative": "hi 档仍 <10% → 即使门开着、目标被消费，提高耦合仍不承重 → 『只读』不是接线事故，是更深的结构性质（念头流对状态无因果作用）",
+      "partial": "仅 hi 出现边缘差异 → 存在阈值，如实报告位置"
+    },
+    "HR2_asymmetry": {
+      "test": "M5：s4 的均值/方差在 open_s4_* 与 ctl_none 间的差异",
+      "purpose": "M1–M4 是行为层面的间接指标；M5 直接看目标变量本身是否被改写。若 M5 动而 M1–M4 不动 → 说明通道确实在写，但写的东西不影响行为（第三种结局）"
+    }
+  },
+
+  "predictions_registered": {
+    "HR2_gate": "预测 ≈0（门开火率 0，机械必然）",
+    "HR2_target": "预测 ≈0（目标无消费者）；**此臂若阳性则是我们的审计错了，须先重做审计再解读**",
+    "HR2_functional": "不确定。两个方向都有真实理由：s4 是检索相似度的权重项（1.2，四项中最高），写 s4 会改变检索胜者，理论上应能承重；但 retieval 的随机扰动项（0.9+0.2·rand）与阈值门（0.72）可能吞掉这个幅度。这正是要测的。",
+    "HR2_asymmetry": "探索性，不预设"
+  },
+
+  "known_limits": {
+    "valence_from_s2_target_s4": "门用的 valence 由 s2 语境算出，而 hi/mid 档写到 s4。这是**刻意的**：它保留『念头的情绪色彩（来自 s2 语境）去调制紧张』这一结构，即 H-W1 提议的『想法→情绪→身体』三层通路。但这也意味着本实验测的不是『s4 的自我回声』，而是『s2 语境 → s4』的跨维写入。若将来要测同维回声，需为 s4 也存 heard_s4（当前记忆记录只存 heard_s2）。",
+    "s2_仍被日志记录": "写 s2 的臂会改变 awareness_log 里的 s2 字段，但不影响任何行为路径。分析时必须区分『日志变了』与『行为变了』。",
+    "单母本": "6 条臂同 fork 自 state_exp，共享同一段历史；结论的可复现性依赖后续多种子复现（如 S1 之于 XP）。"
+  },
+
+  "note": "四条指标含两个二值量（M3/M4），报告中必须分开呈现，不得混成『百分比』。任何阴性结果照实写，并明确它排除的是哪一层。"
+}

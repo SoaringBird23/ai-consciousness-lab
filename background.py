@@ -48,6 +48,14 @@ class Background:
         self.reflow_s2 = float(rf.get("s2", 0.02))
         self.reflow_s5 = float(rf.get("s5", 0.015))
         self.reflow_thresh = float(rf.get("valence_threshold", 0.05))
+        # 写回目标：默认 "s2" 保持原行为逐位一致。"s4" 把同一份情绪色彩写到紧张维度——
+        # s4 被检索相似度消费（SIM_WEIGHTS 含 s4），而 s2 在系统里没有任何行为读取者
+        # （审计见 experiments/prereg_R2.json）。此开关只为实验臂服务，不动默认值，
+        # 以免改动正在运行的线。
+        self.reflow_target = str(rf.get("target", "s2"))
+        self.reflow_idx = 3 if self.reflow_target == "s4" else 1
+        # MC0 计数：操纵检查必须验「通道是否真的开火」，不能只验「接线是否唯一」。
+        self.reflow_fires = {"valence_neg": 0, "valence_pos": 0, "question": 0}
 
         # 状态向量（初始：清醒，中性）
         self.s = np.array([0.5, 0.0, 0.0, 0.1, 0.5, 0.0, 0.0, 0.0])  # s1..s8
@@ -140,6 +148,8 @@ class Background:
             "asleep": self.asleep,
             "sleep_pressure": round(self.sleep_pressure, 4),
             "mode": "B",
+            "reflow_target": self.reflow_target,
+            "reflow_fires": dict(self.reflow_fires),
         })
         return snap
 
@@ -160,6 +170,9 @@ class Background:
                 self.s[i] = float(d[k])
         self.asleep = bool(d.get("asleep", False))
         self.sleep_pressure = float(d.get("sleep_pressure", 0.0))
+        if isinstance(d.get("reflow_fires"), dict):
+            for k in self.reflow_fires:
+                self.reflow_fires[k] = int(d["reflow_fires"].get(k, 0))
         if "sim_time" in d:
             self.clock.t = float(d["sim_time"])
         return True
@@ -171,11 +184,14 @@ class Background:
         if self.asleep:
             return
         if valence < -self.reflow_thresh:
-            self.s[1] = _clip(self.s[1] - self.reflow_s2)     # s2 效价微降
+            self.s[self.reflow_idx] = _clip(self.s[self.reflow_idx] - self.reflow_s2)
+            self.reflow_fires["valence_neg"] += 1
         elif valence > self.reflow_thresh:
-            self.s[1] = _clip(self.s[1] + self.reflow_s2)     # s2 效价微升
+            self.s[self.reflow_idx] = _clip(self.s[self.reflow_idx] + self.reflow_s2)
+            self.reflow_fires["valence_pos"] += 1
         if "？" in text or "怎么" in text or "什么" in text:
             self.s[4] = _clip(self.s[4] + self.reflow_s5)     # 疑问类 → s5 注意微升
+            self.reflow_fires["question"] += 1
 
     # 婴儿期探索行为：无聊超过阈值时产生内生行动意图（由 main 调用）
     def wants_explore(self):

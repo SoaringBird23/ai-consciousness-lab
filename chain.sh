@@ -16,6 +16,7 @@ job_dirs(){
     repl) STATE_DIR=state_repl_$2; CONFIG=config_repl_$2.json; LOG_DIR=logs_repl_$2; INBOX_DIR=inbox_repl_$2 ;;
     s2)   STATE_DIR=state_s2_$2;   CONFIG=config_s2_$2.json;   LOG_DIR=logs_s2_$2;   INBOX_DIR=inbox_s2_$2 ;;
     R)    STATE_DIR=state_R_$2;    CONFIG=config_R_$2.json;    LOG_DIR=logs_R_$2;    INBOX_DIR=inbox_R_$2 ;;
+    R2)   STATE_DIR=state_R2_$2;   CONFIG=config_R2_$2.json;   LOG_DIR=logs_R2_$2;   INBOX_DIR=inbox_R2_$2 ;;
   esac
 }
 
@@ -26,15 +27,15 @@ start_job(){
   JOB_DONE=0
   job_dirs "$kind" "$key"
   mkdir -p "$STATE_DIR" "$LOG_DIR" "$INBOX_DIR"
-  # R 首次运行需从成熟线 fork
-  if [ "$kind" = "R" ] && [ ! -f "$STATE_DIR/stage.json" ]; then
+  # R / R2 首次运行需从成熟线 fork
+  if { [ "$kind" = "R" ] || [ "$kind" = "R2" ]; } && [ ! -f "$STATE_DIR/stage.json" ]; then
     rm -rf "$STATE_DIR"; cp -R state_exp "$STATE_DIR"; rm -f "$STATE_DIR/pid" "$STATE_DIR/e6_state.json"
     log "$kind:$key 已从 state_exp fork"
   fi
-  # 目标日：repl/s2 = day 60；R = fork 点 day + 30（旧脚本误写为 30，会一启动就误判达标）
+  # 目标日：repl/s2 = day 60；R/R2 = fork 点 day + 30（旧脚本误写为 30，会一启动就误判达标）
   if [ ! -f "$STATE_DIR/.target" ]; then
     local base; base=$(day_of "$STATE_DIR"); [ -z "$base" ] && base=0
-    if [ "$kind" = "R" ]; then echo $((base + 30)) > "$STATE_DIR/.target"
+    if [ "$kind" = "R" ] || [ "$kind" = "R2" ]; then echo $((base + 30)) > "$STATE_DIR/.target"
     else echo 60 > "$STATE_DIR/.target"; fi
   fi
   local tgt; tgt=$(cat "$STATE_DIR/.target")
@@ -68,11 +69,10 @@ if [ -f state_body3/pid ] && kill -0 "$(cat state_body3/pid)" 2>/dev/null; then
 fi
 
 # ── 1. 统一任务池：任意时刻最多 MAX 路并发 ──
-# R 阶梯已暂缓（2026-10-06）：审计发现写回通道的 s2 分支**门控不可开**——
-# 触发需 |Δs2| > 0.025（valence_threshold 0.05 ÷ 2），而 s2 全期极差只有 0.0187，
-# 即该分支 255 天一次都没执行过。直接跑会产出"通道不存在"的**假阴性**。
-# 见 experiments/prereg_R.json 的 amendments#1。修好门控并补上"实际开火率"操纵检查后再入队。
-JOBS=(repl:101 repl:102 repl:103 s2:D s2:NC s2:NG s2:BO)
+# R 阶梯（prereg_R）已作废：采集前审计发现那根通道双重失效（门开火率 0.00% + 目标变量
+# 无人消费），跑它只能得到关于"从未打开且打开也没人看"的通道的零结果。改为 R2：
+# 把"门"与"目标"各自变成自变量，直接判定零结果的来源。见 experiments/prereg_R2.json。
+JOBS=(repl:101 repl:102 repl:103 s2:D s2:NC s2:NG s2:BO R2:ctl_none R2:dead_gate R2:open_dead_target R2:open_s4_lo R2:open_s4_mid R2:open_s4_hi)
 n=${#JOBS[@]}; next=0
 an=(); ad=(); at=()
 
