@@ -68,7 +68,11 @@ if [ -f state_body3/pid ] && kill -0 "$(cat state_body3/pid)" 2>/dev/null; then
 fi
 
 # ── 1. 统一任务池：任意时刻最多 MAX 路并发 ──
-JOBS=(repl:101 repl:102 repl:103 s2:D s2:NC s2:NG s2:BO R:lo_abl R:mid_abl R:hi_abl R:lo_ctl R:mid_ctl R:hi_ctl)
+# R 阶梯已暂缓（2026-10-06）：审计发现写回通道的 s2 分支**门控不可开**——
+# 触发需 |Δs2| > 0.025（valence_threshold 0.05 ÷ 2），而 s2 全期极差只有 0.0187，
+# 即该分支 255 天一次都没执行过。直接跑会产出"通道不存在"的**假阴性**。
+# 见 experiments/prereg_R.json 的 amendments#1。修好门控并补上"实际开火率"操纵检查后再入队。
+JOBS=(repl:101 repl:102 repl:103 s2:D s2:NC s2:NG s2:BO)
 n=${#JOBS[@]}; next=0
 an=(); ad=(); at=()
 
