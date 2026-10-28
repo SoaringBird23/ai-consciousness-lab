@@ -70,14 +70,38 @@ PY
 **git 提交时间不能作为"更早想到"的证据**，它只证明"此内容在某次提交时已存在"。
 真正的先后顺序由第 1、2 层（预注册内部时间戳 + 文件哈希）承担。
 
-为补强这一点，本次提交使用**附注标签（annotated tag）**记录作者身份与时间，
-并可选择用本机 SSH 密钥签名（见第七节）。
+为补强这一点，本仓库使用**已签名的附注标签（signed annotated tag）**把作者身份绑定到内容：
 
-### 第 5 层：外部时间戳（**当前缺失，这是最弱的一环**）
+| 项 | 值 |
+|---|---|
+| 标签 | `v0.2.0`（annotated + SSH 签名） |
+| 标签对象 | `refs/tags/v0.2.0` |
+| 签名密钥 | `ssh-ed25519`，指纹 `SHA256:tGWNy0MdB8XzbeZyWGnpoqEhrQHKaEgsCPk0GYOtENs` |
+| 公钥 | `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO++zQk244iHGKdUIBOnmjSq2/WuNCKvsO/mHuE6ZpqH` |
 
-本仓库**尚无** DOI、无 arXiv 编号、无公开远端。
-一旦发布，外部时间戳将取代第 1–4 层成为最硬的锚点，`CITATION.cff` 中两处
-`PLACEHOLDER` 即刻替换为真实地址。
+第三方验证方式（无需信任本仓库的任何陈述）：
+
+```bash
+printf 'chengze ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO++zQk244iHGKdUIBOnmjSq2/WuNCKvsO/mHuE6ZpqH\n' > /tmp/allowed_signers
+git -c gpg.ssh.allowedSignersFile=/tmp/allowed_signers verify-tag v0.2.0
+# 期望：Good "git" signature for chengze with ED25519 key SHA256:tGWNy0MdB8XzbeZyWGnpoqEhrQHKaEgsCPk0GYOtENs
+```
+
+### 第 5 层：外部时间戳（**部分成立，仍不完整**）
+
+| 锚点 | 状态 |
+|---|---|
+| 公开代码仓库 | ✅ `https://github.com/SoaringBird23/ai-consciousness-lab`（2026-10-28 首次推送） |
+| 签名标签被 GitHub 托管 | ✅ 标签对象随仓库公开，验签方法与上方一致 |
+| **归档 DOI（Zenodo/OSF）** | ❌ **仍缺**。这是学术上最硬的一层，未拿到 |
+| **arXiv 编号** | ❌ **仍缺**。需 endorsement，未提交 |
+
+**因此本文档的诚实定位是**：优先权主张目前由"内部冻结时间戳 + 内容哈希 + 公开仓库"支撑，
+**尚未**获得第三方归档机构的时间戳。在拿到 DOI 之前，任何"首次"类表述都应按
+"截至公开仓库首次推送时，作者未检索到更早的同类公开工作"来读，而不是按"已确立优先权"来读。
+
+`CITATION.cff` 仍有 1 处 `PLACEHOLDER`（`preferred-citation.url`，待 arXiv 编号），
+拿到后立即替换。
 
 ---
 
