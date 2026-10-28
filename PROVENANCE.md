@@ -156,13 +156,23 @@ git -c gpg.ssh.allowedSignersFile=/tmp/allowed_signers verify-tag v0.2.0
 
 ---
 
-## 七、签名（可选，需作者本机执行）
+## 七、签名（已完成，第三方可独立验证）
+
+标签 `v0.2.0` 已用本机 SSH 密钥签名并推送至公开仓库。任何人可复验，无需信任本文档：
 
 ```bash
-# 用本机 SSH 密钥对标签签名，形成可独立验证的作者绑定
-git tag -s v0.1.0 -m "ai-consciousness-lab v0.1.0 — Chengze Luo (ORCID 0009-0007-3316-6292)"
-git verify-tag v0.1.0
-git push origin v0.1.0
+git clone https://github.com/SoaringBird23/ai-consciousness-lab
+cd ai-consciousness-lab
+
+# 1) 内容未被改动
+shasum -a 256 -c MANIFEST.sha256
+
+# 2) 标签由该作者的密钥签发
+printf 'chengze ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO++zQk244iHGKdUIBOnmjSq2/WuNCKvsO/mHuE6ZpqH\n' > /tmp/allowed_signers
+git -c gpg.ssh.allowedSignersFile=/tmp/allowed_signers verify-tag v0.2.0
 ```
 
-公钥指纹可公布于 ORCID 或仓库 README，供第三方核对。
+两步都通过，说明：**清单 → 内容未改；签名 → 标签由该密钥签发。**
+
+一条必须说清的边界：签名绑定的是**密钥**，不是法律身份。密钥与 ORCID 的对应
+关系由作者在 ORCID 记录与仓库 README 中声明 —— 这一环是**信任假设**，不是密码学保证。
