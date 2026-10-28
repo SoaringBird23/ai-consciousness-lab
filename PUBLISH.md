@@ -9,10 +9,11 @@
 | 第 2 步 推送 main + 标签 | ✅ 完成（451 文件，树哈希与本地一致）|
 | 第 3 步 签名标签 | ✅ 完成（`Good "git" signature … SHA256:tGWNy0MdB8Xz…`）|
 | 第 4 步 回填 CITATION 仓库地址 | ✅ 完成 |
-| **第 5 步 Zenodo DOI** | ❌ **未做 —— 下一步** |
-| **第 6 步 arXiv** | ❌ **未做**（需 endorsement）|
+| 第 5 步 Zenodo DOI | ✅ 完成 — **`10.5281/zenodo.23728049`**（概念 DOI `…23728048`），归档于 2026-10-28T10:54:18Z |
+| **第 6 步 arXiv** | ❌ **未做 —— 唯一剩余步骤**（需 endorsement）|
 
 仓库地址：<https://github.com/SoaringBird23/ai-consciousness-lab>
+归档记录：<https://zenodo.org/records/23728049>
 
 > 下面是原始手册全文，第 5–6 步仍然有效且未执行。第 0–4 步已完成，留作记录。
 
