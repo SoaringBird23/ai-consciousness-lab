@@ -1,5 +1,10 @@
 # ai-consciousness-lab — P0（婴儿期）
 
+> **引用 / Citation**
+> Chengze Luo (2026). *ai-consciousness-lab: a pre-registered developmental system with a read-only workspace.*
+> Zenodo. doi:[10.5281/zenodo.23728049](https://doi.org/10.5281/zenodo.23728049) · ORCID [0009-0007-3316-6292](https://orcid.org/0009-0007-3316-6292)
+
+
 > **许可与数据**：代码 MIT（见 `LICENSE`）；预注册、结果、文档与论文 CC BY 4.0。
 > 照护者语料源自 CHILDES / TalkBank，**不再分发**，详见 `DATA_AVAILABILITY.md`；引用格式见 `CITATION.cff`。
 

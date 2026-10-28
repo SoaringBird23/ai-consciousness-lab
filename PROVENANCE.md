@@ -87,21 +87,33 @@ git -c gpg.ssh.allowedSignersFile=/tmp/allowed_signers verify-tag v0.2.0
 # 期望：Good "git" signature for chengze with ED25519 key SHA256:tGWNy0MdB8XzbeZyWGnpoqEhrQHKaEgsCPk0GYOtENs
 ```
 
-### 第 5 层：外部时间戳（**部分成立，仍不完整**）
+### 第 5 层：外部时间戳（**已成立**）
 
 | 锚点 | 状态 |
 |---|---|
-| 公开代码仓库 | ✅ `https://github.com/SoaringBird23/ai-consciousness-lab`（2026-10-28 首次推送） |
-| 签名标签被 GitHub 托管 | ✅ 标签对象随仓库公开，验签方法与上方一致 |
-| **归档 DOI（Zenodo/OSF）** | ❌ **仍缺**。这是学术上最硬的一层，未拿到 |
-| **arXiv 编号** | ❌ **仍缺**。需 endorsement，未提交 |
+| 公开代码仓库 | ✅ `https://github.com/SoaringBird23/ai-consciousness-lab`（2026-10-28） |
+| 签名标签被 GitHub 托管 | ✅ `v0.2.0`，验签方法与第六节一致 |
+| **归档 DOI（Zenodo）** | ✅ **`10.5281/zenodo.23728049`**（版本 DOI，归档时间 2026-10-28T10:54:18Z） |
+| 概念 DOI（指向所有版本） | ✅ `10.5281/zenodo.23728048` |
+| arXiv 编号 | ❌ 仍缺（需 endorsement，未提交） |
 
-**因此本文档的诚实定位是**：优先权主张目前由"内部冻结时间戳 + 内容哈希 + 公开仓库"支撑，
-**尚未**获得第三方归档机构的时间戳。在拿到 DOI 之前，任何"首次"类表述都应按
-"截至公开仓库首次推送时，作者未检索到更早的同类公开工作"来读，而不是按"已确立优先权"来读。
+Zenodo 记录中的作者字段由**第三方机构**登记，不依赖本仓库的自述：
 
-`CITATION.cff` 仍有 1 处 `PLACEHOLDER`（`preferred-citation.url`，待 arXiv 编号），
-拿到后立即替换。
+```
+Luo, Chengze · ORCID 0009-0007-3316-6292 · Independent Researcher
+```
+
+归档包为 `SoaringBird23/ai-consciousness-lab-v0.2.0.zip`（12,213,719 字节），
+与 `isSupplementTo` 关联到 GitHub 的 `tree/v0.2.0`。
+
+**一个必须说明的技术事实**：归档快照是 `v0.2.0` 标签的内容，
+**不包含**本次 DOI 回填（因为一个版本无法包含它自己的 DOI）。这是所有归档发布的通例，
+不是遗漏。读到这份文件的人，若想确认归档内容与当前内容的关系，比对 `MANIFEST.sha256` 即可。
+
+**优先权的表述因此可以升级为**：截至 `2026-10-28`（Zenodo 归档时间），
+作者已以预注册、内容哈希、签名标签与第三方归档 DOI 四层证据，固定了这一记录。
+但**仍不得**表述为"首次发表"——arXiv 未上、未经同行评审，
+且第六节列出的同期工作在本记录之前已获得外部时间戳。
 
 ---
 

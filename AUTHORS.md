@@ -29,6 +29,27 @@
 | 论文、文档、图表 | CC BY 4.0 |
 | 照护者语料 | **不再分发**。派生自 CHILDES/TalkBank，受其条款约束，见 [DATA_AVAILABILITY.md](DATA_AVAILABILITY.md) |
 
+## 外部标识（第三方登记，不依赖自述）
+
+| 项 | 值 |
+|---|---|
+| 归档 DOI（本版本 v0.2.0） | **`10.5281/zenodo.23728049`** |
+| 概念 DOI（指向所有版本） | `10.5281/zenodo.23728048` |
+| 公开仓库 | <https://github.com/SoaringBird23/ai-consciousness-lab> |
+| 归档时间 | 2026-10-28T10:54:18Z |
+
+## 身份对应（消除审计歧义）
+
+git 历史中出现两个作者标识，**为同一人**：
+
+| 标识 | 用途 |
+|---|---|
+| `Chengze Luo <SoaringBird66@outlook.com>` | 2026-10-28 起的提交（实名 + ORCID 关联邮箱） |
+| `SoaringBird23 <SoaringBird23@users.noreply.github.com>` | 2026-10-06 的早期提交（GitHub 默认用户名邮箱） |
+
+两者同属本文件所声明的唯一作者。Zenodo 记录中的创作者字段为
+`Luo, Chengze`，ORCID `0009-0007-3316-6292`。
+
 ## 归属与优先权的证据
 
 本项目的主张（尤其是“工作空间只读”这一核心阴性结论）依赖时间戳证据链，

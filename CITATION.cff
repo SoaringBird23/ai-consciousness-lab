@@ -12,6 +12,7 @@ authors:
 # TODO: 建仓后把下面两处占位符替换为真实地址
 repository-code: "https://github.com/SoaringBird23/ai-consciousness-lab"
 url: "https://github.com/SoaringBird23/ai-consciousness-lab"
+doi: 10.5281/zenodo.23728049
 license: MIT
 keywords:
   - machine consciousness
@@ -43,5 +44,7 @@ preferred-citation:
       given-names: Chengze
       orcid: "https://orcid.org/0009-0007-3316-6292"
   year: 2026
-  # TODO: 预印本发布后替换为 arXiv 链接
-  url: "https://arxiv.org/abs/PLACEHOLDER"
+  # arXiv 尚未提交（需 endorsement）；在此之前，引用请指向 Zenodo 记录。
+  # 拿到 arXiv 编号后，把 url 换成 https://arxiv.org/abs/<编号>，并保留 doi 指向 Zenodo。
+  doi: 10.5281/zenodo.23728048
+  url: "https://zenodo.org/records/23728048"
