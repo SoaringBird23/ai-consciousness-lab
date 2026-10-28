@@ -1,5 +1,8 @@
 # ai-consciousness-lab — P0（婴儿期）
 
+> **许可与数据**：代码 MIT（见 `LICENSE`）；预注册、结果、文档与论文 CC BY 4.0。
+> 照护者语料源自 CHILDES / TalkBank，**不再分发**，详见 `DATA_AVAILABILITY.md`；引用格式见 `CITATION.cff`。
+
 ## 当前模式（必须先读）
 
 **模式 B：降级模式。**
@@ -68,3 +71,23 @@ tail -f state/trajectory.jsonl    # 1Hz 追加式轨迹（时间知觉实验的�
 - 语言输出（P2 起）一律只算现象记录，不作意识证据
 - 硬指标只能来自无语言通道（预测器收敛、self_ratio、轨迹频谱、探针误差）
 - 模式 B 的所有"自发性"来源都已显式写在代码里，不假装涌现
+
+## P20（2026-10-19）构造语法会话
+
+P2.6 的检索式内言语只能复述听过的整句；P18 的词二元接龙没有“句子结构”。
+P20 新增 `constructions.py`：听到即学「带空句式 → 填充词分布」，理解时用区间 DP
+把输入切成一串听过的句式 + 槽位；回答时把疑问词换成实听过的槽位词，
+或用听过的句式重组。词法级零幻觉不变（每个输出词都实听过），句法级允许新词序。
+
+```bash
+./venv/bin/python converse.py --explain          # 交互对话
+./venv/bin/python tools/build_constructions.py --out state_p20_models/constructions_eval.json --eval
+./run_P20.sh                                     # P20 发育臂（等 P19b day>=315 后 fork）
+./venv/bin/python experiments/test_P20.py        # 冒烟测试
+./venv/bin/python experiments/analyze_P20.py     # live 统计（P20 启动后）
+./venv/bin/python experiments/probe_self_awareness.py  # 幻觉/随机/自我报告探针
+```
+
+探针结果：`experiments/results_self_awareness_probe.md`。
+
+设计与局限见 `docs/P20_construction_grammar.md`，预注册见 `experiments/prereg_P20.json`。

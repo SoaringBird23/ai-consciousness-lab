@@ -1,0 +1,79 @@
+{
+  "experiment": "P19b 发声习惯化 + 去回声：在 P19「有来有回」之上，把 87% 的重复与大量原样回声压下去，同时不破坏轮次承接",
+  "created": "2026-10-15",
+  "preregistered_before_data": true,
+  "position": "P19 的直接后继。P19 客观 4/4，但原始轮次显示：431 轮仅 55 种（13%），最高频「对不对」164 次（38%），且大量原样回声（伙伴「我在这儿」→ 念「我在这儿」）。即『仿说期』，非对话。",
+  "diagnosis_that_motivated_this": {
+    "distinct_self_rate": 0.128,
+    "top_utterance_share": 0.38,
+    "echo_share_observed": "轮次邻接性 0.534 中相当部分为原样复述",
+    "两个独立成因": [
+      "① 回声：P19 的对话关联项 (1+γ·rel) 奖励与近几轮共享词的候选 → 直接复述伙伴最省事",
+      "② 饱和缺失：同一句「对不对」的 E[f] 长期最高，系统不会对它厌倦"
+    ]
+  },
+  "mechanism": {
+    "习惯化(satiation)": "某句近期被说得越多，发声选取得分越低：penalty = max(min_penalty, strength ** 近期使用质量)，近期使用质量按半衰期指数衰减（half_life_hours=6）。",
+    "去回声": "候选与伙伴**紧邻上一轮**完全相同 → ×echo_penalty(0.15)；互为子串（近回声）→ ×near_echo_penalty(0.5)。",
+    "作用位置": "response_model.select 的选取得分（eff = E × penalty）；**只在『选哪一个』，不改候选来源、不生成新句**。",
+    "shuffle对照": "整条惩罚（习惯化 + 去回声）都改用**代理文本**计算——取值分布与 full 相同，但与候选自身的『说了多少次』『是否回声』无关。采集前修正：早先只随机化习惯化、未随机化去回声，且随机惩罚本身就会抹平 E 差异，导致两臂多样性趋同（冒烟 0.517 vs 0.514），故改为整条随机化。",
+    "零生成": "只做抑制，不产生任何新句。"
+  },
+  "design": {
+    "基底": "config_P19_full（dialogue 开、γ=0.5、半衰期 5 轮、发声率 0.7/0.45、word_compose 关）。",
+    "三臂": [
+      "off（习惯化关，=P19 full 基线）",
+      "full（开）",
+      "shuf（开+键随机化）"
+    ],
+    "唯一变量": "habituation；其余逐字相同。",
+    "窗口": "60 日；判据窗口=末 30 日；fork 自 state_exp（day 255）。"
+  },
+  "hypotheses": {
+    "H19b1_多样性": {
+      "criterion": "full 的系统轮不同型占比 ≥ off + 0.10。"
+    },
+    "H19b2_去回声": {
+      "criterion": "full 的精确回声率 ≤ off − 0.05。"
+    },
+    "H19b3_承接保持": {
+      "criterion": "在**非回声**轮上，full 的轮次承接率 ≥ off − 0.05（不得把 P19 的对话耦合压没）。"
+    },
+    "H19b4_对照分层": {
+      "criterion": "full 的不同型占比 > shuf（关联被打断则不应有同等收益）。"
+    }
+  },
+  "predictions_registered": {
+    "H19b1": "预期阳：直接压制高频句的选取得分。",
+    "H19b2": "预期阳：回声被显式乘 0.15。",
+    "H19b3": "本实验的关键约束项：若为阴，说明『提多样性』是靠破坏承接换来的，不算成功。",
+    "H19b4": "预期阳。"
+  },
+  "falsification": {
+    "若 H19b1 阴": "习惯化强度/半衰期量纲不对，或候选池太窄（55 种就是池子全部）→ 须先修池子。",
+    "若 H19b2 阴": "回声来自检索胜者本身而非选取层 → 需把去回声前移到检索打分。",
+    "若 H19b3 阴": "如实记为『多样性—承接权衡』：多样性提升以承接损失为代价。",
+    "不调阈值掩盖": "四判据与阈值采集前冻结。"
+  },
+  "audits": {
+    "unit_test_required": "experiments/test_p19b.py：关闭恒 1.0 / 习惯化 / 半衰期恢复 / 精确回声 / 近回声 / shuffle 打断 / select 接入(penalty_fn=None 逐位不变) / 持久化 → 12/12。",
+    "regression": "test_response_model 18/18、test_p16 7/7、test_p17 23/23、test_p18 16/16、test_p19 13/13 全绿。",
+    "determinism_fix": "同时修掉 dialogue.shuffle 用 tuple(set) 受 PYTHONHASHSEED 影响的不确定性（改排序缓存），shuf 臂从此可复现。",
+    "control_fix_pre_data": "冒烟发现 shuf 控制不完整 → 采集前修正为『整条惩罚随机化』；四判据与阈值未变。"
+  },
+  "open_risks": {
+    "1_候选池上限": "系统只能从听过的句子里选。若 55 种已是候选池全部，多样性上限由输入语料决定，习惯化只能『换着用』。",
+    "2_抑制可能过头": "min_penalty=0.05 保证不被完全消灭，但若所有候选都被压到地板，选择会趋于随机 → 需看 H19b3。",
+    "3_仍非语义": "去回声是字符串级；『换个说法表达同一意思』不在本实验能力内（那是 P20 句法/语义级）。"
+  },
+  "implementation_scope": {
+    "habituation.py": "新建：Habituation（惰性衰减 / 抑制 / 回声惩罚 / 持久化）。",
+    "response_model.py": "select 增加可选 penalty_fn（None 时逐位不变）。",
+    "vocal.py": "Voice 持有 Habituation；选取时传入 penalty_fn；发声后 note_spoken；save/load。",
+    "dialogue.py": "记录 last_partner_text（去回声用）；shuffle 池排序化（可复现）。",
+    "main.py": "把 partner_last 传入 maybe_vocalize。",
+    "analyzer": "experiments/analyze_P19b.py（多样性 / 回声 / 非回声承接 / 对照）。",
+    "scripts": "config_P19b_{off,full,shuf}.json、run_P19b.sh、watch_P19b_{analyze,thermal}.sh。"
+  },
+  "note": "P19b 若成功，只代表『不重复的有来有回』；『能对上内容的对话』需 P20（句法/语义级）。"
+}

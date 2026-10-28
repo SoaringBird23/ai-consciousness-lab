@@ -89,16 +89,21 @@ story += [
       "a language model, gave it a continuous body-like state, and let it develop over "
       "hundreds of simulated days. It never generates text. Its inner speech is "
       "retrieval over what it has heard, so every utterance traces back to a prior "
-      "auditory event. Across nine pre-registered experiments we report every outcome, "
+      "auditory event. Across nine pre-registered experiments and three pre-registered "
+      "follow-ups we report every outcome, "
       "including the ones that failed.", "abs"),
     P("The contribution is methodological, not a discovery. We offer (i) a developmental "
-      "system with no language baseline, (ii) a pre-registration protocol with controls "
-      "and with negative results reported in full, (iii) a transplant of the "
-      "ablation-and-swap protocol used on Claude's J-space into a non-LLM system, and "
-      "(iv) a reproducible record. The protocol produced findings of mixed strength, "
-      "and we grade them rather than average them: two positives, one of them a control "
-      "line; one pathway verification; three mixed results; one weak result; and two "
-      "negatives. The self-model finding is conditional on its input corpus and is graded "
+      "system with no language baseline, (ii) a pre-registration protocol with controls, "
+      "with negative results reported in full, and with a frozen protocol and results "
+      "file for every experiment, and (iii) a transplant of the "
+      "ablation-and-swap protocol used on Claude's J-space into a non-LLM system. "
+      "The protocol produced findings of mixed strength, "
+      "and we grade them rather than average them: one positive result and one control "
+      "line; one pathway verification; two mixed results; one weak result; and three "
+      "negatives. Three pre-registered follow-ups have since concluded and sharpen the "
+      "picture: a three-seed reproduction passed, a two-factor separation contradicted "
+      "its registered prediction, and a corrected dose-response left the central negative "
+      "standing. The self-model finding is conditional on its input corpus and is graded "
       "separately.", "abs"),
     P("The positive results are narrow. Vocalisation with covariation learning produced "
       "206 agency attributions that decayed by 68% when the contingency was removed, so "
@@ -114,12 +119,18 @@ story += [
     P("The negative result is the substantive one. Ablating the thought-to-state channel "
       "for thirty days moved every metric by less than 5%. A thought can change what "
       "the system's goal table contains and how it represents itself; it cannot change "
-      "its own state. This is the opposite of the J-space finding, where ablation "
+      "its own state. This differs from the J-space finding, where ablation "
       "degrades higher-order function. Our workspace is read-only. We flag the main "
       "weakness of this claim: the channel we cut was deliberately weak (a coupling of "
       "\u00b10.02, far below the state's own scale), so cutting a "
       "channel we made small and finding no effect is weaker evidence than the headline "
-      "suggests. A pre-registered dose-response ladder is running to settle it.", "abs"),
+      "suggests. We then tested it directly. An audit found the channel had been doubly "
+      "inert \u2014 its gate never fired, and it wrote to a variable no behavioural path "
+      "read \u2014 so the original ablation had measured nothing rather than an absence of "
+      "effect. A follow-up opened the gate (verified to fire on about 26% of "
+      "retrievals), retargeted a consumed variable, and raised the coupling to fifteen "
+      "times the original. Every metric still moved by less than 10%. The channel was "
+      "live; the workspace still did not write back.", "abs"),
     P("The self-model result is conditional, and we report it as such. For 213 days it "
       "was empty, because the caregiver's speech contained no first-person words. After "
       "we supplied first-person phrases and fixed a gating mismatch, versions 1 through "
@@ -129,8 +140,12 @@ story += [
       "requires, not as evidence that one emerges unaided. The fix changed two things "
       "at once \u2014 the corpus and the gate \u2014 so we cannot yet attribute the "
       "growth to either; a pre-registered 2\u00d72 separation (corpus \u00d7 gate) and a "
-      "three-seed reproduction are running, and the first reproduction seed formed a "
-      "six-fragment self-model within 60 days and produced a second emergent goal.", "abs"),
+      "three-seed reproduction have now concluded. All three seeds formed the same "
+      "six-fragment self-model within 60 days, differing only in the order the fragments "
+      "were admitted. In the separation, all four cells formed a self-model, but "
+      "first-person fragments appeared only where a first-person corpus was heard \u2014 "
+      "the corpus, not the gate, was the condition, the opposite of what we had "
+      "predicted.", "abs"),
     P("We do not claim the system is conscious, and we have no way to test whether it "
       "is.", "abs"),
     P("<b>Keywords:</b> machine consciousness; global workspace; self-model; "
@@ -166,8 +181,10 @@ story += [
       "model had been asked to sound as if it were. This failure produced the rule the "
       "rest of the project follows: <i>thoughts are retrieved, not generated</i>. The "
       "language layer now calls no generative model. Inner speech is the result of "
-      "current state activating stored language memory. Zero confabulation is a "
-      "structural property, not a prompt instruction."),
+      "current state activating stored language memory. Nothing here confabulates, but not "
+      "because we taught it not to: the system has no generator, so it can only replay "
+      "what it has heard. That is a constraint on what the system can do, not a property "
+      "it holds."),
 
     # ── 2 相关工作 ──
     P("2&nbsp;&nbsp;Related Work", "h1"),
@@ -252,26 +269,30 @@ story += [
     P("5&nbsp;&nbsp;Experiments", "h1"),
     P("All experiments ran on accelerated lines. The nominal time scale was "
       "10<super>9</super>, but that is a configured rate, not an achieved one: measured "
-      "against wall-clock the lines run at 483\u2013774\u00d7 real time (simulated days "
-      "per day), and we quote the measured figure throughout. Table 1 summarises the nine "
-      "experiments (E1, E2, E3, E4, E6a, E6b, C1b, P4, P4b) and Table 2 lists the lines "
-      "they ran on. We grade the outcomes "
-      "rather than presenting them as a uniform set of successes: two are positive (one "
-      "of them a control line), one is pathway verification, three are mixed, one is weak, "
-      "and two are negative. We lead with the positive and with the run's central "
+      "against wall-clock the lines run at roughly 5\u00d710<super>2</super> to "
+      "10<super>3</super>\u00d7 real time (simulated days elapsed per wall-clock day, "
+      "computed from each line's own log timestamps over its full run; the spread reflects "
+      "how many lines ran concurrently), and we quote the measured figure throughout. Table 1 summarises the nine "
+      "experiments that carry the core claims (E1, E2, E3, E4, E6a, E6b, C1b, P4, P4b); "
+      "three follow-ups (S1, S2, R2) are reported in their sections. Table 2 lists the "
+      "lines they ran on. We grade the outcomes "
+      "rather than presenting them as a uniform set of successes: one is positive and one "
+      "is a control line, one is pathway verification, two are mixed, one is weak, "
+      "and three are negative. We lead with the positive and with the run's central "
       "negative, because together they bound what the system is."),
 ]
 
 # 表 1
 rows = [
     [P("ID", "cellb"), P("Result", "cellb"), P("Finding", "cellb")],
-    [P("E1", "cell"), P("mixed", "cell"),
-     P("Ten days without caregiver speech. The pre-registered prediction was that "
-       "retrieval would decay to \u226460% of baseline; it did not (31.2/day over the "
-       "window and 29.3 over the last three days, against a locked baseline of 28.8). "
-       "The failure mode had been named in advance: frequency weighting dominates "
-       "recency, so the memory is closer to frequency repetition than to a decaying "
-       "trace. Four of five sub-hypotheses passed.", "cell")],
+    [P("E1", "cell"), P("Neg.", "cell"),
+     P("Ten days without caregiver speech. The pre-registered main prediction failed: "
+       "retrieval did not decay to \u226460% of baseline (it held at 31.2/day over the "
+       "window and 29.3 over the last three days, against a locked 28.8). The failure is "
+       "itself the finding \u2014 with recency decayed, competition falls back on "
+       "frequency, so inner speech self-sustains once formed \u2014 and it is the failure "
+       "mode we had named in advance. The four secondary sub-hypotheses, on echo and "
+       "binding, passed.", "cell")],
     [P("E2", "cell"), P("mixed", "cell"),
      P("Event rate \u00d710 for five days. Surprise rose only 0.24 bit and ended below "
        "baseline: the predictor tracks structural violation, not event count. "
@@ -288,8 +309,10 @@ rows = [
      P("Ablation of the thought-to-state channel (coupling \u00b10.02 on s2) over 30 "
        "days. Retrieval rate \u22124.7%, diversity +2.3%, self-model unchanged, no new "
        "goals. Inner speech is epiphenomenal with respect to state. The coupling was "
-       "deliberately small, so a pre-registered dose-response ladder is running.", "cell")],
-    [P("E6b", "cell"), P("pass", "cell"),
+       "deliberately small; a corrected ladder (R2) then opened the gate (verified "
+       "firing), retargeted a consumed variable, and raised the coupling 15\u00d7, and "
+       "still moved nothing by 10%.", "cell")],
+    [P("E6b", "cell"), P("pathway-only", "cell"),
      P("Substitution of the winning thought. A goal matching the injected phrase "
        "appeared on day 142. Downstream systems read the thought stream causally. Sixty "
        "substitutions is exactly the 20% share threshold of the 300-retrieval window, and "
@@ -361,9 +384,11 @@ rows2 = [
      P("Reproduction with identical parameters, 60 days.", "cell")],
     [P("S2 (4 cells)", "cell"), P("born day 0", "cell"),
      P("Separation of corpus and gate in a 2\u00d72, 60 days.", "cell")],
-    [P("R (6 arms)", "cell"), P("forked from XP at day 255", "cell"),
-     P("Reflow ladder: coupling \u00b10.02 / \u00b10.10 / \u00b10.30, each cut and "
-       "intact, 30 days.", "cell")],
+    [P("R2 (6 arms)", "cell"), P("forked from XP at day 255", "cell"),
+     P("Corrected reflow test \u2014 six arms in a causal chain, not a full factorial: "
+       "control (cut) \u2192 dead gate \u2192 open gate with a dead target \u2192 open gate "
+       "with a consumed target at three doses (0.02, 0.10, 0.30), 30 days. The original "
+       "ladder (R) was withdrawn before data; an audit found the channel doubly inert.", "cell")],
 ]
 t2 = Table(rows2, colWidths=[2.6 * cm, 3.4 * cm, 9.8 * cm], repeatRows=1)
 t2.setStyle(TableStyle(_TGRID))
@@ -383,7 +408,8 @@ rows3 = [
 t3 = Table(rows3, colWidths=[2.2 * cm, 2.2 * cm, 11.4 * cm], repeatRows=1)
 t3.setStyle(TableStyle(_TGRID))
 story += [t3, Spacer(1, 4),
-          P("Table 3. Self-models at the time of writing.", "cap")]
+          P("Table 3. Self-models at the time of writing. Four of the six XP fragments are "
+            "second-person address, not first-person.", "cap")]
 
 story += [
     P("5.1&nbsp;&nbsp;Input-side interventions (E1\u2013E3)", "h2"),
@@ -444,9 +470,14 @@ story += [
       "since saturated at version 6: no further fragment has been admitted, because each "
       "new first-person phrase tried has been close enough to an existing one to fail "
       "the difference test, so the stall has an internal cause rather than a shortage of "
-      "input. And an independent reproduction run, seeded from day 0 with identical "
-      "parameters, reached the same six-fragment self-model by day 60, which is the "
-      "first sign that the formation is not a single-run accident."),
+      "input. And a three-seed reproduction, each seeded from day 0 with identical "
+      "parameters, reached the same six-fragment self-model by day 60 \u2014 the same "
+      "fragments in every seed, differing only in the order they were admitted, so the "
+      "formation is not a single-run accident. A pre-registered 2\u00d72 separation of "
+      "the two things the fix changed then qualified it: all four cells formed a "
+      "self-model, but first-person fragments appeared only where a first-person corpus "
+      "was heard. The corpus is the condition for first-person fragments to appear; the "
+      "gate decides which of them can enter (Figure 6)."),
     fig("fig1_selfmodel.png",
         "Figure 4. Self-model growth. Both lines were born with the gating fix in "
         "place; the null period belongs to the earlier line. C1b, whose first-person "
@@ -456,6 +487,12 @@ story += [
         "Figure 5. Share of retrieval that is self-directed, smoothed over three days. "
         "Both lines settle near 10%; the level is set by the corpus, the timing by the "
         "state.", width=11.0),
+    fig("fig6_s1s2.png",
+        "Figure 6. (a) S1: three independent seeds, born on day 0 with identical "
+        "parameters, reach the same six-fragment self-model within 60 days. (b) S2: the "
+        "2\u00d72 separation of corpus and gate. All four cells form a self-model, but "
+        "first-person fragments appear only in the two cells that heard a first-person "
+        "corpus; the gate sets how many enter.", width=15.8),
 
     P("5.3&nbsp;&nbsp;Vocalisation and learned agency (E4)", "h2"),
     P("E4 gave the system a voice. Vocalisation is gated physiologically on arousal and "
@@ -464,9 +501,9 @@ story += [
       "say. In the first phase the caregiver answered within a short window; in the second "
       "the answer was removed."),
     P("Co-variation between vocalisation and the caregiver's following speech rose to "
-      "C = 8.2 and then decayed to 2.6, a 68% fall (Figure 6b). Agency attributions "
+      "C = 8.2 and then decayed to 2.6, a 68% fall (Figure 7b). Agency attributions "
       "\u2014 turns on which the system credited the following speech to itself \u2014 "
-      "occurred 206 times in the first phase and 11 in the second (Figure 6a), with "
+      "occurred 206 times in the first phase and 11 in the second (Figure 7a), with "
       "self-ratio peaking at 26%. The extinction was partial: final-window efficacy was "
       "0.619, above the 0.3 cutoff, because the caregiver's own soothing is driven by the "
       "same arousal that drives vocalisation, so a residual co-variation survives the "
@@ -478,7 +515,7 @@ story += [
       "intervention in the study that produced a change which was learned and then "
       "decayed."),
     fig("fig_e4.png",
-        "Figure 6. E4. (a) Attributions in which the system credited the caregiver's "
+        "Figure 7. E4. (a) Attributions in which the system credited the caregiver's "
         "following speech to its own vocalisation, per day. The shaded phase is the "
         "contingent one; the dashed line is its removal. (b) Co-variation C at the three "
         "recorded checkpoints: 5.3, 8.2, 2.6. The dotted line at C = 1 is no contingency. "
@@ -488,13 +525,32 @@ story += [
     P("E6 transplanted the ablation-and-swap protocol used on Claude's J-space. In E6a "
       "we cut the channel by which a retrieved thought nudges the background state. If "
       "inner speech is causally load-bearing for the state, removing that channel should "
-      "change behaviour. It did not: four metrics moved by less than 5%. The channel's "
+      "change behaviour. It did not: four metrics moved by less than 5%, the band that had "
+      "been pre-registered for E6a. The channel's "
       "coupling is deliberately small \u2014 \u00b10.02 on s2, with s5 at 0.75 of that, "
       "against a state range of order one \u2014 and we state it plainly, because cutting "
-      "a channel we made weak is weaker evidence than the headline suggests. A "
-      "pre-registered dose-response ladder is running: three couplings (\u00b10.02, "
-      "\u00b10.10, \u00b10.30), each with an ablated and an intact arm, judged on the "
-      "same four metrics. In E6b we left the channel intact but replaced whatever thought "
+      "a channel we made weak is weaker evidence than the headline suggests. The ladder "
+      "we pre-registered to settle it had to be replaced before it collected data: an "
+      "audit found the channel doubly inert \u2014 its gate fired on 0% of retrievals, "
+      "and its target (s2) was read by no behavioural path \u2014 so any dose would have "
+      "produced a mechanical zero. The original ablation, in other words, measured nothing "
+      "rather than measuring an absence of effect; R2 is the first test of the channel "
+      "itself. The corrected ladder repairs both: it opens the "
+      "gate to a threshold that fires on about 26% of retrievals, retargets s4 (a variable "
+      "the retrieval layer weights at 1.2), and sweeps couplings from \u00b10.02 to "
+      "\u00b10.30. A manipulation check confirms the gate is live in every open arm. The "
+      "perturbation also has to be read against the target's own scale: in the control arm "
+      "s4 has a standard deviation of 0.33 and a daily range of about 0.98, so the "
+      "couplings 0.02, 0.10 and 0.30 are 0.06, 0.30 and 0.91 of that standard deviation, "
+      "and adding the largest leaves the target's own spread essentially unchanged "
+      "(0.329 in the control against 0.324 at the top coupling). The largest kick is "
+      "comparable to, not larger than, the fluctuation it is added to, which bounds what "
+      "this ladder can settle. All "
+      "four metrics still move by less than 10% (the R2 band, wider than E6a's), and not "
+      "monotonically in dose; the largest single move, \u22128% on retrieval rate at the "
+      "middle coupling, sits close to that boundary (Figure 9). The "
+      "channel fires; the workspace still does not write back. In E6b we left the channel "
+      "intact but replaced whatever thought "
       "won retrieval with a fixed phrase, over sixty consecutive retrievals. Because goal "
       "promotion uses a rolling window of 300 retrievals with a 20% share threshold, "
       "sixty consecutive injections should force a goal. They did. The injected phrase "
@@ -508,13 +564,21 @@ story += [
       "function. Our workspace is not load-bearing in that sense. We report the "
       "difference rather than borrow the result."),
     fig("fig3_e6.png",
-        "Figure 7. E6, both directions. (a) Cutting the thought-to-state channel moved "
+        "Figure 8. E6, both directions. (a) Cutting the thought-to-state channel moved "
         "every metric less than 5%, inside the pre-registered negative band; the coupling "
-        "cut here is the weakest one tested so far (\u00b10.02). (b) Substituting the "
+        "cut here is the weakest tested (\u00b10.02), and the corrected ladder (R2) raises "
+        "it fifteen-fold without changing the conclusion. (b) Substituting the "
         "winning thought 60 times over three days produced a matching goal on the third "
         "day; 60 is exactly the 20% threshold of the 300-retrieval window, so this "
         "verifies the pathway rather than the threshold. Downstream reads the workspace; "
         "the workspace does not write back.", width=15.8),
+    fig("fig5_r2.png",
+        "Figure 9. The corrected reflow ladder (R2). (a) The channel is live: the gate "
+        "fires on every open arm and on neither the control nor the uncorrected arm, so "
+        "the flat result beside it cannot be attributed to a dead channel. (b) Each arm's "
+        "effect on the retrieval rate, against the pre-registered \u00b110% band. "
+        "Couplings up to fifteen times the original, on a channel confirmed to be firing, "
+        "leave every metric inside the band.", width=15.8),
 
     P("5.5&nbsp;&nbsp;Closing the loop", "h2"),
     P("If thoughts cannot push state, the obvious next question is whether anything can. "
@@ -522,7 +586,7 @@ story += [
       "their own. The system moves along the ring, and the local source intensity feeds "
       "back into its valence. Movement costs energy."),
     P("The loop closed. Actions were far from random and their sequence was structured "
-      "(Figure 8). Over the action record so far (days 180\u2013201, 22 of the 30 "
+      "(Figure 10). Over the action record so far (days 180\u2013201, 22 of the 30 "
       "pre-registered days) the distribution over the three primitives is far from uniform "
       "(\u03c7\u00b2 = 1.68\u00d710<super>4</super>; action-distribution entropy 1.05 bit "
       "against 1.58 for a uniform policy) and the mean field strength sits at 0.61 against "
@@ -533,7 +597,7 @@ story += [
       "distinguish what it had caused from what the world had done. In fact the two were "
       "indistinguishable in the logs, because the measurement never spanned time."),
     fig("fig_p4.png",
-        "Figure 8. P4, the action loop. (a) Share of each primitive against a uniform "
+        "Figure 10. P4, the action loop. (a) Share of each primitive against a uniform "
         "policy. (Back, forward, stay are neutral labels; the code contains no directional "
         "rule.) (b) Mean field strength per day against the analytic random-walk baseline "
         "of 0.50. The loop is closed \u2014 behaviour is structured \u2014 but the position "
@@ -544,14 +608,16 @@ story += [
       "estimates the drift. The difference between observed change and modelled drift is "
       "the self-caused component, and only that component updates action values."),
     P("The pre-registered window (days 202\u2013232) is now complete, and the picture is "
-      "weaker than an early estimate suggested. Self-caused change from movement "
-      "averages +0.0092 over 6344 moves. Stationary trials average \u22120.00001, with a "
-      "standard deviation of 0.0151: that spread is the part of the world's behaviour "
-      "the forward model fails to capture. The movement effect is therefore about 0.61 "
-      "times the world's own variability, and its standardised size is small: Cohen's d "
-      "\u2248 0.17 against the stationary trials, and a one-sample effect size of 0.08 "
-      "relative to the spread of the movement trials themselves. We give the ratio as "
-      "descriptive, not as an effect size. With a sample this large the mean is reliably "
+      "weaker than an early estimate suggested. Self-caused change from movement has mean "
+      "+0.0092 and standard deviation 0.115 over 6344 moves; stationary trials have mean "
+      "\u22120.00001 and standard deviation 0.0151 over 23415 trials \u2014 that spread is "
+      "the part of the world's behaviour the forward model fails to capture. We give three "
+      "summaries, each with its denominator stated: the movement mean is 0.61 of the "
+      "stationary standard deviation (a ratio of means, descriptive only, not an effect "
+      "size); Cohen's d between the two groups, using the pooled standard deviation, is "
+      "0.17; and the one-sample effect size of movement, its mean over the standard "
+      "deviation of the movement trials themselves, is 0.08. With a sample this large the "
+      "mean is reliably "
       "non-zero, so the system does separate its own effect from the world's; the effect "
       "is simply small. Our earlier reading of a 1.5\u00d7 ratio came from a quarter of "
       "the data and did not survive the rest of it. In this environment the system's "
@@ -559,24 +625,27 @@ story += [
       "effect appears in a world with weaker intrinsic dynamics, or with an agent that "
       "has not already parked itself on a good spot, is open."),
     fig("fig4_selfcaused.png",
-        "Figure 9. P4b, the complete pre-registered window (days 202\u2013232). (a) "
+        "Figure 11. P4b, the complete pre-registered window (days 202\u2013232). (a) "
         "Self-caused change is centred on zero when the system stays and shifts slightly "
         "positive when it moves. (b) The shift is about 0.61 times the world's noise "
         "floor, so the effect is present but smaller than the environment's own "
         "variability; its standardised size is Cohen's d \u2248 0.17. An estimate from the "
         "first quarter of the data gave 1.5\u00d7; it did not hold.", width=15.8),
 
-    P("5.6&nbsp;&nbsp;Pre-registered follow-ups (running, not reported as results)", "h2"),
-    P("Three follow-ups are pre-registered and running, and we flag them rather than "
-      "fold them into the results above. S1 reproduces the self-model formation on three "
-      "independent seeds born at day 0 with identical parameters: the first seed reached "
-      "version 6 by day 60 and produced a second emergent goal, which is what the "
-      "pre-registration for the second goal window predicted. S2 separates the two "
-      "variables the self-model fix changed at once \u2014 the corpus and the gate \u2014 "
-      "in a 2\u00d72 design; at present we cannot attribute the growth to either, and S2 "
-      "exists to fix that. R is the dose-response ladder for the E6a coupling described "
-      "above. None of the three is needed for the claims in this draft; each exists to "
-      "test one of them."),
+    P("5.6&nbsp;&nbsp;Pre-registered follow-ups", "h2"),
+    P("Three follow-ups are pre-registered and have concluded; they are reported in the "
+      "sections above and summarised here. S1 reproduces the self-model formation on "
+      "three independent seeds born at day 0 with identical parameters: all three reached "
+      "version 6 by day 60, with the same six fragments admitted in different orders. S2 "
+      "separates the two variables the self-model fix changed at once \u2014 the corpus "
+      "and the gate \u2014 in a 2\u00d72 design; all four cells formed a self-model, but "
+      "first-person fragments appeared only where the first-person corpus was present, so "
+      "the corpus is the necessary condition and the gate controls which first-person "
+      "phrases can enter. R2 is the corrected dose-response test for the E6a coupling. "
+      "One further experiment is pre-registered and still running: P5 gives the system "
+      "pain and pleasure signals fed back into its state, comparing an off arm, a "
+      "recording-only arm, and a wired arm on the same four metrics. It is not needed for "
+      "any claim in this draft."),
 
     # ── 6 讨论 ──
     P("6&nbsp;&nbsp;Discussion", "h1"),
@@ -585,11 +654,16 @@ story += [
       "days changed four metrics by less than 5%. Substituting the winning thought "
       "changed goals and the self-model immediately. Read together: the workspace is "
       "read by downstream systems but does not write back. Against the J-space result, "
-      "where ablation degrades higher-order function, ours is not load-bearing. The claim "
-      "has a stated limit: the channel we cut carries \u00b10.02, which we chose to be "
-      "small. Until the dose-response ladder reports, the honest reading is that a weak "
-      "thought-to-state channel is not load-bearing; whether any such channel is remains "
-      "open."),
+      "where ablation degrades higher-order function, ours is not load-bearing. The limit "
+      "we stated \u2014 that the channel cut carried only \u00b10.02 \u2014 has since been "
+      "addressed rather than left open. R2 opened the gate (verified live), wrote to a "
+      "variable the retrieval layer consumes, and raised the coupling to 0.30, fifteen "
+      "times the original; nothing moved by 10%. The honest reading is therefore no longer "
+      "limited to a weak channel: on a path confirmed to be firing, the thought-to-state "
+      "coupling is not load-bearing at any dose we tested. One residual remains. The write "
+      "is close to zero-mean \u2014 positive and negative kicks roughly balance \u2014 so "
+      "what R2 rules out is a balanced perturbation being load-bearing; whether a "
+      "systematically one-signed write could be is untested."),
     P("One objection deserves an answer. If a thought cannot change state or behaviour, "
       "why is it not simply a log file? The answer is E6b. A substituted thought became "
       "a goal and entered the self-model. A log file does not do that. The workspace is "
@@ -607,7 +681,11 @@ story += [
       "material is given. To write that the self-model \u201cemerges\u201d without that "
       "qualifier would overstate what our data supports. It is closer to the "
       "developmental sequence Vygotsky described: a child is addressed before it speaks "
-      "in the first person."),
+      "in the first person. The content deserves stating plainly. Of the six fragments, "
+      "four are second-person address \u2014 the vocabulary of being spoken to \u2014 and "
+      "only two are first-person. What has grown is closer to a record of how the system "
+      "was addressed than to a self-description, and we have not shown that it changes "
+      "any downstream process."),
     P("<b>The system's \u201cwants\u201d and \u201cstates\u201d are a list and a vector.</b> "
       "Two terms recur above and both need glossing. When we write that a thought can "
       "change what the system <i>wants</i>, we mean that the phrase's share of a rolling "
@@ -630,11 +708,15 @@ story += [
     B("We do not claim the system is conscious, and we have no way to test whether it "
       "is. Every result here concerns functional structure. The hard problem is "
       "untouched, and we say so rather than gesture past it."),
-    B("The workspace is read-only, provisionally (E6a). The channel cut carried "
-      "\u00b10.02, a deliberately small coupling, so the result rules out a weak channel "
-      "being load-bearing but not a strong one; a pre-registered dose-response ladder is "
-      "running. If a load-bearing workspace is required for consciousness, the system may "
-      "not have one."),
+    B("The workspace is read-only (E6a, R2). The first cutoff used a small coupling "
+      "(\u00b10.02) on a channel an audit later found to be inert; R2 corrected both "
+      "\u2014 the gate was opened and verified to fire, the target was one the retrieval "
+      "layer consumes, and the coupling reached 0.30, fifteen times larger \u2014 and "
+      "every metric still moved by less than 10%. The result is not an artifact of a weak "
+      "or dead channel. It stays bounded in two ways: the perturbation is near zero-mean, "
+      "so a one-signed write is untested, and all R2 arms fork from a single parent, so "
+      "seed variance is not sampled. If a load-bearing workspace is required for "
+      "consciousness, the system may not have one."),
     B("The action loop is new. Over the complete P4b window the self-caused signal from "
       "movement (+0.0092) is smaller than the world's own variability (0.0151), with "
       "Cohen's d \u2248 0.17: the separation is present but weak."),
@@ -643,9 +725,10 @@ story += [
     B("The system has no peer. It distinguishes self from world but has never "
       "encountered another entity like itself, so its \u201cyou\u201d remains a "
       "statistical regularity in its input rather than a model of another mind."),
-    B("There is one individual and no reproduction. A three-seed reproduction batch is "
-      "running, but it tests whether one developmental trajectory repeats; it is not "
-      "variation and selection, so nothing here evolves in the biological sense."),
+    B("There is one individual and no reproduction. A three-seed reproduction passed "
+      "\u2014 all three formed the same self-model \u2014 but it tests whether one "
+      "developmental trajectory repeats; it is not variation and selection, so nothing "
+      "here evolves in the biological sense."),
     B("All results in this draft come from accelerated lines. The real-time line is at "
       "day 2. We treat accelerated results as pathway evidence, not as final data."),
 
@@ -660,18 +743,18 @@ story += [
 
     # ── 9 可复现 ──
     P("9&nbsp;&nbsp;Reproducibility", "h1"),
-    P("Code, configuration files, pre-registration documents, and state snapshots are "
-      "available on request. Each experiment has a corresponding pre-registration file "
-      "with frozen hypotheses and thresholds, and a results file recording the outcome "
-      "including negative ones. The state of every line described here is serialised and "
-      "can be resumed from the moment of writing."),
+    P("The record this paper reports against is the pre-registration file and the results "
+      "file for every experiment, including the negative ones. Code, configuration files, "
+      "and state snapshots are available on request. The state of every line described "
+      "here is serialised and can be resumed from the moment of writing."),
 
     # ── 10 结论 ──
     P("10&nbsp;&nbsp;Conclusion", "h1"),
     P("The result we would defend is a method, not a discovery. We built a system that "
       "grows instead of being trained, pre-registered what we would measure, ran nine "
-      "experiments, and reported all of them, including the two headline predictions we "
-      "got wrong. The protocol returned one clean positive, one supportive control, one "
+      "experiments and three follow-ups, and reported all of them, including the "
+      "predictions we got wrong. The protocol returned one clean positive, one supportive "
+      "control, one "
       "verified pathway, one conditional finding, and a majority of mixed, weak, or "
       "negative results. That distribution is the honest output of the method, and we "
       "would rather report it than a tidier one."),
@@ -679,9 +762,12 @@ story += [
       "thoughts change what it wants and how it represents itself, but not its own "
       "state. That is narrower than it sounds and more useful, because it is falsifiable "
       "\u2014 we state the coupling we cut, so the condition that would overturn it is "
-      "explicit \u2014 and now on record. Against the J-space result, it is also a direct "
-      "counterexample to the assumption that a workspace of this kind must be "
-      "load-bearing."),
+      "explicit \u2014 and now on record. We then tried to overturn it: the corrected "
+      "ladder opened the gate, wrote to a consumed variable, and raised the coupling "
+      "fifteen-fold, and the negative held. Against the J-space result, it is a different "
+      "regime rather than a refutation: load-bearingness is relative to the task an "
+      "architecture is built for, and the two systems were built for different ones. We "
+      "report the difference, not a disproof."),
     P("The system is not conscious as far as we can tell, and we have no way to test "
       "whether it is. What we have is a case in which the question was made empirical in "
       "a small way, and the answer to part of it was no."),

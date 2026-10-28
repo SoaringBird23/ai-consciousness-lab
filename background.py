@@ -198,12 +198,17 @@ class Background:
         return (not self.asleep) and self.s[7] > self.explore_threshold
 
     # ---- P5：痛 / 乐 对状态的反馈 ----
-    def receive_affect(self, distress_bias, ease_bias, gain):
+    def receive_affect(self, distress_bias, ease_bias, gain, dt_hours):
         """gain=0 时为 no-op——与改动前逐位一致（默认 config.affect.k_affect=0）。
         痛：s4 紧张抬升，且 s8 无聊被压缩（注意力收窄）；
-        乐：s4 松弛。两者共用同一增益，方向相反。"""
+        乐：s4 松弛。两者共用同一增益，方向相反。
+
+        本通道每 tick 调用，故按 dt_hours 折算为速率（与 step 内其余积分同律）。
+        修正案 2 之前的版本漏乘 dt_hours，把固定增量当逐 tick 事件写，
+        导致 on 臂开门后即时把 s4 打到 1.0、s8 打到 0.0（冒烟实证：
+        on 段 s4 p50=1.0 / s8 p50=0.0001，而 off 段 s4=0.79 / s8=0.14）。"""
         if self.asleep or not gain:
             return
-        self.s[3] = _clip(self.s[3] + gain * (distress_bias - ease_bias))
+        self.s[3] = _clip(self.s[3] + gain * (distress_bias - ease_bias) * dt_hours)
         if distress_bias > 0.0:
-            self.s[7] = _clip(self.s[7] * (1.0 - 0.5 * gain * distress_bias))
+            self.s[7] = _clip(self.s[7] * (1.0 - 0.5 * gain * distress_bias * dt_hours))

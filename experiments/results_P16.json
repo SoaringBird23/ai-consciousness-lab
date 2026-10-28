@@ -1,0 +1,69 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "arms": {
+    "off": {
+      "arm": "off",
+      "n_train": 0,
+      "n_test": 0,
+      "acc_world": null,
+      "n_world": 0,
+      "acc_other": null,
+      "n_other": 0,
+      "acc_pre15_world": null,
+      "n_pre": 0,
+      "acc_post15_world": null,
+      "n_post": 0,
+      "match5": null,
+      "n_match5": 0
+    },
+    "full": {
+      "arm": "full",
+      "n_train": 9384,
+      "n_test": 8915,
+      "acc_world": 1.0,
+      "n_world": 3747,
+      "acc_other": 0.4915,
+      "n_other": 5168,
+      "acc_pre15_world": 1.0,
+      "n_pre": 1896,
+      "acc_post15_world": 1.0,
+      "n_post": 1841,
+      "match5": 0.2698,
+      "n_match5": 8915
+    },
+    "shuf": {
+      "arm": "shuf",
+      "n_train": 9352,
+      "n_test": 9001,
+      "acc_world": 0.5135,
+      "n_world": 3741,
+      "acc_other": 0.5108,
+      "n_other": 5260,
+      "acc_pre15_world": 0.5122,
+      "n_pre": 1890,
+      "acc_post15_world": 0.5233,
+      "n_post": 1865,
+      "match5": 0.2015,
+      "n_match5": 9001
+    }
+  },
+  "verdicts": {
+    "H16a_指称存在(acc>=0.75,p<0.01)": {
+      "pass": true,
+      "detail": "full world acc=1.0(n=3747) p=0.00e+00"
+    },
+    "H16b_内容特定(shuf<=0.60 且 full-shuf>=0.15)": {
+      "pass": true,
+      "detail": "full=1.0 shuf=0.5135"
+    },
+    "H16c_特异性(world-other>=0.20)": {
+      "pass": true,
+      "detail": "world=1.0 other=0.4915"
+    },
+    "H16d_学习曲线(post>=1.2x pre)": {
+      "pass": false,
+      "detail": "pre=1.0 post=1.0"
+    }
+  },
+  "note": "二值世界（field 双峰），chance=0.5；N=5 匹配为次级指标。"
+}

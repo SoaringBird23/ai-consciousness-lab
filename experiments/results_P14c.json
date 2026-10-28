@@ -1,0 +1,93 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "window_days": 120,
+  "judged_window": "末30日 (t0+90d .. t0+120d)",
+  "content_map_sha": "9639a9cc1ae8d9440675e531c65034732aaa52d99da77d7788aa803de040e666",
+  "arms": {
+    "off": {
+      "arm": "off",
+      "M5_vocal_n": 534,
+      "M5_vocal_n_post30": 139,
+      "M1_overlap_post30": 1.0,
+      "M2_C_post30": 10.527728903228391,
+      "M2_r_in": 0.02194244604316547,
+      "M2_r_out": 0.0020842525719328396,
+      "M2_n_speech_in": 183,
+      "M2_n_speech_out": 5385,
+      "M4_E_dispersion_post30": 0.0,
+      "M7_class_mix_HIGH": null,
+      "M3_pred_err_pre15": null,
+      "M3_pred_err_post15": null,
+      "M6_E_vs_r_spearman": null,
+      "n_rm_updates": 0,
+      "n_E_types": 0,
+      "n_speech_total": 66639
+    },
+    "full": {
+      "arm": "full",
+      "M5_vocal_n": 471,
+      "M5_vocal_n_post30": 108,
+      "M1_overlap_post30": 0.23148148148148148,
+      "M2_C_post30": 22.18315358869468,
+      "M2_r_in": 0.046141975308641975,
+      "M2_r_out": 0.002080045793496086,
+      "M2_n_speech_in": 299,
+      "M2_n_speech_out": 5378,
+      "M4_E_dispersion_post30": 1.0388,
+      "M7_class_mix_HIGH": 0.4621,
+      "M3_pred_err_pre15": 11.327968,
+      "M3_pred_err_post15": 4.7566910714285715,
+      "M6_E_vs_r_spearman": 0.8433,
+      "n_rm_updates": 449,
+      "n_E_types": 42,
+      "n_speech_total": 66949
+    },
+    "shuf": {
+      "arm": "shuf",
+      "M5_vocal_n": 482,
+      "M5_vocal_n_post30": 121,
+      "M1_overlap_post30": 0.2396694214876033,
+      "M2_C_post30": 12.013306800563191,
+      "M2_r_in": 0.02534435261707989,
+      "M2_r_out": 0.002109689949472674,
+      "M2_n_speech_in": 184,
+      "M2_n_speech_out": 5453,
+      "M4_E_dispersion_post30": 0.8848,
+      "M7_class_mix_HIGH": 0.4717,
+      "M3_pred_err_pre15": 11.524120253164556,
+      "M3_pred_err_post15": 3.7048980392156863,
+      "M6_E_vs_r_spearman": 0.8661,
+      "n_rm_updates": 462,
+      "n_E_types": 47,
+      "n_speech_total": 66543
+    }
+  },
+  "power_ok": true,
+  "space_ok": true,
+  "verdicts": {
+    "H14a_选择标准改变(重合<0.80)": {
+      "pass": true,
+      "detail": "full 后30日重合=0.23148148148148148"
+    },
+    "H14b_有组织性(C>=1.5x off)": {
+      "pass": true,
+      "detail": "full C=22.18315358869468 vs off C=10.527728903228391 → 比=2.107"
+    },
+    "H14c_在学习(后15<0.7x前15)": {
+      "pass": true,
+      "detail": "前15=11.327968 后15=4.7566910714285715"
+    },
+    "H14d_内容特定性(shuf<1.2xoff 且 full>=1.2xshuf)": {
+      "pass": true,
+      "detail": "off=10.527728903228391 full=22.18315358869468 shuf=12.013306800563191"
+    },
+    "H14e_反事实(自因>0 且>0.0151)": {
+      "pass": true,
+      "detail": "自因分量(r_in-r_out)=0.0440619"
+    },
+    "H14f_学到听者内容规则(Spearman>=0.5)": {
+      "pass": true,
+      "detail": "full M6 ρ=0.8433（对比 shuf ρ=0.8661）"
+    }
+  }
+}

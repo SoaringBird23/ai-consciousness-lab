@@ -34,3 +34,9 @@ corpus/*.json
 *.bak_*
 *.aux
 *.log
+
+# ── 调试临时脚本 ──
+_probe_p5_tmp.py
+
+# ── arXiv 提交包（本地生成，按需重建）──
+paper/arxiv/submission.tar.gz

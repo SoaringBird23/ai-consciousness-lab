@@ -1,0 +1,60 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "arms": {
+    "off": {
+      "arm": "off",
+      "n_turns": 14306,
+      "n_self": 431,
+      "n_partner": 13875,
+      "contain_all_mean": 0.1317,
+      "contain_multi_mean": 0.051,
+      "linked_rate": 0.2622,
+      "max_chain": 4,
+      "chains_ge3": 9,
+      "distinct_self_rate": 0.1299
+    },
+    "full": {
+      "arm": "full",
+      "n_turns": 14302,
+      "n_self": 431,
+      "n_partner": 13871,
+      "contain_all_mean": 0.2026,
+      "contain_multi_mean": 0.0603,
+      "linked_rate": 0.5336,
+      "max_chain": 15,
+      "chains_ge3": 30,
+      "distinct_self_rate": 0.1276
+    },
+    "shuf": {
+      "arm": "shuf",
+      "n_turns": 14255,
+      "n_self": 422,
+      "n_partner": 13833,
+      "contain_all_mean": 0.1453,
+      "contain_multi_mean": 0.0592,
+      "linked_rate": 0.3199,
+      "max_chain": 5,
+      "chains_ge3": 11,
+      "distinct_self_rate": 0.1232
+    }
+  },
+  "verdicts": {
+    "H19a_轮次承重(full-linked >= shuf+0.10)": {
+      "pass": true,
+      "detail": "full=0.5336 shuf=0.3199"
+    },
+    "H19b_多轮承接(full 链>=3 数 > shuf)": {
+      "pass": true,
+      "detail": "full=30 shuf=11"
+    },
+    "H19c_非退化(full distinct>=off-0.05)": {
+      "pass": true,
+      "detail": "full=0.1276 off=0.1299"
+    },
+    "H19d_优于off(full-linked >= off)": {
+      "pass": true,
+      "detail": "full=0.5336 off=0.2622"
+    }
+  },
+  "note": "以词重叠为对话承接的可实现代理（共现层，非语义理解）；shuffle 为内容对照（D 幅值不变、轮↔词关联打断）。"
+}

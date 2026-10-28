@@ -1,0 +1,405 @@
+{
+  "masked": {
+    "n": 404,
+    "top1": 0.07673267326732673,
+    "top5": 0.16831683168316833,
+    "frame_prior_top1": 0.0297029702970297,
+    "unigram_top1": 0.034653465346534656,
+    "unigram_top5": 0.12128712871287128
+  },
+  "generation": {
+    "n": 200,
+    "purity": 1.0,
+    "novel": 0.905,
+    "topic_overlap": 0.865,
+    "frame_valid": 0.2,
+    "avg_len": 4.45,
+    "modes": {
+      "followup": 53,
+      "paraphrase": 67,
+      "question_template": 24,
+      "frame": 24,
+      "backchannel": 13,
+      "why_because": 1,
+      "imperative": 3,
+      "action_template": 1,
+      "yesno_echo": 13,
+      "praise": 1
+    }
+  },
+  "pseudo_question": {
+    "n": 18,
+    "exact_any": 0.0,
+    "exact_first": 0.0,
+    "category_any": 0.5555555555555556,
+    "modes": {
+      "backchannel": 6,
+      "question_template": 42,
+      "stitch": 3,
+      "followup": 3
+    }
+  },
+  "masked_examples": [
+    {
+      "text": "这个头在这儿",
+      "mask": "这个_在这儿",
+      "truth": "头",
+      "pred": [
+        "汽车",
+        "咧",
+        "嘞"
+      ],
+      "frame": "这个_"
+    },
+    {
+      "text": "那你就那样画呀",
+      "mask": "那你就那_画呀",
+      "truth": "样",
+      "pred": [
+        "边",
+        "然后呢",
+        "还有呢"
+      ],
+      "frame": "那_"
+    },
+    {
+      "text": "他吓一跳耶",
+      "mask": "他_耶",
+      "truth": "吓一跳",
+      "pred": [
+        "说",
+        "肚子饿了",
+        "很伤心"
+      ],
+      "frame": "他_"
+    },
+    {
+      "text": "那前天",
+      "mask": "那_天",
+      "truth": "前",
+      "pred": [
+        "边",
+        "然后呢",
+        "还有呢"
+      ],
+      "frame": "那_"
+    },
+    {
+      "text": "妈妈的菜来了",
+      "mask": "_的菜来了",
+      "truth": "妈妈",
+      "pred": [
+        "好",
+        "真",
+        "黄"
+      ],
+      "frame": "_的"
+    },
+    {
+      "text": "妈妈的菜来了",
+      "mask": "妈妈的_来了",
+      "truth": "菜",
+      "pred": [
+        "来",
+        "快",
+        "妈妈"
+      ],
+      "frame": "_来"
+    },
+    {
+      "text": "妈妈的菜来了",
+      "mask": "妈妈的菜_了",
+      "truth": "来",
+      "pred": [
+        "刀",
+        "韭",
+        "榨"
+      ],
+      "frame": "菜_"
+    },
+    {
+      "text": "傻乎乎地笑",
+      "mask": "傻乎_地笑",
+      "truth": "乎",
+      "pred": [
+        "震",
+        "议",
+        "狂"
+      ],
+      "frame": "_地"
+    },
+    {
+      "text": "妈妈要到你们家啰",
+      "mask": "_要到你们家啰",
+      "truth": "妈妈",
+      "pred": [
+        "吃饭",
+        "休息",
+        "打针"
+      ],
+      "frame": "_要"
+    },
+    {
+      "text": "妈妈要到你们家啰",
+      "mask": "妈妈要到你_家啰",
+      "truth": "们",
+      "pred": [
+        "看",
+        "说",
+        "告诉我"
+      ],
+      "frame": "你_"
+    },
+    {
+      "text": "妈妈要到你们家啰",
+      "mask": "妈妈要到你们_啰",
+      "truth": "家",
+      "pred": [
+        "打哈欠",
+        "在干",
+        "告诉"
+      ],
+      "frame": "你们_"
+    },
+    {
+      "text": "我是男生",
+      "mask": "我是_生",
+      "truth": "男",
+      "pred": [
+        "虫子",
+        "女生",
+        "狮子"
+      ],
+      "frame": "是_"
+    }
+  ],
+  "generation_examples": [
+    {
+      "in": "你只要坐著",
+      "out": "我只要坐著吗",
+      "act": "statement",
+      "mode": "followup",
+      "frame": null
+    },
+    {
+      "in": "画小熊我也不会",
+      "out": "画小熊你也不会",
+      "act": "statement",
+      "mode": "paraphrase",
+      "frame": null
+    },
+    {
+      "in": "晚饭必须吃的啊",
+      "out": "晚饭必须吃的啊吗",
+      "act": "statement",
+      "mode": "followup",
+      "frame": null
+    },
+    {
+      "in": "唉对做一张桌子",
+      "out": "唉对做一张桌子呢",
+      "act": "statement",
+      "mode": "paraphrase",
+      "frame": null
+    },
+    {
+      "in": "猫头鹰在哪里",
+      "out": "猫头鹰在下面",
+      "act": "wh_question",
+      "mode": "question_template",
+      "frame": null
+    },
+    {
+      "in": "种子是果实里的籽",
+      "out": "种子是果实里的籽呢",
+      "act": "statement",
+      "mode": "paraphrase",
+      "frame": null
+    },
+    {
+      "in": "拿起一块小石头",
+      "out": "小石头",
+      "act": "statement",
+      "mode": "frame",
+      "frame": "小_"
+    },
+    {
+      "in": "好大一个太阳",
+      "out": "嗯",
+      "act": "statement",
+      "mode": "backchannel",
+      "frame": null
+    },
+    {
+      "in": "带著壮壮",
+      "out": "带著壮壮吗",
+      "act": "statement",
+      "mode": "followup",
+      "frame": null
+    },
+    {
+      "in": "变一个出来",
+      "out": "变出来",
+      "act": "statement",
+      "mode": "frame",
+      "frame": "变_"
+    },
+    {
+      "in": "小猫咪走了",
+      "out": "小猫咪不走了",
+      "act": "statement",
+      "mode": "frame",
+      "frame": "小猫咪不_了"
+    },
+    {
+      "in": "为什么站得近些",
+      "out": "因为没办法些",
+      "act": "wh_question",
+      "mode": "why_because",
+      "frame": "因为_"
+    },
+    {
+      "in": "哦我们看这边",
+      "out": "嗯哦我们看这边",
+      "act": "statement",
+      "mode": "paraphrase",
+      "frame": null
+    },
+    {
+      "in": "对还有积木是吧",
+      "out": "嗯",
+      "act": "statement",
+      "mode": "backchannel",
+      "frame": null
+    },
+    {
+      "in": "是化妆化妆表演",
+      "out": "嗯",
+      "act": "statement",
+      "mode": "backchannel",
+      "frame": null
+    }
+  ],
+  "pseudo_examples": [
+    {
+      "heldout": "那什么蛋",
+      "question": "那什么什么",
+      "truth": "蛋",
+      "answers": [
+        "嗯",
+        "嗯",
+        "嗯"
+      ]
+    },
+    {
+      "heldout": "哥哥拍的",
+      "question": "谁拍的",
+      "truth": "哥哥",
+      "answers": [
+        "手拍的",
+        "著拍的",
+        "手拍的"
+      ]
+    },
+    {
+      "heldout": "那你排",
+      "question": "那你什么",
+      "truth": "排",
+      "answers": [
+        "那我没办法",
+        "那我讲给你听",
+        "那我很想"
+      ]
+    },
+    {
+      "heldout": "哦这是三角形",
+      "question": "哦这是什么",
+      "truth": "三角形",
+      "answers": [
+        "哦这是梨子",
+        "哦这是桃子",
+        "哦这是卡布达"
+      ]
+    },
+    {
+      "heldout": "哎你看",
+      "question": "什么你看",
+      "truth": "哎",
+      "answers": [
+        "宝宝我看",
+        "宝宝我看",
+        "宝宝我看"
+      ]
+    },
+    {
+      "heldout": "也是绿颜色的",
+      "question": "也是什么",
+      "truth": "绿颜色的",
+      "answers": [
+        "也是梯形",
+        "也是梯形",
+        "也是梯形"
+      ]
+    },
+    {
+      "heldout": "不好拆",
+      "question": "不好什么",
+      "truth": "拆",
+      "answers": [
+        "不好吃",
+        "不好玩",
+        "不好吃"
+      ]
+    },
+    {
+      "heldout": "下面还有两个",
+      "question": "下面还有什么",
+      "truth": "两个",
+      "answers": [
+        "下面还有一横",
+        "下面还有十分钟",
+        "下面还有十分钟"
+      ]
+    },
+    {
+      "heldout": "放到里面去",
+      "question": "放到哪里去",
+      "truth": "里面",
+      "answers": [
+        "放到旁边去",
+        "放到旁边去",
+        "放到旁边去"
+      ]
+    },
+    {
+      "heldout": "要出去喽",
+      "question": "要出去什么",
+      "truth": "喽",
+      "answers": [
+        "要出去飞",
+        "要出去飞",
+        "要出去飞"
+      ]
+    },
+    {
+      "heldout": "还要吃",
+      "question": "还要什么",
+      "truth": "吃",
+      "answers": [
+        "还要木头",
+        "还要玩",
+        "还要玩"
+      ]
+    },
+    {
+      "heldout": "花朵对吗",
+      "question": "什么对吗",
+      "truth": "花朵",
+      "answers": [
+        "哎对的对的",
+        "嗯对的对的",
+        "嗯对的对的"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "window_days": 60,
+  "judged_window": "末30日 (t0+30d .. t0+60d)",
+  "arms": {
+    "off": {
+      "arm": "off",
+      "M5_vocal_n": 1444,
+      "M5_vocal_n_post30": 127,
+      "H15a_ledger_n_post30": 0,
+      "H15a_runnerup_rate": null,
+      "H15a_selfmodel_cf": false,
+      "H15b_calib_rho": null,
+      "H15b_n_pairs": 0,
+      "H15c_avoid_rho": null,
+      "H15c_n_types": 0,
+      "H15d_p_dev_neg": null,
+      "H15d_p_dev_pos": null,
+      "H15d_ratio": null
+    },
+    "full": {
+      "arm": "full",
+      "M5_vocal_n": 1418,
+      "M5_vocal_n_post30": 128,
+      "H15a_ledger_n_post30": 123,
+      "H15a_runnerup_rate": 1.0,
+      "H15a_selfmodel_cf": true,
+      "H15b_calib_rho": 0.1981,
+      "H15b_n_pairs": 123,
+      "H15c_avoid_rho": 0.5488,
+      "H15c_n_types": 16,
+      "H15d_p_dev_neg": 0.88,
+      "H15d_p_dev_pos": 0.75,
+      "H15d_ratio": 1.1733
+    },
+    "shuf": {
+      "arm": "shuf",
+      "M5_vocal_n": 1444,
+      "M5_vocal_n_post30": 129,
+      "H15a_ledger_n_post30": 125,
+      "H15a_runnerup_rate": 1.0,
+      "H15a_selfmodel_cf": true,
+      "H15b_calib_rho": -0.0228,
+      "H15b_n_pairs": 125,
+      "H15c_avoid_rho": -0.097,
+      "H15c_n_types": 22,
+      "H15d_p_dev_neg": 0.8769,
+      "H15d_p_dev_pos": 0.7627,
+      "H15d_ratio": 1.1497
+    }
+  },
+  "verdicts": {
+    "H15a_形式与无泄漏": {
+      "pass": true,
+      "detail": "full ru=1.0 smcf=True; off ledger=0 smcf=False"
+    },
+    "H15b_校准(Spearman>=0.5)": {
+      "pass": false,
+      "detail": "full ρ=0.1981 vs shuf ρ=-0.0228"
+    },
+    "H15c_后悔—回避(ρ<0,探索)": {
+      "pass": false,
+      "detail": "full ρ=0.5488（型数 16）"
+    },
+    "H15d_负意外调制(>=1.2x,探索)": {
+      "pass": false,
+      "detail": "full P(偏离|负)=0.88 / P(偏离|非负)=0.75 → 1.1733"
+    }
+  },
+  "power_ok": true
+}

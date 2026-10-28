@@ -1,0 +1,77 @@
+{
+ "n_inherit": 9336,
+ "K": 4055,
+ "arms": {
+  "noloop_full": {
+   "seq": {
+    "n_retr": 858,
+    "n_uniq": 11,
+    "diversity": 0.0027127003699136867,
+    "adj_top3_hit": 0.0,
+    "recur5": 0.9167643610785463,
+    "self_ratio": 0.037296037296037296
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3377,
+    "n_types_act": 2090,
+    "n_assoc": 2090,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 71,
+    "phrase_agreement": 0.352112676056338,
+    "jaccard": 0.042161520190023755
+   }
+  },
+  "noloop_shuf": {
+   "seq": {
+    "n_retr": 872,
+    "n_uniq": 12,
+    "diversity": 0.002959309494451295,
+    "adj_top3_hit": 0.01722158438576349,
+    "recur5": 0.8592848904267589,
+    "self_ratio": 0.03555045871559633
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3342,
+    "n_types_act": 2088,
+    "n_assoc": 2087,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 66,
+    "phrase_agreement": 0.3484848484848485,
+    "jaccard": 0.038755137991779216
+   }
+  },
+  "off": {
+   "seq": {
+    "n_retr": 897,
+    "n_uniq": 10,
+    "diversity": 0.002466091245376079,
+    "adj_top3_hit": 0.04241071428571429,
+    "recur5": 0.8228699551569507,
+    "self_ratio": 0.002229654403567447
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3383,
+    "n_types_act": 2093,
+    "n_assoc": 2093,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": null
+  }
+ }
+}

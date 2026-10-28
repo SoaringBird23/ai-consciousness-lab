@@ -1,0 +1,55 @@
+{
+  "experiment": "R2c 最小消费者实验：把写回值接到『行为侧』读取者，判定『通而轻』是否只是消费者选错了",
+  "created": "2026-10-07",
+  "preregistered_before_data": true,
+  "parent": "prereg_R2.json（amendments#A2 的『通而轻』结论）",
+
+  "why": "R2 v2 显示 s4 写回**确实被读**（检索流立即分岔，jaccard 0.04）但四指标 <10%。审计显示 s4 现有消费者是『检索相似度(1.2)、照护者紧张分支、affect』——它们改变的是**检索谁赢**，不是**行为做什么**。本实验检验一个具体假设：阴性来自『消费者全是内部软变量、没有行为侧读端』，而不是『念头对状态无因果』。",
+
+  "single_variable": "在 open_s4_hi 上加**且只加**一个行为侧消费者；耦合幅度、门、目标、RNG、窗口全部与 open_s4_hi 一致。",
+
+  "design": {
+    "instance": "双臂 fork 自同一 state_exp（day 255），30 仿真日、目标 day 285，time.seed_python_random=true。",
+    "arms": {
+      "open_s4_hi": "**复用 R2 v2 的 open_s4_hi**（耦合 0.30，无行为侧消费者）作配对对照，不重跑",
+      "open_s4_beh": "耦合 0.30（与 hi 同）+ 新增行为侧消费者：reflow 写出的 valence 符号与幅值调制一个**已存在的动作门**（候选：vocal.arousal_gate / vocal.base_prob，或 motor 探索阈值）。"
+    },
+    "consumer_spec": "reflow 输出 v（带符号）：v>0 → 提高发声/探索门（更主动）；v<0 → 降低（更收敛）。调制为**加性、有界**，系数预热登记为固定值，不随数据调参。",
+    "metrics": "主判据仍用 R2 四指标（M1–M4，相对 ctl_none）；**新增行为侧直接指标**：动作分布（χ²/熵）、vocalizations.jsonl 发声率、发声门触发率被消费者改动的次数。"
+  },
+
+  "manipulation_check": {
+    "MC_consumer_exercised": "消费者必须**实际被触发**：报告窗口内『消费者改变了动作门』的次数与平均改动量；为 0 则本臂作废。",
+    "MC_channel_fires": "valence 开火 >0（同 R2 MC0）。",
+    "no_hidden_rewire": "必须确认新增读取端**不改动** open_s4_hi 已有的检索相似度路径；即两臂若要逐条比对，差异必须**只**来自动作门。"
+  },
+
+  "hypotheses": {
+    "Hc_consumer_was_the_problem": {
+      "test": "open_s4_beh vs ctl_none 的四指标（并与 open_s4_hi 对比）",
+      "positive": "四指标任一 ≥10% 而 open_s4_hi <10% → 『通而轻』是**消费者放置问题**：写回值一旦进入行为回路就开始承重。这不等于双向，但**推翻**『念头对状态无因果分量』的强读法，核心主张须相应软化。",
+      "negative": "四指标仍全 <10%（即便行为门被真实调制） → 更进一步的结构结论：**注入的状态扰动不足以在行为层面留下可见痕迹**，无论读端选在哪。"
+    },
+    "Hc_behavior_only": {
+      "test": "行为侧直接指标（发声率/动作熵）是否移动，即便 M1–M4 不动",
+      "purpose": "区分『真无影响』与『影响只在行为、不进念头流四指标』——后者是第三种结局，必须如实单列。"
+    }
+  },
+
+  "predictions_registered": {
+    "default": "不确定。行为门是硬阈值型，加性调制若小于其阈值带宽可能被整平（与 s4 被检索阈值吞掉同构）；故阳性/阴性都有理由。这正是要测的。",
+    "risk_of_overfitting": "禁止事后调消费者系数到过线；系数在采集前固定并写入 config。"
+  },
+
+  "known_limits": {
+    "requires_code_change": "需改 motor/vocal 读取端，属**架构改动**而非纯参数扫；改动本身必须最小、可回退，并在论文中作为『我们注入的读端』明示。",
+    "not_spontaneous": "同样是我们手动接的消费者；阳性只证明『接上去能承重』，不证明『它自己会接上去』。",
+    "single_parent": "单母本，需多种子复现。"
+  },
+
+  "status": {
+    "prereg": "已预注册",
+    "code": "**设计待实现**（消费者最小改动未写）",
+    "run": "未运行"
+  }
+}

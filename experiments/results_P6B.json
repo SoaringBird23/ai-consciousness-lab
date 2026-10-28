@@ -1,0 +1,152 @@
+{
+ "n_inherit": 9336,
+ "K": 4055,
+ "arms": {
+  "off": {
+   "seq": {
+    "n_retr": 573,
+    "n_uniq": 403,
+    "diversity": 0.09938347718865598,
+    "adj_top3_hit": 0.0034965034965034965,
+    "recur5": 0.022887323943661973,
+    "self_ratio": 0.19546247818499127
+   },
+   "ws": {
+    "enabled": false,
+    "n_deposit": 0,
+    "n_types_act": 0,
+    "n_assoc": 0,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": null
+  },
+  "full": {
+   "seq": {
+    "n_retr": 897,
+    "n_uniq": 10,
+    "diversity": 0.002466091245376079,
+    "adj_top3_hit": 0.04241071428571429,
+    "recur5": 0.8228699551569507,
+    "self_ratio": 0.002229654403567447
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3379,
+    "n_types_act": 2090,
+    "n_assoc": 2090,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 50,
+    "phrase_agreement": 0.08,
+    "jaccard": 0.035211267605633804
+   }
+  },
+  "shuf": {
+   "seq": {
+    "n_retr": 855,
+    "n_uniq": 9,
+    "diversity": 0.0022194821208384712,
+    "adj_top3_hit": 0.00819672131147541,
+    "recur5": 0.8552941176470589,
+    "self_ratio": 0.0
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3300,
+    "n_types_act": 2053,
+    "n_assoc": 2053,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": true,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 30,
+    "phrase_agreement": 0.06666666666666667,
+    "jaccard": 0.02145922746781116
+   }
+  },
+  "nodep": {
+   "seq": {
+    "n_retr": 570,
+    "n_uniq": 400,
+    "diversity": 0.09864364981504316,
+    "adj_top3_hit": 0.0035149384885764497,
+    "recur5": 0.023008849557522124,
+    "self_ratio": 0.19473684210526315
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 0,
+    "n_types_act": 0,
+    "n_assoc": 0,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": true
+   },
+   "overlap": {
+    "n_common": 570,
+    "phrase_agreement": 1.0,
+    "jaccard": 0.9947643979057592
+   }
+  },
+  "nodecay": {
+   "seq": {
+    "n_retr": 894,
+    "n_uniq": 10,
+    "diversity": 0.002466091245376079,
+    "adj_top3_hit": 0.0425531914893617,
+    "recur5": 0.8222722159730034,
+    "self_ratio": 0.0022371364653243847
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3368,
+    "n_types_act": 2084,
+    "n_assoc": 2083,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 50,
+    "phrase_agreement": 0.08,
+    "jaccard": 0.035285815102328866
+   }
+  },
+  "bigk": {
+   "seq": {
+    "n_retr": 893,
+    "n_uniq": 21,
+    "diversity": 0.005178791615289766,
+    "adj_top3_hit": 0.06614349775784753,
+    "recur5": 0.7252252252252253,
+    "self_ratio": 0.09966405375139978
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3336,
+    "n_types_act": 2047,
+    "n_assoc": 2047,
+    "k": 20,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 38,
+    "phrase_agreement": 0.05263157894736842,
+    "jaccard": 0.02661064425770308
+   }
+  }
+ }
+}

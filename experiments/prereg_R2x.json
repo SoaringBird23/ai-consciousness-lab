@@ -1,0 +1,58 @@
+{
+  "experiment": "R2x 边界探针：把写回耦合推到 >1σ，判定『只读』在噪声之上的边界",
+  "created": "2026-10-07",
+  "preregistered_before_data": true,
+  "parent": "prereg_R2.json（其结果见其 amendments#A2）",
+
+  "why": "R2 v2 里 hi 档耦合 0.30 = s4 自然标准差(0.33) 的 0.91σ，四指标 <10% 的阴性结论只在『不超过 1σ』范围内有效——它排除不了『其实就是没超过噪声底、一旦超过就会动』这一读法。本实验只做一件事：把耦合推到明确超过自然涨落，看四指标是否仍 <10%。",
+
+  "not_aiming_at_bidirectional": "本实验**不**试图造出双向。它只量边界。任何『过了 10%』的结果都只能读作『该幅度下通道开始承重』，不能读作『自发双向成立』——因为这是我们手动注入的强耦合。",
+
+  "design": {
+    "instance": "臂 SIGSTOP 安全 fork 自同一成熟线 state_exp（day 255），窗口 30 仿真日、目标 day 285；与 R2 v2 完全同源同窗，唯 reflow 幅度不同。",
+    "arms": {
+      "ctl_none": "**复用 R2 v2 的 ctl_none**（同 fork 点、同 seed、同窗；已证与 dead_gate / open_dead_target 逐条位相同，可直接作零参照，不必重跑）",
+      "xl": "target=s4、valence_threshold=0.008、reflow.s2=0.50（=1.5σ）、s5=0.375",
+      "xl2": "target=s4、valence_threshold=0.008、reflow.s2=0.66（=2.0σ）、s5=0.495"
+    },
+    "dose_ladder_full": "0.02(lo) / 0.10(mid) / 0.30(hi,0.91σ) / 0.50(xl,1.5σ) / 0.66(xl2,2σ)；前三点已由 R2 v2 实测。",
+    "metrics": "沿用 R2 H2 四项：M1 检索率/日、M2 检索多样性、M3 自我模型版本增量、M4 新增目标数；另记 M5 s4 均值/方差，及逐 tick 重合率（experiments/analyze_R2_overlap.py）。",
+    "rng": "所有臂 config 必须 time.seed_python_random=true（对齐前提，见 R2 amendments#A1）。"
+  },
+
+  "manipulation_check": {
+    "MC0_channel_fires": "xl/xl2 的 valence 开火必须 >0；否则该臂作废（不得把『没打开』读成『打开无效』）。",
+    "amplitude_actually_exceeds_noise": "必须报告窗口内 s4 的实测 sd，并确认 reflow.s2 幅度 / s4_sd ≥ 1.5；若 s4 在窗口内已被 _clip 夹在边界（贴 0 或贴 1），须先报分布再解读（防『踢击被吸收』被读成『无影响』）。"
+  },
+
+  "hypotheses": {
+    "Hx_boundary": {
+      "test": "xl(1.5σ) 与 xl2(2σ) 相对 ctl_none 的四指标差异",
+      "positive": "任一档四指标 ≥10% → **存在阈值**，位置只报落在 0.91σ–1.5σ 之间；仍**不得宣布双向**。",
+      "negative": "两档仍全 <10% → 『只读』从『≤1σ 下成立』升级为『≥1σ 量级下亦成立』的**结构定论**，写入 D6 与论文。",
+      "partial": "仅 xl2 过线 → 报阈值落在 1.5σ–2σ 之间。"
+    },
+    "Hx_monotone": {
+      "test": "五档 M1/M2 是否随剂量单调",
+      "purpose": "R2 v2 里 lo/mid/hi 不单调；若加入 xl/xl2 后出现单调抬升，说明之前的不单调是小幅度下的噪声，而非真的无剂量关系。"
+    }
+  },
+
+  "predictions_registered": {
+    "default": "倾向阴性（延续 R2 v2）。理由：s4 进的是检索相似度（权重 1.2），而检索自带 0.9+0.2·rand 扰动与 0.72 硬阈值；即便 s4 被抬到 2σ，噪声项仍可能吞掉对『检索胜者』的影响。",
+    "falsifier_of_default": "若 2σ 档仍不动，则说明吞掉耦合的不是幅度而是检索噪声项与阈值结构——这会指向下一个可直接改的环节（降噪/降阈），而不是『架构不可能』。"
+  },
+
+  "known_limits": {
+    "single_parent": "同源于 state_exp 单母本；结论可复现性依赖后续多种子复现。",
+    "clip": "s4 受 _clip[0,1]；2σ 注入可能贴边，必须报窗口内 s4 分布。",
+    "not_spontaneous": "手动注入强耦合 ≠ 自发双向；本实验只回答『结构能否被外力推动』，不回答『它会不会自己形成』。"
+  },
+
+  "run_plan": {
+    "configs": "config_R2x_xl.json / config_R2x_xl2.json（在 config_R2_open_s4_hi.json 上仅改 reflow.s2/s5 与 comment）",
+    "runner": "仿 run_R2b.sh 的幂等调度（TGT=285，MAX=2，per-arm rm -rf + cp -R state_exp）；臂目录 state_R2x_xl / state_R2x_xl2",
+    "control": "直接读 state_R2_ctl_none，不重跑",
+    "status": "已预注册，**未运行**（等确认）"
+  }
+}

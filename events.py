@@ -21,6 +21,7 @@ class Environment:
         self.a, self.b = self.cfg["active_hours"]  # 9..23
         self.rate_active = self.cfg["rate_per_hour_active"]
         self.rate_night = self.cfg["rate_per_hour_night"]
+        os.makedirs(PROCESSED, exist_ok=True)   # 优化：mkdir 从每 tick poll 移到一次初始化
 
     def _sim_rate(self, sim_hour):
         if self.a <= sim_hour < self.b:
@@ -44,7 +45,6 @@ class Environment:
                 "detail": "activity",
             })
         # inbox 真实投递（P3：say_* 文件 = 真实照护者话语，路由到语言层）
-        os.makedirs(PROCESSED, exist_ok=True)
         if os.path.isdir(INBOX):
             for name in sorted(os.listdir(INBOX)):
                 path = os.path.join(INBOX, name)

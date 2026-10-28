@@ -1,0 +1,71 @@
+{
+  "experiment": "P8 工作集容量扫描：区分『内容特定性』与『候选基数效应』",
+  "created": "2026-10-09",
+  "preregistered_before_data": true,
+  "step_of": "P6B 的续作（P6B → P8）",
+
+  "relation": "P6B 六臂中，bigk（k=20）给出全批唯一的正向偏离：adj_top3=0.066，高于 full（k=6）的 0.042，且高于阈值 0.07 仅差 0.004。但 P6B 的 bigk 臂**没有配对的 shuf 对照**，因此无法判断该提升来自『内容特定性』（下一个念头真的被上一个念头的内容牵连）还是『候选基数效应』（k 越大、候选越多、随机命中的期望越高）。P8 的唯一目的就是补上这个配对，并向上扫描 k。",
+
+  "motivation": "R5→P6B 已经把『输入贫乏』这条归因检验到底：扩容使 full−shuf 差从 0.009 放大到 0.034（约 3.8 倍），但仍低于 0.07 阈值。在全部已试杠杆中（耦合幅度 R/R2/R2x、消费者位置 R2c、结构缺口 R3/R4、表征方式 R5、环境多样性 P6/P6B），只有『改变候选集构成』这一类参数给出正向偏离——k 值即是其中最直接的一个。若 k 的提升只是基数效应，则『内容特定性』在本架构下即为不可行；若 k 的提升确实是内容特定性，则须先找到使 full−shuf 差跨过阈值的 k，才谈得上把工作空间从『只读』推向某种有内容的内部回响。",
+
+  "design": {
+    "instance": "三臂，SIGSTOP 安全 fork 自同一基底（state_P6_childes，day 315，已过镜像期、语言层已解锁、CHILDES 富语料）",
+    "window": "day 315 → 345（30 仿真日），与 P6B 完全同一窗口、同一基底、同一判据，保证可直接对比",
+    "new_arms": {
+      "k20_shuf": "k=20 且 shuffle_assoc=true —— 补上 P6B bigk 缺失的配对",
+      "k40_full": "k=40，正常联想 —— 向上扫描",
+      "k40_shuf": "k=40 且 shuffle_assoc=true —— 配对对照"
+    },
+    "reused_arms_from_P6B": {
+      "k6_full": "P6B full（adj_top3=0.042）",
+      "k6_shuf": "P6B shuf（adj_top3=0.008）",
+      "k20_full": "P6B bigk（adj_top3=0.066）",
+      "k0_off": "P6B off（adj_top3=0.003，无工作集约束，即 k→∞）"
+    },
+    "invariants": [
+      "基底、窗口、判据、阈值、真值图（state_P6_childes）全部与 P6B 相同",
+      "workspace 的 kappa / tau_minutes / gain 保持不变，只动 k 与 shuffle_assoc",
+      "其余一切配置（语料、照护者、语言层、回流、发声）与 P6B 逐位相同"
+    ]
+  },
+
+  "hypotheses": {
+    "H8a_内容特定性是否随 k 跨阈（主判据）": {
+      "criterion": "adj_top3(k20_full) − adj_top3(k20_shuf) ≥ 0.07",
+      "positive": "内容特定性在 k=20 已足够强 → 工作空间产生有内容的内部回响，『只读』结论须限定为『在 k=6 的容量下只读』",
+      "negative": "差值 < 0.07 → bigk 的 0.066 主要来自候选基数效应，而非内容特定性 → 本架构下内容特定性不可行得到进一步坐实"
+    },
+    "H8b_k 的单调性": {
+      "criterion": "[adj_top3(k40_full) − adj_top3(k40_shuf)] ≥ [adj_top3(k20_full) − adj_top3(k20_shuf)]",
+      "note": "若 k 增大能持续提升内容特定性，差值应单调不减；若出现倒 U 型（k 过大反而回落），则存在一个最优容量，该最优值本身就是可报告的发现"
+    },
+    "H8c_多样性的代价": {
+      "criterion": "uniq(k40_full) ≥ uniq(k20_full) = 21",
+      "note": "P6B 已观测到容量约束的代价：full 臂检索到的不同型数从对照的 403 坍缩到 10（k=6）。若 k 增大能同时提升内容特定性并缓解坍缩，则说明此前的『坍缩』是容量过小所致，而非机制的固有代价"
+    }
+  },
+
+  "falsification": "本批不追求『双向成立』。唯一可宣布的阳性是 H8a：即某档 k 下 full−shuf 差 ≥ 0.07。任何 < 10% 的行为差异只报『存在耦合』，不得宣布『双向已打通』。若三臂全阴性，则『只读/不可行』的结论在 k 这一维度上亦被闭合。",
+
+  "predictions_registered": {
+    "H8a": "不确定。若 bigk 的 0.066 是真内容特定性，k20_shuf 应显著低于 0.066（预测区间 0.01–0.03），差值落在 0.03–0.05，仍低于阈值；若主要是基数效应，k20_shuf 应接近 0.05–0.06，差值 < 0.02",
+    "H8b": "倾向倒 U 型：k=6 → 20 上升，k=20 → 40 可能回落（因候选集过大导致约束失效，趋近 off 的 0.003）",
+    "H8c": "倾向阳性（k 越大坍缩越轻）"
+  },
+
+  "metrics": "复用 R5/P6B 的同一套分析器（analyze_R5.py，经环境变量参数化）：adj_top3（主）、recur5、self_ratio、diversity、Jaccard 对对照、n_deposit、n_assoc。真值图取自 state_P6_childes。",
+
+  "audits": {
+    "default_off": "新增配置只在 config_P8_*.json 中设置，不改动任何既有 config；未设 k 的实例行为不变",
+    "single_variable": "相对 P6B bigk，k20_shuf 只改 shuffle_assoc 一个变量；相对 k20，k40 只改 k 一个变量",
+    "threshold_frozen": "0.07 阈值由 R5 事前设定，P6B 与 P8 均沿用，**不因新数据调整**"
+  },
+
+  "open_risks": {
+    "single_seed": "三臂均为单次运行，无多种子方差。与 P6B 同源的局限，如实记录",
+    "base_drift": "P6B 各臂从 state_P6_childes (day 315) fork；P8 亦从同一目录 fork。若该目录在 P6B 采集期间被写入，则两批的基底可能不同。启动前须校验 state_P6_childes 的 day 仍为 315",
+    "no_shuf_for_k0": "off 臂（无工作集）无 shuf 配对，仅作参照"
+  },
+
+  "note": "本实验是对『r 改变候选集构成』这一类杠杆的最后一次系统扫描。它的价值不在于能否得到阳性，而在于把『内容特定性是否随容量涌现』这个问题一次问清，从而决定：要么继续在容量维度上找最优值，要么承认该架构在当前表征下不可行、转入表征层面的重新设计。"
+}

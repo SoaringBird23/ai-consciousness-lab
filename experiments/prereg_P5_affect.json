@@ -14,6 +14,56 @@
         "新增 H4（痛态是否提升第一人称检索占比）与 H5（痛态检索的片段是否更易进入自我模型）",
         "补记 affect → 自我模型 的间接通路（经 s4/s8 与检索相似度）"
       ]
+    },
+    {
+      "n": 2,
+      "date": "2026-10-06",
+      "before_data_collection": true,
+      "why": "采集前的离线审计发现 receive_affect 的量纲错误：该通道每 tick 调用，原实现却把固定增量当逐 tick 事件写、漏乘 dt_hours，与 step 内其余积分不同律；后果是 on 臂开门后把 s4 打到饱和、s8 压到 0，是『捶死』而非『调制』，会毁掉 H1 的可解释性。同时补做 MC0『通道真开火』功效检查。本实验尚未启动任何线，故修正在采集之前，合法；按要求显式记录，不静默改写。",
+      "changes": [
+        "修正幅值量纲：receive_affect 两处写入（s4 抬升、s8 压缩）均改为 ×dt_hours 的速率式；签名新增 dt_hours，main.py 传入 dt_h。k_affect=0 时逐位不变，对在跑的线零影响。",
+        "补记 MC0（通道真开火）：采集前用母本历史做反事实积分，确证两通道的 0.5 门确实会被越过——否则 H1/H2 是无功效的空测。",
+        "如实记录已知局限：ease 的 0.5 门在稳态下几乎恒开，故承重功效主要来自 distress 通道；此限制在采集前登记。"
+      ],
+      "evidence": {
+        "magnitude_bug": {
+          "symptom": "旧实现下 on 臂开门后 s4 立即饱和到 1.0、s8 被压到 0.0（冒烟实证，分歧段：on s4 p50=1.0000 / s8 p50=0.0001，off s4 p50=0.7849 / s8 p50=0.1137）——『捶死』而非『调制』。",
+          "fix": "background.receive_affect 两处写入均 ×dt_hours；main.py 传 dt_h。",
+          "verified_after_fix": {
+            "setup": "从 state_exp 安全 fork 两臂，affect 状态自 0 起，--time-scale 1e9 各跑 90s（母本历史 + 追加冒烟段）。",
+            "first_diff_row": 56763,
+            "ndiff_rows": 141,
+            "off": {"s4_mean": 0.7889, "s4_p50": 0.7849, "s8_mean": 0.1433, "s8_p50": 0.1137, "s5_mean": 0.7345},
+            "on": {"s4_mean": 0.8034, "s4_p50": 0.7952, "s8_mean": 0.1423, "s8_p50": 0.1164, "s5_mean": 0.7389},
+            "verdict": "on 相对 off 仅小幅均衡位移（s4 +0.0145、s8 −0.0010），不再饱和 → 调制成立。"
+          }
+        },
+        "mc0_channel_fires": {
+          "method": "把 affect 的 d_drive/e_drive 公式与 tau 惯性逻辑在母本 56763 行轨迹上做反事实积分（复用 affect.step 的步进、初始态 0），统计 0.5 门开启比例。初次报的是 drive（瞬时目标），后修正为积分态——后者才是进门判据。",
+          "state_distress_gt_0.5_frac": 0.513,
+          "state_ease_gt_0.5_frac": 1.0,
+          "state_distress_mean": 0.5085,
+          "state_ease_mean": 0.6792,
+          "drive_distress_mean": 0.4049,
+          "drive_ease_mean": 0.7201,
+          "verdict": "积分态下两通道的 0.5 门都会被越过（distress 51.3%、ease 100%），采集有功效，非空测。"
+        },
+        "ease_saturation_limitation": {
+          "statement": "稳态下 ease 积分态 >0.5 占 100%（均值 0.68）→ 乐门几乎恒开，乐偏置近似常数（≈0.36），承重功效主要来自 distress 通道（其门开合约占清醒时间一半、且随时间变化）。",
+          "cold_start_note": "从母本 fork 时 affect 态自 0 冷启动（ease tau_up=3h）；若 fork 落在傍晚、窗口又太短，ease 来不及爬过 0.5（冒烟实测 ease 峰值仅 0.48、distress>0.5 占清醒样本 81.5%）；正式 30 仿真日窗口足以进入稳态，不受此限。"
+        }
+      }
+    },
+    {
+      "n": 3,
+      "date": "2026-10-06",
+      "before_data_collection": false,
+      "why": "首轮采集完成后发现：三臂虽 fork 自同一 state_exp（继承段逐字节一致），但 language.py 用未播种的 Python 全局 random（OS 熵种子，不随 fork 复制、不落盘），臂间念头流互不对齐——与 R2 v1 同型混杂。实测 off vs rec_only 仅差 −1.4%（M1）/−4.0%（M2），而 rec_only 行为上应与 off 等价，故该差值即逐次运行的噪声底；on vs off 为 +2.4%/−6.0%。因此首轮『四项 <10%』不能读成『无影响』，只能读作『效应 < 逐次运行涨落』。",
+      "changes": [
+        "main.py 增加 opt-in 开关 time.seed_python_random（显式播种 + RNG 状态落盘/恢复）；config_p5_{off,rec_only,on}.json 打开该开关。默认关闭 → 主线/P3 逐位不变。",
+        "开对齐后重跑三臂（run_p5b.sh）；首轮数据保留于 state_p5pre_* 作『未对齐』对照。"
+      ],
+      "status": "重跑中（state_p5_*，run_p5b.sh）；首轮 → state_p5pre_*"
     }
   ],
 

@@ -1,0 +1,68 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "conds": {
+    "full60": {
+      "dir": "state_P15_full",
+      "w_model": 60.0,
+      "n_post30": 123,
+      "rho_inst": 0.1981,
+      "rho_bin": 0.1529,
+      "n_bins": 10,
+      "rho_oos": 0.1397,
+      "n_pairs_oos": 16
+    },
+    "shuf60": {
+      "dir": "state_P15_shuf",
+      "w_model": 60.0,
+      "n_post30": 125,
+      "rho_inst": -0.0228,
+      "rho_bin": 0.0424,
+      "n_bins": 10,
+      "rho_oos": 0.7672,
+      "n_pairs_oos": 22
+    },
+    "full180": {
+      "dir": "state_P15b_full180",
+      "w_model": 180.0,
+      "n_post30": 137,
+      "rho_inst": -0.0493,
+      "rho_bin": -0.2364,
+      "n_bins": 10,
+      "rho_oos": -0.3308,
+      "n_pairs_oos": 14
+    },
+    "shuf180": {
+      "dir": "state_P15b_shuf180",
+      "w_model": 180.0,
+      "n_post30": 123,
+      "rho_inst": 0.0415,
+      "rho_bin": 0.2848,
+      "n_bins": 10,
+      "rho_oos": 0.6449,
+      "n_pairs_oos": 24
+    }
+  },
+  "verdicts": {
+    "H15b1_分箱校准(ρ_bin>=0.5且>full60)": {
+      "pass": false,
+      "detail": "full180 ρ_bin=-0.2364(10箱) vs full60 ρ_bin=0.1529"
+    },
+    "H15b2_逐次提升(Δρ_inst>=0.15)": {
+      "pass": false,
+      "detail": "ρ_inst：full180=-0.0493 − full60=0.1981 = -0.2474"
+    },
+    "H15b3_归因判定": {
+      "pass": false,
+      "detail": "能力所限（E 仅承载序信息、不承载量信息）；Δρ_inst=-0.2474"
+    }
+  },
+  "attribution": "能力所限（E 仅承载序信息、不承载量信息）",
+  "info_rho_oos": {
+    "full60": 0.1397,
+    "shuf60": 0.7672,
+    "full180": -0.3308,
+    "shuf180": 0.6449,
+    "note": "外推 ρ 不具区分性（E 在任何臂都追踪真实结果），仅作信息记录，不作判据。"
+  },
+  "power_ok": true
+}

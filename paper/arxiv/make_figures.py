@@ -413,9 +413,105 @@ def fig_p4():
           % (tot, chi, H, np.mean([r["field_after"] for r in recs])))
 
 
+# ─────────── 图 5：R2 修正写回阶梯（操纵检查 + 剂量响应）───────────
+def fig_r2():
+    # 六臂：零参照 / 未修正死门 / 活门死目标 / 活门活目标（3 档剂量）
+    arms = [("ctl_none", "control"),
+            ("dead_gate", "dead\ngate"),
+            ("open_dead_target", "dead\ntarget"),
+            ("open_s4_lo", "open $s_4$\n$\\pm0.02$"),
+            ("open_s4_mid", "open $s_4$\n$\\pm0.10$"),
+            ("open_s4_hi", "open $s_4$\n$\\pm0.30$")]
+    n_inherit = len(_jsonl("state_exp/inner_speech.jsonl"))   # fork 点继承条数
+    rate, fires = [], []
+    for a, _ in arms:
+        sp = _jsonl("state_R2_%s/inner_speech.jsonl" % a)[n_inherit:]
+        rate.append(len(sp) / 30.0)
+        fr = load("state_R2_%s/background_state.json" % a).get("reflow_fires", {})
+        fires.append(fr.get("valence_neg", 0) + fr.get("valence_pos", 0))
+    pct = [100.0 * (r - rate[0]) / rate[0] for r in rate]
+    col = ["0.80", "0.55", "black", "black", "black", "black"]
+
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.8, 2.5))
+    x = np.arange(len(arms))
+    a.bar(x, fires, color=col, width=0.62)
+    a.set_xticks(x)
+    a.set_xticklabels([l for _, l in arms], fontsize=6.2)
+    a.set_ylabel("gate firings (30 d)", fontsize=8)
+    a.set_title("(a) manipulation check: the channel is live", fontsize=8.2)
+    for i in range(len(arms)):
+        a.text(i, fires[i] + max(fires) * 0.03, "%d" % fires[i], ha="center", fontsize=6.6)
+    a.set_ylim(0, max(fires) * 1.24)
+    a.grid(axis="y", color="0.9", lw=0.5)
+    a.set_axisbelow(True)
+
+    b.axhspan(-10, 10, color="0.93", zorder=0)
+    b.bar(x, pct, color=col, width=0.62, zorder=2)
+    b.axhline(0, color="0.2", lw=0.8, zorder=3)
+    b.set_xticks(x)
+    b.set_xticklabels([l for _, l in arms], fontsize=6.2)
+    b.set_ylabel("retrieval-rate change (%)", fontsize=8)
+    b.set_ylim(-25, 25)
+    b.set_title("(b) dose-response: nothing leaves the band", fontsize=8.2)
+    b.text(len(arms) - 0.55, 12, "negative band\n($\\pm$10%)", fontsize=6.0, color="0.4",
+           ha="right")
+    b.grid(axis="y", color="0.9", lw=0.5)
+    b.set_axisbelow(True)
+    save(fig, "fig5_r2")
+    print("   R2: fires=%s  M1%%=%s" % (fires, [round(p, 1) for p in pct]))
+
+
+# ─────────── 图 6：S1 复现（3 种子）+ S2 分离（2×2）───────────
+def fig_s1s2():
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.8, 2.4),
+                               gridspec_kw={"width_ratios": [1.12, 1]})
+
+    # 左：S1，三种子自我模型版本轨迹
+    for sd, lab, ls in (("101", "seed 101", "-"), ("102", "seed 102", "--"),
+                        ("103", "seed 103", ":")):
+        h = load("state_repl_%s/self_model.json" % sd)["history"]
+        a.step([x["updated_at"] / DAY for x in h], [x["version"] for x in h],
+               where="post", marker="o", markersize=3.0, linewidth=1.0, color="black",
+               markerfacecolor="white", linestyle=ls, label=lab)
+    a.set_xlabel("simulated day", fontsize=8)
+    a.set_ylabel("self-model version", fontsize=8)
+    a.set_xlim(10, 38)
+    a.set_ylim(0, 7)
+    a.legend(loc="lower right", fontsize=6.6)
+    a.set_title("(a) S1: three seeds reproduce", fontsize=8.2)
+    a.grid(axis="y", color="0.9", lw=0.5)
+    a.set_axisbelow(True)
+
+    # 右：S2，2×2 —— 四格都形成自我模型，但第一人称片段只在"有语料"的格出现
+    cells = [("D", "corpus\n+ gate"), ("NG", "gate\noff"),
+             ("NC", "corpus\noff"), ("BO", "both\noff")]
+    vers, fpn = [], []
+    for c, _ in cells:
+        sm = load("state_s2_%s/self_model.json" % c)
+        frags = (sm.get("description", "") or "").split()
+        vers.append(sm.get("version", 0))
+        fpn.append(sum(1 for frag in frags if "我" in frag))
+    x = np.arange(4)
+    b.bar(x, vers, color="0.72", width=0.62, label="self-model version")
+    b.bar(x, fpn, color="black", width=0.30, label="first-person fragments")
+    for i in range(4):
+        b.text(i, vers[i] + 0.15, "%d" % vers[i], ha="center", fontsize=6.6)
+    b.set_xticks(x)
+    b.set_xticklabels([l for _, l in cells], fontsize=6.8)
+    b.set_ylabel("count", fontsize=8)
+    b.set_ylim(0, 8)
+    b.legend(loc="upper right", fontsize=6.2)
+    b.set_title("(b) S2: corpus, not the gate", fontsize=8.2)
+    b.grid(axis="y", color="0.9", lw=0.5)
+    b.set_axisbelow(True)
+    save(fig, "fig6_s1s2")
+    print("   S2: versions=%s  first-person=%s" % (vers, fpn))
+
+
 if __name__ == "__main__":
     print("生成图表 →", OUT)
-    for fn in (fig1, fig2, fig3, fig4, fig_system, fig_e1e2, fig_e3, fig_e4, fig_p4):
+    for fn in (fig1, fig2, fig3, fig4, fig_system, fig_e1e2, fig_e3, fig_e4, fig_p4,
+               fig_r2, fig_s1s2):
         try:
             fn()
         except Exception as e:

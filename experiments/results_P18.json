@@ -1,0 +1,57 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "arms": {
+    "off": {
+      "arm": "off",
+      "n_retrieval": 881,
+      "n_composed": 0,
+      "composed_rate": 0.0,
+      "purity_mean": null,
+      "purity_min": null,
+      "struct_mean": null,
+      "novel_rate": null,
+      "len_mean": null
+    },
+    "full": {
+      "arm": "full",
+      "n_retrieval": 859,
+      "n_composed": 611,
+      "composed_rate": 0.7112922002328289,
+      "purity_mean": 1.0,
+      "purity_min": 1.0,
+      "struct_mean": 1.0,
+      "novel_rate": 0.8887070376432079,
+      "len_mean": 4.008183306055646
+    },
+    "shuf": {
+      "arm": "shuf",
+      "n_retrieval": 816,
+      "n_composed": 816,
+      "composed_rate": 1.0,
+      "purity_mean": 1.0,
+      "purity_min": 1.0,
+      "struct_mean": 0.3026085434173682,
+      "novel_rate": 1.0,
+      "len_mean": 4.10171568627451
+    }
+  },
+  "verdicts": {
+    "H18a_组合发生(full rate>=0.10)": {
+      "pass": true,
+      "detail": "full=0.711 shuf=1.000 off=0.000"
+    },
+    "H18b_词法纯净(purity>=0.999)": {
+      "pass": true,
+      "detail": "full purity_min=1.0"
+    },
+    "H18c_结构合理(full-shuf>=0.30)": {
+      "pass": true,
+      "detail": "full struct=1.0 shuf struct=0.303"
+    },
+    "H18d_整体新(novel>=0.60)": {
+      "pass": true,
+      "detail": "full novel=0.889"
+    }
+  },
+  "note": "词级组合：零幻觉=词法级（组合词均实听过，purity=1），重组=句法级（整体未逐字听过）。shuf 为内容对照（词汇不变、词→词关联打乱）。"
+}

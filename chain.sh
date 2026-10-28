@@ -17,6 +17,7 @@ job_dirs(){
     s2)   STATE_DIR=state_s2_$2;   CONFIG=config_s2_$2.json;   LOG_DIR=logs_s2_$2;   INBOX_DIR=inbox_s2_$2 ;;
     R)    STATE_DIR=state_R_$2;    CONFIG=config_R_$2.json;    LOG_DIR=logs_R_$2;    INBOX_DIR=inbox_R_$2 ;;
     R2)   STATE_DIR=state_R2_$2;   CONFIG=config_R2_$2.json;   LOG_DIR=logs_R2_$2;   INBOX_DIR=inbox_R2_$2 ;;
+    p5)   STATE_DIR=state_p5_$2;   CONFIG=config_p5_$2.json;   LOG_DIR=logs_p5_$2;   INBOX_DIR=inbox_p5_$2 ;;
   esac
 }
 
@@ -27,15 +28,16 @@ start_job(){
   JOB_DONE=0
   job_dirs "$kind" "$key"
   mkdir -p "$STATE_DIR" "$LOG_DIR" "$INBOX_DIR"
-  # R / R2 首次运行需从成熟线 fork
-  if { [ "$kind" = "R" ] || [ "$kind" = "R2" ]; } && [ ! -f "$STATE_DIR/stage.json" ]; then
+  # R / R2 / p5 首次运行需从成熟线 fork
+  if { [ "$kind" = "R" ] || [ "$kind" = "R2" ] || [ "$kind" = "p5" ]; } && [ ! -f "$STATE_DIR/stage.json" ]; then
     rm -rf "$STATE_DIR"; cp -R state_exp "$STATE_DIR"; rm -f "$STATE_DIR/pid" "$STATE_DIR/e6_state.json"
+    [ "$kind" = "p5" ] && rm -f "$STATE_DIR/affect.json"
     log "$kind:$key 已从 state_exp fork"
   fi
-  # 目标日：repl/s2 = day 60；R/R2 = fork 点 day + 30（旧脚本误写为 30，会一启动就误判达标）
+  # 目标日：repl/s2 = day 60；R/R2/p5 = fork 点 day + 30（旧脚本误写为 30，会一启动就误判达标）
   if [ ! -f "$STATE_DIR/.target" ]; then
     local base; base=$(day_of "$STATE_DIR"); [ -z "$base" ] && base=0
-    if [ "$kind" = "R" ] || [ "$kind" = "R2" ]; then echo $((base + 30)) > "$STATE_DIR/.target"
+    if [ "$kind" = "R" ] || [ "$kind" = "R2" ] || [ "$kind" = "p5" ]; then echo $((base + 30)) > "$STATE_DIR/.target"
     else echo 60 > "$STATE_DIR/.target"; fi
   fi
   local tgt; tgt=$(cat "$STATE_DIR/.target")
@@ -72,7 +74,8 @@ fi
 # R 阶梯（prereg_R）已作废：采集前审计发现那根通道双重失效（门开火率 0.00% + 目标变量
 # 无人消费），跑它只能得到关于"从未打开且打开也没人看"的通道的零结果。改为 R2：
 # 把"门"与"目标"各自变成自变量，直接判定零结果的来源。见 experiments/prereg_R2.json。
-JOBS=(repl:101 repl:102 repl:103 s2:D s2:NC s2:NG s2:BO R2:ctl_none R2:dead_gate R2:open_dead_target R2:open_s4_lo R2:open_s4_mid R2:open_s4_hi)
+# P5（痛/乐）排在 R2 之后，三臂 off/rec_only/on 同 fork 自 state_exp。见 experiments/prereg_P5_affect.json。
+JOBS=(repl:101 repl:102 repl:103 s2:D s2:NC s2:NG s2:BO R2:ctl_none R2:dead_gate R2:open_dead_target R2:open_s4_lo R2:open_s4_mid R2:open_s4_hi p5:off p5:rec_only p5:on)
 n=${#JOBS[@]}; next=0
 an=(); ad=(); at=()
 

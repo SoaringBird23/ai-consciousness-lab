@@ -19,7 +19,13 @@ import json
 import math
 import os
 import random
+import statistics
 from collections import deque
+
+import workspace as workspace_mod
+import compose as compose_mod
+import dialogue as dialogue_mod
+import constructions as constructions_mod
 
 STATE_DIR = os.environ.get("STATE_DIR", "state")
 _ROOT = os.path.dirname(__file__)
@@ -27,6 +33,9 @@ INNER_SPEECH_PATH = os.path.join(_ROOT, STATE_DIR, "inner_speech.jsonl")
 GOALS_PATH = os.path.join(_ROOT, STATE_DIR, "goals.json")
 LANG_STATE_PATH = os.path.join(_ROOT, STATE_DIR, "language_state.json")
 LING_MEMORY_PATH = os.path.join(_ROOT, STATE_DIR, "linguistic_memory.json")
+WORD_COMPOSE_PATH = os.path.join(_ROOT, STATE_DIR, "word_compose.json")   # P18
+DIALOGUE_PATH = os.path.join(_ROOT, STATE_DIR, "dialogue.json")           # P19
+CONSTRUCTION_PATH = os.path.join(_ROOT, STATE_DIR, "constructions.json")  # P20
 
 
 def _cumsum(weights):
@@ -45,6 +54,12 @@ CORPUS_EVENT = [          # 事件/互动时说（好奇、招呼、命名）
     "哦？", "咦", "怎么了", "怎么了呀", "看", "看这个", "又动了", "又动啦",
     "是你呀", "你好呀", "你醒啦", "又在看", "对", "对呀", "来了来了",
     "什么声音", "呀", "摸摸", "轻轻的", "在这里", "在这儿呢",
+]
+CORPUS_WORLD_HI = [       # P16：世界相关照护者——世界场偏高时命名（"球/亮亮"↔世界状态 HIGH）
+    "球", "亮亮", "看那儿",
+]
+CORPUS_WORLD_LO = [       # P16：世界场偏低时命名（"灯/那个"↔世界状态 LOW）
+    "灯", "那个", "在那儿",
 ]
 CORPUS_NIGHT = [          # 夜间/哄睡
     "嘘", "安静哦", "睡吧", "睡喽", "睡觉觉", "晚啦", "不哭哦", "别怕",
@@ -99,6 +114,26 @@ class Language:
         self._prev_asleep = None
         # E4：对发声的应答概率（contingent 模式下）
         self.vocal_response_prob = cg_cfg.get("vocal_response_prob", 0.7)
+        # P14b：内容敏感的听者——应答概率按「发声的型」差异化 r(f)。
+        # 关闭（默认）时退化为固定 vocal_response_prob，行为与 P14 逐位一致。
+        cr_cfg = cg_cfg.get("content_response", {})
+        self.content_response_enabled = bool(cr_cfg.get("enabled", False))
+        self.content_response_default = float(cr_cfg.get("default_r",
+                                                         self.vocal_response_prob))
+        # P14c：对 HIGH 词的“短爆”回应条数（1=不短爆；k>1 时一次发声窗口内回 k 句）
+        self.cr_burst_k = int(cr_cfg.get("burst_high_k", 1))
+        self._burst_pending = 0
+        self._burst_pool = None
+        self.content_r = {}
+        # P16 前置：世界相关照护者（joint attention）——外部世界显著时命名外部对象
+        self.world_contingent = bool(cg_cfg.get("world_contingent", False))
+        self.wc_rate = float(cg_cfg.get("wc_rate_per_hour", 6.0))
+        self.wc_field_hi = float(cg_cfg.get("wc_field_hi", 0.65))
+        self.wc_field_lo = float(cg_cfg.get("wc_field_lo", 0.35))
+        self.wc_field_delta = float(cg_cfg.get("wc_field_delta", 0.05))
+        self._prev_wf = None
+        if self.content_response_enabled:
+            self._load_content_map(cr_cfg.get("map_file"))
         # E4 修复：每个发声窗口只应答一次（此前逐 tick 掷骰 → 60s 窗口内
         # 洪水式应答 8000+/日，p1 已污染清洗重跑，见 experiments/e4/deviation_1.json）
         self._vocal_win_active = False
@@ -126,6 +161,16 @@ class Language:
         self.corpus_cum = []               # 累积权重（选句 O(log n)）
         self.corpus_directed = []          # 含"你/我"的子集索引（状态定义时刻用）
         self.corpus_directed_cum = []
+        # P17：词汇发育——语料词表档（top-cap）+ 扩词规则
+        self.corpus_vocab_cap = int(cg_cfg.get("corpus_vocab_cap", 0))   # 0=不设限
+        self.vocab_growth = str(cg_cfg.get("vocab_growth", "none"))
+        self.vocab_cap_max = int(cg_cfg.get("vocab_cap_max", 1000))
+        self.vocab_median_threshold = float(cg_cfg.get("vocab_median_threshold", 20.0))
+        self._rows_full = None
+        self._exponent = 1.0
+        self._type_n = {}                # 当前档内各型的被说次数
+        self._type_n_sum = 0             # Σ type_n（均值短路用；避免每 tick O(cap) 求中位）
+        self._cap_last_grow_day = -999
         _cf = cg_cfg.get("corpus_file")
         if _cf:
             self._load_corpus(_cf, float(cg_cfg.get("corpus_zipf_exponent", 1.0)))
@@ -163,7 +208,49 @@ class Language:
         # 目标涌现的滚动窗口：最近 N 次自发检索（窗口占比替代全期占比）
         self.retrieval_log = deque(maxlen=self.goal_window)
         self._last_evoke_t = 0.0
+        # ---- C1 成句重组（R3，归口本层）----
+        # 仅在 spont.compose=true 时激活；否则所有新分支不执行，本层输出与改动前
+        # 逐位一致。bigram：从"真实相继听到的短语"学一张后继频次表（纯数据驱动、
+        # 无人工语法），evoke 时以检索胜者为起点、按频次抽其后继拼成新句。
+        self.compose = bool(config.get("spont", {}).get("compose", False))
+        self._bigram = {}                 # prev_text -> {next_text: count}
+        self._last_heard_text = None
+        self.n_composed = 0               # 重组句计数（M_生成 分子）
         self._last_error = None
+        # ---- P18 词级组合（零幻觉词法级、重组句法级）----
+        # 默认关（word_compose.enabled=False）→ composer=None，本层行为逐位不变。
+        self.composer = (compose_mod.WordComposer(config)
+                         if config.get("word_compose", {}).get("enabled", False)
+                         else None)
+        # ---- P19 对话状态向量（多轮）----
+        # 默认关（dialogue.enabled=False）→ dialogue=None，本层行为逐位不变。
+        self.dialogue = (dialogue_mod.DialogueState(config)
+                         if config.get("dialogue", {}).get("enabled", False)
+                         else None)
+        self.dialogue_gamma = float(config.get("dialogue", {}).get("gamma", 0.5))
+        # ---- P20 构造语法（理解句式 + 槽位重组）----
+        # 默认关 → grammar=None，本层行为逐位不变（P19b 等既有臂不受影响）。
+        con_cfg = config.get("construction", {})
+        self.grammar = (constructions_mod.ConstructionGrammar(
+            os.path.join(_ROOT, con_cfg.get("lexicon_file", "corpus/lexicon.json")))
+            if con_cfg.get("enabled", False) else None)
+        if self.grammar is not None:
+            self.grammar.finalize()      # 空模型也要有索引，避免首轮 respond 崩溃
+        self.grammar_window_s = float(con_cfg.get("response_window_s", 300.0))
+        self.grammar_finalize_every = int(con_cfg.get("finalize_every_learns", 500))
+        self._grammar_learns = 0
+        self.n_construction = 0
+        # ---- R5 激活式工作集（见 workspace.py；默认关，行为逐位不变）----
+        self.ws = workspace_mod.Workspace(config)
+        # P13：学习/使用相位分界（day_index 口径，见 prereg_P13.json）。
+        # <0：不分相（旧行为，priming 立即生效、A 边用边写，与 P9/P10 逐位一致）；
+        # >=0：此前为学习期（只学 A、priming 关），此后为使用期（priming 开、A 冻结只读），
+        #       以避免 P12 soft 臂那种「用 A → 改 A」正反馈把念头流锁死（uniq 5）。
+        self.ws_phase_split = float(config.get("workspace", {}).get("phase_split_day", -1))
+        # P9：上一个检索胜出的念头（priming 的前驱；与 adj_top3 判据对齐）
+        self._last_thought = None
+        # P14：最近一次检索的候选池（文本, 得分），供发声时按 E[f] 选择；echo 不动它
+        self._last_candidates = []
 
     # ============ 外部语料：加载与采样（扩语料）============
     def _load_corpus(self, path, exponent):
@@ -176,12 +263,24 @@ class Language:
             return
         with open(full, encoding="utf-8") as f:
             rows = json.load(f)
+        # P17：按频次降序保存整池，便于按 top-cap 截取与后续发育扩词
+        self._rows_full = sorted(
+            [(str(r.get("text", "")).strip(), float(r.get("count", 1)))
+             for r in rows if str(r.get("text", "")).strip()],
+            key=lambda x: x[1], reverse=True)
+        self._exponent = exponent
+        self._apply_vocab_cap()
+
+    def _apply_vocab_cap(self):
+        """按 top-cap 构建采样池（cap<=0 表示不设限）。P17：cap 可随发育增长。"""
+        if not self._rows_full:
+            return
+        rows = self._rows_full
+        if self.corpus_vocab_cap and self.corpus_vocab_cap > 0:
+            rows = rows[:self.corpus_vocab_cap]
         texts, weights, d_w = [], [], []
-        for r in rows:
-            t = str(r.get("text", "")).strip()
-            if not t:
-                continue
-            w = max(1e-9, float(r.get("count", 1))) ** exponent
+        for t, c in rows:
+            w = max(1e-9, c) ** self._exponent
             texts.append(t)
             weights.append(w)
             if any(word in t for word in self.sd_words):
@@ -194,23 +293,60 @@ class Language:
         self.corpus_directed = [i for i, _ in d_w]
         self.corpus_directed_cum = _cumsum([w for _, w in d_w])
 
+    def maybe_grow_vocab(self, day_index):
+        """P17 词汇发育：adaptive=当前档已巩固（每型中位样本≥阈值）→ cap 翻倍；
+        fixed_fast=每 15 日翻倍。上限 vocab_cap_max。未启用 cap 时不动作。"""
+        if self.vocab_growth not in ("adaptive", "fixed_fast"):
+            return
+        if not self._rows_full or self.corpus_vocab_cap <= 0:
+            return
+        if self.corpus_vocab_cap >= self.vocab_cap_max:
+            return
+        grow = False
+        if self.vocab_growth == "fixed_fast":
+            grow = (day_index - self._cap_last_grow_day) >= 15
+        else:  # adaptive：巩固了再扩
+            n = len(self.corpus_texts)
+            # 均值短路：中位 ≤ 均值，故均值 < 阈值 ⇒ 中位必 < 阈值 ⇒ 无需排序。
+            # 常见路径退化为 O(1)，避免每 tick 对整档 O(cap) 求中位（cap 可达 1000）。
+            if n and (self._type_n_sum / n) >= self.vocab_median_threshold:
+                vals = [self._type_n.get(t, 0) for t in self.corpus_texts]
+                grow = statistics.median(vals) >= self.vocab_median_threshold
+        if grow:
+            self.corpus_vocab_cap = min(self.corpus_vocab_cap * 2, self.vocab_cap_max)
+            self._cap_last_grow_day = day_index
+            self._type_n = {}
+            self._type_n_sum = 0
+            self._apply_vocab_cap()
+
     def _sample_corpus(self, directed=False):
         if directed and self.corpus_directed:
             i = random.choices(self.corpus_directed,
                                cum_weights=self.corpus_directed_cum, k=1)[0]
-            return self.corpus_texts[i]
-        return random.choices(self.corpus_texts,
-                              cum_weights=self.corpus_cum, k=1)[0]
+            return self._record_type(i)
+        i = random.choices(range(len(self.corpus_texts)),
+                           cum_weights=self.corpus_cum, k=1)[0]
+        return self._record_type(i)
 
-    def _say(self, pool, directed=False, use_burst=False):
+    def _record_type(self, i):
+        """P17：记录某型被说的次数（驱动自适应扩词）。"""
+        t = self.corpus_texts[i]
+        self._type_n[t] = self._type_n.get(t, 0) + 1
+        self._type_n_sum += 1
+        return t
+
+    def _say(self, pool, directed=False, use_burst=False, force_pool=False):
         """选一句要说的话：加载了外部语料 → 按频次加权从整池采；
         否则退回内置池（未设 corpus_file 时行为与改动前逐位一致）。
         directed=True 时只从含"你/我"的子集里采——自我指向输入是自我模型
         形成的硬前提（213 天 null 已证），故保留这一条词法过滤。
         use_burst=True（仅用于通用内容的通道：安静基流 / 事件命名）时，改走
-        话题连续采样；状态针对性的通道（醒来问候 / 安抚 / 被注视 / 应答）
-        不受影响，以保住"什么时候说"的状态驱动性。"""
-        if self.corpus_texts:
+        话题连续采样。
+        P17 修复：force_pool=True 时**始终用指定池、不走语料**——用于状态针对性
+        与指称通道（醒来问候 / 安抚 / 无聊召唤 / 被注视 / 世界命名），保住"什么时候
+        说、针对什么说"的情境驱动性（人类照护者对着婴儿的状态与所指对象说话）。
+        仅通用内容通道（事件命名 #2 / 安静基流 #6）走语料——词汇发育发生在这里。"""
+        if self.corpus_texts and not force_pool:
             if use_burst and self.burst_mode and self.burst_sessions:
                 return self._burst_next(directed)
             return self._sample_corpus(directed)
@@ -265,15 +401,49 @@ class Language:
                               cum_weights=self.burst_session_cum[i], k=1)[0]
 
     # ============ 环境（照护者）说话 ============
+    def _load_content_map(self, map_file):
+        """P14b：载入『型→应答倾向 r(f)』映射（默认路径 experiments/p14b_content_map.json）。"""
+        path = map_file or "experiments/p14b_content_map.json"
+        full = path if os.path.isabs(path) else os.path.join(_ROOT, path)
+        if not os.path.exists(full):
+            self.content_response_enabled = False
+            self._last_error = f"content map 缺失：{full}"
+            return
+        try:
+            with open(full, encoding="utf-8") as f:
+                d = json.load(f)
+            self.content_r = {str(k): float(v) for k, v in d.get("r", {}).items()}
+        except Exception as e:
+            self.content_response_enabled = False
+            self._last_error = f"content map 解析失败：{e}"
+
+    def _vocal_response_prob(self, vocal_text):
+        """P14b：对某次发声的应答概率。关闭时恒为固定值（与 P14 逐位一致）。"""
+        if self.content_response_enabled and vocal_text:
+            return self.content_r.get(vocal_text, self.content_response_default)
+        return self.vocal_response_prob
+
+    def drain_burst(self):
+        """P14c：取出本发声窗口剩余的“短爆”回应（HIGH 词），由调用方逐条 hear。"""
+        if self._burst_pending <= 0 or not self._burst_pool:
+            self._burst_pending = 0
+            return []
+        k = self._burst_pending
+        self._burst_pending = 0
+        return [random.choice(self._burst_pool) for _ in range(k)]
+
     def caregiver_speaks(self, dt_hours, sim_hour, event_happened,
                          state_vec=None, asleep=None, salience=0.0,
-                         vocal_recent=False):
+                         vocal_recent=False, vocal_text=None,
+                         world_event=False, world_field=None):
         """决定本 tick 照护者是否说话，返回话语或 None。纯环境侧。
         - random 模式（原逻辑，对照）：随机时机 + 随机语料，与候选体状态无关（零应答）
         - contingent 模式（E3 应答式）：说话时机与内容由候选体状态驱动——
           环境可以有应答性（真实父母的属性）；候选体内部机制零改动。
         - E4：contingent 模式下对发声（vocal_recent）高概率应答——
           动作-结果共变的来源。
+        - P14b：contingent 模式下若开启 content_response，应答概率改为按发声的型
+          r(vocal_text)——听者对『说什么』敏感（环境侧属性）。关闭时与 P14 逐位一致。
         """
         if not self.enabled:
             return None
@@ -289,17 +459,36 @@ class Language:
                 if not self._vocal_win_active:       # 新发声窗口开启
                     self._vocal_win_active = True
                     self._vocal_responded = False
-                if (not self._vocal_responded
-                        and random.random() < self.vocal_response_prob):
+                # P12 修复：本窗口首次调用即「决策」（无论应答与否）。原实现只在
+                # 应答成功时置位，于是窗口内每 tick 重掷（60s 窗口 = 1200 次），
+                # 累计概率 1-(1-0.7)^1200 ≈ 1.0 —— vocal_response_prob 被架空成死参数，
+                # 与 echo 旧 bug 完全同构。
+                if not self._vocal_responded:
                     self._vocal_responded = True
-                    pool = ["看", "看这个", "又动了", "又动啦", "来了来了",
-                            "是你呀", "你在看", "你好呀", "对", "对呀"]
-                    return random.choice(pool)
+                    # P14b：应答概率按发声的型（关闭时 = vocal_response_prob）
+                    rp = self._vocal_response_prob(vocal_text)
+                    if random.random() < rp:
+                        pool = ["看", "看这个", "又动了", "又动啦", "来了来了",
+                                "是你呀", "你在看", "你好呀", "对", "对呀"]
+                        # P14c：HIGH 词（r 高）→ 短爆 k 句，放大窗口内效应幅度
+                        if (self.content_response_enabled and vocal_text
+                                and self.cr_burst_k > 1 and rp >= 0.5):
+                            self._burst_pool = pool
+                            self._burst_pending = self.cr_burst_k - 1
+                        return random.choice(pool)
             else:
                 self._vocal_win_active = False       # 窗口结束，下次发声可再应答
             # 1) 醒来时刻：晨间问候（每天必现的自我指向共现）
             if woke:
-                return self._say(["你醒啦", "你醒啦", "你醒啦", "你好呀"], directed=True)
+                return self._say(["你醒啦", "你醒啦", "你醒啦", "你好呀"], directed=True,
+                                 force_pool=True)
+            # 1b) P16 前置：世界相关照护者（joint attention）——**不同的词对应不同的
+            #     世界状态**：世界场偏高时命名 HIGH 词表，偏低时命名 LOW 词表。
+            #     P17：force_pool——指称词始终来自世界词表，不被语料覆盖。
+            if self.world_contingent and world_field is not None:
+                if random.random() < self.wc_rate * dt_hours:
+                    pool = (CORPUS_WORLD_HI if world_field > 0.5 else CORPUS_WORLD_LO)
+                    return self._say(pool, directed=True, force_pool=True)
             # 2) 事件时刻：命名/好奇（与随机模式同概率、同语料）
             if event_happened and random.random() < self.speech_prob_with_event:
                 return self._say(CORPUS_EVENT, use_burst=True)
@@ -307,23 +496,25 @@ class Language:
             #    C1 对照（inverted）：同一批"我"短语移到平静时刻说——频率匹配、语境反转
             fp_soothe = FP_SOOTHE if (self.corpus_fp and self.fp_context == "bound") else []
             if state_vec[3] > 0.62 and random.random() < 10.0 * dt_hours:
-                return self._say(CORPUS_NIGHT + fp_soothe)
+                return self._say(CORPUS_NIGHT + fp_soothe, force_pool=True)
             if (self.corpus_fp and self.fp_context == "inverted" and state_vec[3] < 0.40
                     and random.random() < self.fp_inv_rate_soothe * dt_hours):
-                return self._say(FP_SOOTHE, directed=True)
-            # 4) 无聊高（s8）：互动召唤（8/时）
+                return self._say(FP_SOOTHE, directed=True, force_pool=True)
+            # 4) 无聊高（s8）：互动召唤（8/时）——状态针对性通道：force_pool，
+            #    保住"无聊→召唤"这一状态-内容绑定（人类照护者的反应有定式）
             if state_vec[7] > 0.40 and random.random() < 8.0 * dt_hours:
                 return self._say(["看", "看这个", "又动了", "又动啦",
-                                  "摸摸", "来了来了"])
+                                  "摸摸", "来了来了"], force_pool=True)
             # 5) 注意焦点显著：自我指向——"你"与被注视状态共现（5/时）
             #    C1（inverted）：高焦点时刻只说"你"族；"我"族移到无焦点时刻（频率匹配）
+            #    被注视=状态针对性通道：force_pool，保住"你"的语境驱动
             pool_self = (CORPUS_SELF if (self.corpus_fp and self.fp_context == "bound")
                          else CORPUS_SELF_2P)
             if salience > 0.6 and random.random() < 5.0 * dt_hours:
-                return self._say(pool_self, directed=True)
+                return self._say(pool_self, directed=True, force_pool=True)
             if (self.corpus_fp and self.fp_context == "inverted" and salience < 0.3
                     and random.random() < self.fp_inv_rate_salience * dt_hours):
-                return self._say(FIRST_PERSON, directed=True)
+                return self._say(FIRST_PERSON, directed=True, force_pool=True)
             # 6) 默认：安静时段基础语流（与随机模式同率；自我指向通道已由 1/5 承担）
             p = self.speech_per_hour_quiet * dt_hours
             if random.random() < p:
@@ -352,18 +543,45 @@ class Language:
         return text
 
     # ============ 听 ============
-    def hear(self, text, state_vec, sim_time):
-        """外部语言进入。存储片段 + 听到时的状态快照。"""
-        self.memory.append({
+    def hear(self, text, state_vec, sim_time, world_sig=None):
+        """外部语言进入。存储片段 + 听到时的状态快照（+ P16：外部世界签名）。"""
+        rec = {
             "text": text,
             "t": round(sim_time, 1),
             "s": [round(float(v), 4) for v in state_vec],
             "self_directed": any(w in text for w in self.sd_words),  # S2：门控词表可配（默认含"我"，与 self_model 词表对齐）
             "echoed": False,          # 私语复述只发生一次（真实私语是复述一两遍）
-        })
+        }
+        # P16：外部世界签名（照护者言之有物时，片段可获得对外部世界的所指）
+        if world_sig is not None:
+            rec["world"] = round(float(world_sig), 4)
+        self.memory.append(rec)
         self.n_heard += 1
         if self.first_heard_t is None:
             self.first_heard_t = sim_time
+        # C1：学习"真实相继听到的短语"的二元后继。仅 compose 开启时写入；关闭时
+        # 本分支不执行（不消耗随机数、不改任何输出），hear 与改动前逐位一致。
+        if self.compose:
+            if self._last_heard_text is not None and self._last_heard_text != text:
+                row = self._bigram.setdefault(self._last_heard_text, {})
+                row[text] = row.get(text, 0) + 1
+            self._last_heard_text = text
+        # P18：词级组合——听到即切词、更新词二元表与实听词表（默认关时 composer=None）
+        if self.composer is not None:
+            self.composer.learn(text)
+        # P19：听到照护者一轮 → 更新对话状态向量（多轮）
+        if self.dialogue is not None:
+            self.dialogue.observe_turn(text, "partner", sim_time)
+        # P20：听到即学句式（挖空 → 填充词分布）与词序/共现；离线构造模型
+        if self.grammar is not None:
+            self.grammar.learn(text, state=state_vec, world=world_sig)
+            self._grammar_learns += 1
+            if (self.grammar_finalize_every > 0
+                    and self._grammar_learns % self.grammar_finalize_every == 0):
+                self.grammar.finalize()
+        # R5：听到 → 沉积激活 + 沿共现扩散（默认关时 activate 直接返回）
+        # P13：标注来源 'heard'；thought_only 下听到的事件不写念头—念头共现矩阵 A
+        self.ws.activate(text, source="heard")
         return self.memory[-1]
 
     # ============ 念头：私语 + 检索 ============
@@ -376,6 +594,18 @@ class Language:
             den += w
         return num / den if den else 0.0
 
+    # ---- P13：工作空间学习/使用相位 ----
+    def _ws_priming_on(self, day_index):
+        """本 tick priming 是否生效。phase_split_day<0 → 恒生效（P9/P10 逐位一致）；
+        >=0 → 仅在使用期（day_index>=split）生效，此前为学习期、只学 A 不用 A。"""
+        if self.ws_phase_split < 0:
+            return True
+        return day_index >= self.ws_phase_split
+
+    def _ws_assoc_frozen(self, day_index):
+        """使用期冻结 A（只读不写），切断『用 A → 念头流被改 → 又写回 A』的自锁。"""
+        return self.ws_phase_split >= 0 and day_index >= self.ws_phase_split
+
     def _echo_prob(self, sim_time):
         """私语概率：随语言经验天数缓慢衰减（内化加深→复述减少）。"""
         if self.first_heard_t is None:
@@ -383,8 +613,18 @@ class Language:
         days = (sim_time - self.first_heard_t) / 86400.0
         return self.echo_prob0 / (1.0 + days / self.echo_decay_days)
 
-    def _record(self, kind, frag, mem_entry, sim_time, score, day_index):
-        """写入 inner_speech.jsonl 并更新统计。"""
+    def _sample_successor(self, text):
+        """C1：从二元后继表按频次加权抽一个续段。无后继时返回 None。"""
+        succ = self._bigram.get(text)
+        if not succ:
+            return None
+        pop = list(succ.keys())
+        wts = [succ[k] for k in pop]
+        return random.choices(pop, weights=wts, k=1)[0]
+
+    def _record(self, kind, frag, mem_entry, sim_time, score, day_index, extra=None):
+        """写入 inner_speech.jsonl 并更新统计。extra：仅在 C1 重组句上追加
+        （composed 等标记）。默认 None → 记录字段与改动前逐位一致。"""
         delay_days = (sim_time - mem_entry["t"]) / 86400.0
         rec = {
             "t": round(sim_time, 1),
@@ -397,11 +637,111 @@ class Language:
             "self_directed": mem_entry["self_directed"],
             "evidence": "soft",
         }
+        if extra:
+            rec.update(extra)
         self.recent_inner.append(frag)
         os.makedirs(os.path.dirname(INNER_SPEECH_PATH), exist_ok=True)
         with open(INNER_SPEECH_PATH, "a") as f:
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
         return rec
+
+    # ============ P14：候选打分管线（evoke 与 response_model 共用） ============
+    def score_candidates(self, s, sim_time, day_index):
+        """对记忆候选打分。返回 (best_entry, best_score, candidates)。
+        candidates = [(text, score), ...] 按得分降序、按文本去重（同型多实例取最高）。
+        本方法的随机数消耗与 P14 之前逐位一致：off 臂行为不变。"""
+        freq = {}
+        for m in self.memory:
+            freq[m["text"]] = freq.get(m["text"], 0) + 1
+        best, best_score = None, -1.0
+        # 抽样评估（记忆大时不全扫）
+        # R5：若工作集开启，候选 = 工作集内的型（保证沉积内容在候选里）；否则原路径。
+        # P12 修复：soft_prior = **真正的全长池**——既不裁候选（硬帽 k），也不落到
+        # `random.sample(memory, 200)`。P11 的 soft 臂写成了后者，候选被缩到
+        # 200/51721 ≈ 0.4%，采样瓶颈（R3/R4 的老问题）回归、激活加权随之被淹没：
+        # 实测 adj_top3=0.000，且 soft 与 soft_shuf 三项读数几乎全同（打乱行零效果），
+        # 是为旁证。本次让候选 = 全部记忆条目，激活只经打分乘子 (1+γ·Âct) 起作用。
+        wset = None if self.ws.soft_prior else self.ws.working_set()
+        if self.ws.soft_prior:
+            sample = self.memory
+        elif wset is not None:
+            keep = set(wset)
+            cand = [m for m in self.memory if m["text"] in keep]
+            if not cand:
+                sample = (self.memory if len(self.memory) <= 200
+                          else random.sample(self.memory, 200))
+            else:
+                sample = cand if len(cand) <= 200 else random.sample(cand, 200)
+        else:
+            sample = self.memory if len(self.memory) <= 200 else random.sample(self.memory, 200)
+        now_days = sim_time / 86400.0
+        self.ws.begin_retrieval()   # P11：刷新软先验的归一化基准（关闭时为空操作）
+        scored = []
+        for m in sample:
+            sim = self._state_sim(s, m["s"])
+            age_days = now_days - m["t"] / 86400.0
+            recency = 0.5 ** (max(0.0, age_days - 0.02) / self.recency_half_life_days)
+            score = sim * (0.35 + 0.65 * recency) * (1.0 + self.freq_gain * math.log(1 + freq[m["text"]]))
+            # P9：联想启动——上一个念头对其联想后继加权（prime_bonus 在关闭时返回 0，乘子退化为 1）
+            # P13：相位门——学习期不施加 priming（prime_bonus 自身的 priming 开关仍生效）
+            if self._last_thought is not None and self._ws_priming_on(day_index):
+                score *= 1.0 + self.ws.priming_gamma * self.ws.prime_bonus(self._last_thought, m["text"])
+            # P11：软先验——当前激活场对候选加权（soft_bonus 在关闭时返回 0，乘子退化为 1）
+            if self.ws.soft_prior:
+                score *= 1.0 + self.ws.soft_gamma * self.ws.soft_bonus(m["text"])
+            # P19：对话状态向量——候选与近几轮对话上下文的关联加权（默认关时 dialogue=None）
+            if self.dialogue is not None:
+                score *= 1.0 + self.dialogue_gamma * self.dialogue.relevance(m["text"])
+            score *= 0.9 + 0.2 * random.random()   # 内部涨落
+            scored.append((m, score))
+            if score > best_score:
+                best, best_score = m, score
+        # 候选池：按文本去重取最高，再按得分降序（P14 的 top-k 来自这里）
+        by_text = {}
+        for m, sc in scored:
+            t = m["text"]
+            if t not in by_text or sc > by_text[t]:
+                by_text[t] = sc
+        candidates = sorted(by_text.items(), key=lambda kv: kv[1], reverse=True)
+        return best, best_score, candidates
+
+    def _construction_reply(self, state_vec, sim_time, day_index, score):
+        """P20：对最近听到的一轮，用构造语法听→答。
+
+        只在 grammar 开启时调用；返回 inner_speech 记录或 None。
+        回答的句式与词都必须是它听过的（构造语法内部保证），
+        整体词序可以没听过——这是“句法级重组”。
+        """
+        if self.grammar is None or not self.memory:
+            return None
+        last = self.memory[-1]
+        if sim_time - last.get("t", 0.0) > self.grammar_window_s:
+            return None
+        # 近几轮话题（只取实词，避免把“的/了”带进对话状态）
+        recent_topics = []
+        for m in reversed(self.memory[-8:]):
+            for w in self.grammar.tok.segment(m.get("text", "")):
+                if (w not in constructions_mod.FUNCTION_WORDS
+                        and w not in recent_topics):
+                    recent_topics.append(w)
+            if len(recent_topics) >= 8:
+                break
+        und, gen = self.grammar.respond(
+            last.get("text", ""), state=state_vec, world=last.get("world"),
+            recent_topics=recent_topics, rng=random,
+            avoid=tuple(self.recent_inner))
+        if not gen:
+            return None
+        self.n_construction += 1
+        extra = {"composed": True, "compose_level": "construction",
+                 "compose_from": last.get("text"), "reply_to": last.get("text"),
+                 "construction_mode": gen.get("answer_mode"),
+                 "construction_frame": ("".join(gen["frame"])
+                                        if gen.get("frame") else None),
+                 "construction_speech_act": und.get("speech_act"),
+                 "construction_coverage": und.get("coverage")}
+        return self._record("construction", gen["text"], last, sim_time,
+                            score, day_index, extra=extra)
 
     def evoke_inner_speech(self, state_vec, focus, sim_time, day_index):
         """主入口：本 tick 是否有念头浮现。返回记录 dict 或 None。
@@ -437,25 +777,48 @@ class Language:
         if len(self.memory) > 120000:
             self.memory = self.memory[-120000:]
         # 对候选片段打分：状态相似 × 新近 × 频率
-        freq = {}
-        for m in self.memory:
-            freq[m["text"]] = freq.get(m["text"], 0) + 1
-        best, best_score = None, -1.0
-        # 抽样评估（记忆大时不全扫）
-        sample = self.memory if len(self.memory) <= 200 else random.sample(self.memory, 200)
-        now_days = sim_time / 86400.0
-        for m in sample:
-            sim = self._state_sim(s, m["s"])
-            age_days = now_days - m["t"] / 86400.0
-            recency = 0.5 ** (max(0.0, age_days - 0.02) / self.recency_half_life_days)
-            score = sim * (0.35 + 0.65 * recency) * (1.0 + self.freq_gain * math.log(1 + freq[m["text"]]))
-            score *= 0.9 + 0.2 * random.random()   # 内部涨落
-            if score > best_score:
-                best, best_score = m, score
+        # P14：抽离为 score_candidates()，供 evoke_inner_speech 与 response_model
+        # 复用——同一条打分管线，同一批随机数消耗，off 臂行为逐位不变。
+        best, best_score, candidates = self.score_candidates(s, sim_time, day_index)
         if best is None or best_score < self.evoke_threshold:
             return None  # 这一刻没有念头浮现
+        self._last_candidates = candidates   # P14：供发声时按 E[f] 选择
         self.n_retrieval += 1
-        return self._record("retrieval", best["text"], best, sim_time, best_score, day_index)
+        # P9：记录本 tick 的念头，作为下一次检索的 priming 前驱
+        prev_thought = self._last_thought
+        self._last_thought = best["text"]
+        # P13：念头—念头共现按「念头流」顺序记录（与 hearing 事件无关——原始激活序列里
+        # 听到事件远多于念头，字面相邻几乎不存在，会使 A 被架空）。使用期冻结 A，
+        # 切断『用 A → 念头流被改 → 又写回 A』的正反馈自锁（P12 soft 臂坍缩成因）。
+        if self.ws.thought_only and not self._ws_assoc_frozen(day_index):
+            self.ws.record_assoc(prev_thought, best["text"])
+        # R5：检索到的念头 → 回写激活（复述/回响 = 双向闭环；默认关时直接返回）
+        self.ws.activate(best["text"], source="thought")
+        # P20：构造语法听→答（默认 grammar=None，不执行）
+        if self.grammar is not None:
+            crec = self._construction_reply(s, sim_time, day_index, best_score)
+            if crec is not None:
+                return crec
+        # P18 词级组合 / C1 短语级重组（二选一——本实验只开 word_compose）
+        frag, extra = best["text"], None
+        if self.composer is not None:
+            comp = self.composer.compose(best["text"])
+            if comp is not None:
+                frag = comp["text"]
+                extra = {"composed": True, "compose_level": "word",
+                         "compose_from": best["text"], "words": comp["words"],
+                         "novel": comp["novel"], "n_pairs": comp["n_pairs"],
+                         "n_pairs_real": comp["n_pairs_real"],
+                         "purity": round(comp["purity"], 4)}
+        elif self.compose:
+            cont = self._sample_successor(best["text"])
+            if cont is not None:
+                frag = best["text"] + "，" + cont
+                self.n_composed += 1
+                extra = {"composed": True, "compose_level": "phrase",
+                         "compose_from": best["text"], "compose_to": cont}
+        return self._record("retrieval", frag, best, sim_time, best_score,
+                            day_index, extra=extra)
 
     # ============ 回流信号 ============
     def valence_of(self, record, state_vec):
@@ -518,20 +881,43 @@ class Language:
             "n_heard": self.n_heard,
             "n_echo": self.n_echo,
             "n_retrieval": self.n_retrieval,
+            "n_composed": self.n_composed,
+            "n_construction": self.n_construction,
+            "grammar_frames": (len(self.grammar.frames) if self.grammar else 0),
+            "grammar_words": (len(self.grammar.word_count) if self.grammar else 0),
             "existence_count": self.existence_count,
             "first_heard_t": self.first_heard_t,
             "recent_inner": list(self.recent_inner),
             "fragment_activations": self.fragment_activations,
             "retrieval_log": list(self.retrieval_log),
             "goals": self.goals,
+            "bigram": self._bigram,
+            "last_heard_text": self._last_heard_text,
+            # P12：检索连续性——priming 前驱与检索节流时钟随盘持久化，
+            # 避免重启/fork 后首个检索丢前驱、节流归零（各臂对称，但相对
+            # "自然续跑"存在小状态断点，见审计 C-1）
+            "last_thought": self._last_thought,
+            "last_evoke_t": self._last_evoke_t,
+            # P17：词汇发育状态（扩词档位与型计数）随盘持久化
+            "corpus_vocab_cap": self.corpus_vocab_cap,
+            "cap_last_grow_day": self._cap_last_grow_day,
+            "type_n": self._type_n,
         }
 
     def save(self):
         os.makedirs(os.path.dirname(LANG_STATE_PATH), exist_ok=True)
         with open(LANG_STATE_PATH, "w") as f:
-            json.dump(self.snapshot(), f, ensure_ascii=False, indent=2)
+            json.dump(self.snapshot(), f, ensure_ascii=False)   # 去 indent（体积/IO）
         with open(LING_MEMORY_PATH, "w") as f:
             json.dump(self.memory[-120000:], f, ensure_ascii=False)
+        self.ws.save()          # R5：工作集状态随语言层持久化
+        if self.composer is not None:      # P18：词级组合状态
+            self.composer.save(WORD_COMPOSE_PATH)
+        if self.dialogue is not None:      # P19：对话状态向量
+            self.dialogue.save(DIALOGUE_PATH)
+        if self.grammar is not None:       # P20：构造语法
+            self.grammar.finalize()
+            self.grammar.save(CONSTRUCTION_PATH)
 
     def load(self):
         if not os.path.exists(LANG_STATE_PATH):
@@ -541,8 +927,22 @@ class Language:
         self.n_heard = d.get("n_heard", 0)
         self.n_echo = d.get("n_echo", 0)
         self.n_retrieval = d.get("n_retrieval", 0)
+        self.n_composed = d.get("n_composed", 0)
+        self.n_construction = d.get("n_construction", 0)
         self.existence_count = d.get("existence_count", 0)
         self.first_heard_t = d.get("first_heard_t")
+        self._bigram = d.get("bigram", {})
+        self._last_heard_text = d.get("last_heard_text")
+        self._last_thought = d.get("last_thought")
+        self._last_evoke_t = d.get("last_evoke_t", 0.0)
+        # P17：恢复词汇发育档位并重建采样池
+        if d.get("corpus_vocab_cap"):
+            self.corpus_vocab_cap = int(d["corpus_vocab_cap"])
+            self._cap_last_grow_day = int(d.get("cap_last_grow_day", -999))
+            self._type_n = d.get("type_n", {})
+            self._type_n_sum = sum(self._type_n.values())
+            if self._rows_full:
+                self._apply_vocab_cap()
         self.recent_inner = deque(d.get("recent_inner", []), maxlen=8)
         self.fragment_activations = d.get("fragment_activations", {})
         self.retrieval_log = deque(d.get("retrieval_log", []),
@@ -551,4 +951,36 @@ class Language:
         if os.path.exists(LING_MEMORY_PATH):
             with open(LING_MEMORY_PATH) as f:
                 self.memory = json.load(f)
+        self.ws.load()          # R5：工作集状态恢复（缺失时返回 False，不影响）
+        if self.composer is not None:      # P18：词级组合状态恢复
+            if self.composer.load(WORD_COMPOSE_PATH):
+                # seen 不再随盘（等价于 set(记忆整句)）→ 从 memory 重建
+                if not self.composer.seen:
+                    self.composer.seen = {_m.get("text") for _m in self.memory
+                                          if _m.get("text")}
+            else:
+                # 无自身状态文件（新 fork）：用已有听觉史（memory）初始化词二元与实听词表。
+                # 否则检索胜者若来自 fork 前的旧记忆，其词不在「实听词表」→ 词法纯净被误伤。
+                for _m in self.memory:
+                    _t = _m.get("text")
+                    if _t:
+                        self.composer.learn(_t)
+        if self.dialogue is not None:      # P19：对话状态向量恢复
+            self.dialogue.load(DIALOGUE_PATH)
+        if self.grammar is not None:       # P20：构造语法恢复/用听觉史初始化
+            if os.path.exists(CONSTRUCTION_PATH):
+                self.grammar = constructions_mod.ConstructionGrammar.load(
+                    CONSTRUCTION_PATH)
+            else:
+                for _m in self.memory:
+                    _t = _m.get("text")
+                    if _t:
+                        self.grammar.learn(_t, state=_m.get("s"),
+                                           world=_m.get("world"))
+                self.grammar.finalize()
         return True
+
+    # ============ R5 工作集：每 tick 衰减 ============
+    def tick_workspace(self, dt_hours):
+        """每 tick 调用；默认关时直接返回，不改状态。"""
+        self.ws.decay(dt_hours)

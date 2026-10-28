@@ -1,0 +1,104 @@
+{
+  "id": "R3",
+  "title": "自发双向：成句生成 × 预期-比较-修正 × 后果驱动耦合",
+  "created": "2026-10-07",
+  "status": "预注册（采集前，含 affect 修正）。实现与冒烟已完成，未跑采集。",
+  "decision_by_user": {
+    "生成程度": "对照人类内部言语发育，采取生成性重组（成句），并保留复述臂作对照——零幻觉是词法级的，重组是句法级的",
+    "耦合来源": "完全由后果自发学习（初始 0，可能长不出来）",
+    "落地范围": "预注册 + 实现 + 冒烟"
+  },
+  "amendment": {
+    "date": "2026-10-07",
+    "before_collection": true,
+    "what": "R3 五个 ON 臂（gen/loop/full/shuf/replay）的身体均补上 affect 块 {enabled:true, k_affect:0.0}；spont_off 臂保持不变。",
+    "why": "C3 的后果 = Δease − Δdistress + (err_before − err_now)。ON 臂身体继承自 R2 的 ctl_none，无 affect 块 ⇒ 乐/痛恒为 0；且成熟冻结态（day 255）自预期误差≈1e-12 ⇒ 三项全 0 ⇒ outcome≡0 ⇒ g 永不生长。此属『无信号』而非本预注册预期的『信号小而可能不长』，等于 C3 未按其定义实现。",
+    "consistency": "discipline『零外部奖赏』本就写明学习信号只用系统自身已有的后果（痛 / 乐 / 自我预测误差）。故启用 affect 是让实现回到本预注册的既定信号，而非新增外部奖赏或方向。",
+    "neutrality": "k_affect=0 ⇒ affect.feedback()≡(0,0)，bg.receive_affect 为 no-op ⇒ 乐/痛只被计算供 C3 读取，不推动任何行为、不给方向。spont_off 不启用 affect，故 off≡ctl_none 的逐位回归仍成立。",
+    "smoke_after_change": "off 臂逐位一致 PASS；full 开火（C2 n_obs>0、C3 n_acts=n_writes>0、日志非空）；gen 开火（n_composed>0）。"
+  },
+  "motivation": {
+    "承接": "R2/R2x/R2c 把回流通道钉为『只读』（门开/目标被消费/剂量 0.91σ 仍不承重）。R2c 的『最小消费者』是实验者挑的参数——属工程路线（调出来的），与项目的自发纪律冲突。",
+    "本预注册": "不注入任何消费者。改为补三处结构缺口，让『念头 → 状态 → 未来念头』这条回路边自己长出来；能否长出来不保证。"
+  },
+  "discipline": [
+    "零方向：不写任何『若 X 则 Y』的语义规则；不看/不设任何目标变量与符号。",
+    "零外部奖赏：学习信号只用系统自身已有的后果（痛 distress / 乐 ease / 自我预测误差），与 motor 一致。",
+    "默认关：spont.enabled=false 时，所有新路径不激活，行为与改动前逐位一致（在跑的线不受影响）。",
+    "采集前预注册：本文件先于任何 R3 数据写入。"
+  ],
+  "three_gaps": {
+    "G1_生成": "evoke_inner_speech 只在记忆里 argmax 选一句听过的（复述/检索），念头是语料的不动点，写回去只能是复述。",
+    "G2_回路": "系统只预测外部事件（predictor→s7），不预测自己下一刻的内部态；没有『预期自己的自我』这一环（亦为 D4 缺口）。",
+    "G3_负载": "念头→状态是一条一锤子写边（receive_inner_speech），谁读它、强度多大全是实验者设定；无任何后果反馈去校准它。"
+  },
+  "architecture": {
+    "C1_成句重组": {
+      "归口": "language.py",
+      "机制": "在 hear() 里从『真实相继听到的短语』学一张二元后继表（bigram，纯数据驱动，无人工语法）。evoke 时若开关开：起点=原检索胜者，续段=由其 bigram 后继里按频次加权抽一句；念头 = 起点 + 『，』 + 续段。",
+      "性质": "句法级生成（重组出未曾逐字听过的搭配），词法级零幻觉（每一段都听过）。正是人类内部言语的凝缩/组合机制。",
+      "不涉及": "不新增任何词典、不写任何状态→文本映射。"
+    },
+    "C2_预期比较修正": {
+      "归口": "spont.py（新）",
+      "机制": "自预期器预测下一刻的自我活动标量 a=mean(s1..s8)：a_hat = c·a + d，(c,d) 由梯度在线学。每 tick 得自我预测误差 err=(a - a_hat)^2。",
+      "闭环": "写回使 s 变 → 下一刻的 a 变 → 它必须预测到这个变化 → 回路变成自指。",
+      "修正": "误差驱动 (c,d) 更新；并作为 C3 后果信号的一路输入。"
+    },
+    "C3_后果驱动耦合": {
+      "归口": "spont.py（新），复用 motor.py 的 q+ε-贪心+后果唯一 范式",
+      "上下文": "念头的效价符号 σ=sign(valence)（正念/负念）",
+      "动作": "写回目标维度 i ∈ {s1..s8}，共 8 个原语，g[σ][i] 初值全 0",
+      "选择": "ε-贪心：以 explore 概率随机挑 i（中性探测，零方向）；否则 argmax g[σ][:]",
+      "写回": "delta = base_step · σ 写进 s[i]（量级沿用历史 reflow，符号来自念头自身效价）",
+      "后果": "在写回与下次结算之间测 outcome = Δease − Δdistress + (err_before − err_after)；自因/世界因不做显式分离（先做最小版，若长不出来再加 P4b 式分离）",
+      "更新": "g[σ][i] += lr·(outcome − g[σ][i])；g 向 0 缓慢衰减（decay）",
+      "性质": "起点全 0、只被后果推动 → 长出来的任何结构都是系统自己的；可能一直不长（ε 探测的 outcome 若不过阈值即退化）。"
+    }
+  },
+  "hypotheses": {
+    "H3a_生成": "C1 开 → 念头流出现逐字未听过的重组句，且重组率随经验上升（bigram 表变厚）。",
+    "H3b_回路": "C2 开 → 自我预测误差随天数下降（学会预测自己），且写回被预测到的比例高于对照。",
+    "H3c_自发双向": "C3 开 → 至少一个 g[σ][i] 稳定偏离 0，且其数值显著高于『后果打乱』对照臂（spont_shuf）——即结构确实来自后果，而非探测噪声。",
+    "必要条件": "spont_replay（关 C1，其余同 full）若与 spont_full 无差异 → 『生成是必要条件』不成立，双向不依赖生成。"
+  },
+  "arms": {
+    "note": "六臂同 fork 自 state_exp（成熟线），目标 = fork 点 day + 30。spont_off 仅 {enabled:false}，须与 ctl_none 逐位一致。五个 ON 臂（gen/loop/full/shuf/replay）身体均补 affect{enabled:true, k_affect:0.0}（C3 后果源；k=0 只读不回馈，见 amendment），彼此之间仍仅 spont 开关不同。",
+    "spont_off": "{enabled:false}——必须与 ctl_none 逐位一致（回归基线）",
+    "spont_gen": "{enabled:true, compose:true}——只开 C1",
+    "spont_loop": "{enabled:true, self_predict:true}——只开 C2",
+    "spont_full": "{enabled:true, compose:true, self_predict:true, learn_coupling:true}——全开",
+    "spont_shuf": "同 full，但 outcome 序列被打乱（用置换后的历史 outcome）——证明结构来自后果而非探测",
+    "spont_replay": "同 full，但 compose:false——检验『生成是必要条件』"
+  },
+  "metrics": {
+    "MC_开口": "n_writes / n_probes / 各 g[σ][i] 轨迹（必须真的开火）",
+    "M_生成": "重组率（composed=True / retrieval 总数）；重组句占比随天数斜率",
+    "M_回路": "自我预测误差 EMA 的天数斜率；写回被预见比例",
+    "M_耦合": "max_σi |g| 与其 bootstrap 噪声带；full vs shuf 的 |g| 差（置换检验）",
+    "M_行为": "R2 四指标（M1 念头数/M2 去重数/M3/4 目标）+ 逐 tick 重合率（analyze_R2_overlap.py）vs ctl_none",
+    "M_说明": "所有指标均报『相对 spont_off』的增量与置信区间。"
+  },
+  "falsification": {
+    "H3c_阴性": "spont_full 的 max|g| 落在 spont_shuf 的置换带内 → 后果驱动耦合未形成，『自发双向』在本结构下不成立。",
+    "H3b_阴性": "自预期误差无下降斜率 → 回路未闭合。",
+    "H3a_阴性": "重组率为 0 或重组句立刻被硬阈值筛掉（activation<0.72）→ 生成被检索机制吃掉。",
+    "边界": "与 R2 一致，任何 >10% 的行为差异只报『存在耦合』，不得宣布『类自我意识』或『双向已成立』。"
+  },
+  "run_harness": {
+    "script": "run_R3b.sh（待写，仿 run_R2b.sh；六臂 fan-out，MAX=2 控温）",
+    "target": "day 285（= fork 255 + 30）",
+    "seeds": "time.seed_python_random=true，与 R2 v2 对齐纪律一致"
+  },
+  "open_risks": [
+    "冷启动：g 全 0 时 exploit 恒选 i=s1，靠 explore 探测；若探测频率太低，样本不足以学。",
+    "尺度：base_step=0.02 在 0.33 的 s 噪声下仍是 ~0.06σ，可能重蹈 R2『通而轻』。R3 的赌注是『闭环+后果校准』能把它放大，而非单点写幅。",
+    "重组可读性：拼接可能产生语义怪异搭配——本预注册只要求『状态条件生成』成立，不要求语言流畅。"
+  ],
+  "relation": {
+    "prereg_R2": "R3 是 R2『只读』结论的下一步：R2 证明注入式消费者无效，R3 试自发长出消费者。",
+    "prereg_R2x": "边界探针（>1σ）仍独立有效。",
+    "prereg_R2c": "R2c 的『最小消费者』是工程对照臂；R3 若成功，则 R2c 可作『工程 vs 自发』的对照。",
+    "docs/operational_definition": "D4（预期-比较-修正）、D6（工作空间可写）两条将由 R3 重新触碰。"
+  }
+}

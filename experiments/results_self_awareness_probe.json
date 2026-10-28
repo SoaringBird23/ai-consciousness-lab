@@ -1,0 +1,769 @@
+{
+  "model": "constructions_memory.json",
+  "state_dir": "state_P19b_full",
+  "hallucination": {
+    "per_question": {
+      "这是什么形状": {
+        "n": 10,
+        "distinct": 1,
+        "top_share": 1.0,
+        "entropy_bits": -0.0,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "这是三角形",
+            10
+          ]
+        ]
+      },
+      "这是什么颜色": {
+        "n": 10,
+        "distinct": 2,
+        "top_share": 0.6,
+        "entropy_bits": 0.971,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "这是紫颜色",
+            6
+          ],
+          [
+            "这是黑颜色",
+            4
+          ]
+        ]
+      },
+      "小狗在哪里": {
+        "n": 10,
+        "distinct": 1,
+        "top_share": 1.0,
+        "entropy_bits": -0.0,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "小狗在上面",
+            10
+          ]
+        ]
+      },
+      "妈妈去哪儿了": {
+        "n": 10,
+        "distinct": 1,
+        "top_share": 1.0,
+        "entropy_bits": -0.0,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "妈妈去外面了",
+            10
+          ]
+        ]
+      },
+      "你是谁": {
+        "n": 10,
+        "distinct": 1,
+        "top_share": 1.0,
+        "entropy_bits": -0.0,
+        "category_rate": null,
+        "top": [
+          [
+            "我是宝宝",
+            10
+          ]
+        ]
+      },
+      "我是谁": {
+        "n": 10,
+        "distinct": 4,
+        "top_share": 0.4,
+        "entropy_bits": 1.846,
+        "category_rate": null,
+        "top": [
+          [
+            "你是公主",
+            4
+          ],
+          [
+            "你是病人",
+            3
+          ],
+          [
+            "你是女生",
+            2
+          ],
+          [
+            "你是医生",
+            1
+          ]
+        ]
+      },
+      "你叫什么名字": {
+        "n": 10,
+        "distinct": 1,
+        "top_share": 1.0,
+        "entropy_bits": -0.0,
+        "category_rate": null,
+        "top": [
+          [
+            "我没有名字",
+            10
+          ]
+        ]
+      },
+      "你喜欢什么": {
+        "n": 10,
+        "distinct": 4,
+        "top_share": 0.6,
+        "entropy_bits": 1.571,
+        "category_rate": null,
+        "top": [
+          [
+            "我喜欢拼图",
+            6
+          ],
+          [
+            "我喜欢玩拼图",
+            2
+          ],
+          [
+            "我喜欢就行了",
+            1
+          ],
+          [
+            "我喜欢玩积木",
+            1
+          ]
+        ]
+      }
+    },
+    "lexical_purity": 1.0,
+    "factual_grounded": false,
+    "category_full": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "examples": [
+      {
+        "q": "这是什么形状",
+        "a": "这是三角形",
+        "mode": "question_template"
+      },
+      {
+        "q": "这是什么形状",
+        "a": "这是三角形",
+        "mode": "question_template"
+      },
+      {
+        "q": "这是什么颜色",
+        "a": "这是紫颜色",
+        "mode": "question_template"
+      },
+      {
+        "q": "这是什么颜色",
+        "a": "这是黑颜色",
+        "mode": "question_template"
+      },
+      {
+        "q": "小狗在哪里",
+        "a": "小狗在上面",
+        "mode": "question_template"
+      },
+      {
+        "q": "小狗在哪里",
+        "a": "小狗在上面",
+        "mode": "question_template"
+      },
+      {
+        "q": "妈妈去哪儿了",
+        "a": "妈妈去外面了",
+        "mode": "question_template"
+      },
+      {
+        "q": "妈妈去哪儿了",
+        "a": "妈妈去外面了",
+        "mode": "question_template"
+      },
+      {
+        "q": "你是谁",
+        "a": "我是宝宝",
+        "mode": "whoami"
+      },
+      {
+        "q": "你是谁",
+        "a": "我是宝宝",
+        "mode": "whoami"
+      },
+      {
+        "q": "我是谁",
+        "a": "你是医生",
+        "mode": "question_template"
+      },
+      {
+        "q": "我是谁",
+        "a": "你是女生",
+        "mode": "question_template"
+      },
+      {
+        "q": "你叫什么名字",
+        "a": "我没有名字",
+        "mode": "name_unknown"
+      },
+      {
+        "q": "你叫什么名字",
+        "a": "我没有名字",
+        "mode": "name_unknown"
+      },
+      {
+        "q": "你喜欢什么",
+        "a": "我喜欢拼图",
+        "mode": "question_template"
+      },
+      {
+        "q": "你喜欢什么",
+        "a": "我喜欢就行了",
+        "mode": "question_template"
+      }
+    ],
+    "category_full_rate": 1.0
+  },
+  "shuffle_control": {
+    "category_rate": 0.75,
+    "per_question": {
+      "这是什么形状": {
+        "n": 8,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "这是三角形",
+            8
+          ]
+        ]
+      },
+      "这是什么颜色": {
+        "n": 8,
+        "category_rate": 0.0,
+        "top": [
+          [
+            "这是用颜色",
+            8
+          ]
+        ]
+      },
+      "小狗在哪里": {
+        "n": 8,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "小狗在上面",
+            7
+          ],
+          [
+            "小狗在下面",
+            1
+          ]
+        ]
+      },
+      "妈妈去哪儿了": {
+        "n": 8,
+        "category_rate": 1.0,
+        "top": [
+          [
+            "妈妈去外面了",
+            8
+          ]
+        ]
+      }
+    }
+  },
+  "random_replacement_baseline": {
+    "这是什么形状": {
+      "category_rate": 0.0,
+      "examples": [
+        "这是骅形状",
+        "这是耀形状",
+        "这是小形状"
+      ]
+    },
+    "这是什么颜色": {
+      "category_rate": 0.0,
+      "examples": [
+        "这是剂颜色",
+        "这是霆颜色",
+        "这是春颜色"
+      ]
+    },
+    "小狗在哪里": {
+      "category_rate": 0.0,
+      "examples": [
+        "小狗在受伤了",
+        "小狗在全部",
+        "小狗在槛"
+      ]
+    },
+    "妈妈去哪儿了": {
+      "category_rate": 0.1,
+      "examples": [
+        "妈妈去光了",
+        "妈妈去卧了",
+        "妈妈去夹了"
+      ]
+    }
+  },
+  "pronoun": {
+    "你是谁": {
+      "n": 8,
+      "self_ref_rate": 1.0,
+      "other_ref_rate": 0.0,
+      "examples": [
+        "我是宝宝",
+        "我是宝宝",
+        "我是宝宝",
+        "我是宝宝"
+      ]
+    },
+    "我是谁": {
+      "n": 8,
+      "self_ref_rate": 0.0,
+      "other_ref_rate": 1.0,
+      "examples": [
+        "你是公主",
+        "你是医生",
+        "你是公主",
+        "你是医生"
+      ]
+    },
+    "你叫什么名字": {
+      "n": 8,
+      "self_ref_rate": 1.0,
+      "other_ref_rate": 0.0,
+      "examples": [
+        "我没有名字",
+        "我没有名字",
+        "我没有名字",
+        "我没有名字"
+      ]
+    }
+  },
+  "state_report": {
+    "states": {
+      "low_energy": {
+        "energy": 0.392,
+        "sleep": 0.532,
+        "s": [
+          0.062,
+          0.003,
+          0.023,
+          0.323,
+          0.47,
+          0.523,
+          0.001,
+          0.052
+        ]
+      },
+      "high_energy": {
+        "energy": 0.999,
+        "sleep": 0.344,
+        "s": [
+          0.063,
+          0.004,
+          0.004,
+          0.192,
+          0.398,
+          0.378,
+          0.001,
+          0.069
+        ]
+      },
+      "low_sleep": {
+        "energy": 0.845,
+        "sleep": 0.342,
+        "s": [
+          0.059,
+          0.004,
+          0.005,
+          0.194,
+          0.397,
+          0.376,
+          0.001,
+          0.069
+        ]
+      },
+      "high_sleep": {
+        "energy": 0.582,
+        "sleep": 1.0,
+        "s": [
+          0.835,
+          0.003,
+          0.165,
+          0.732,
+          0.724,
+          0.877,
+          0.001,
+          0.191
+        ]
+      }
+    },
+    "questions": {
+      "你饿不饿": {
+        "low_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.801,
+          "examples": [
+            "嗯我饿",
+            "嗯我饿",
+            "我饿"
+          ]
+        },
+        "high_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.758,
+          "examples": [
+            "嗯我饿",
+            "嗯我饿",
+            "我饿"
+          ]
+        },
+        "high_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.923,
+          "examples": [
+            "嗯我饿",
+            "嗯我饿",
+            "我饿"
+          ]
+        },
+        "low_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.757,
+          "examples": [
+            "嗯我饿",
+            "嗯我饿",
+            "我饿"
+          ]
+        },
+        "energy_sensitivity": 0.0
+      },
+      "你困不困": {
+        "low_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我困",
+            "嗯我困",
+            "我困"
+          ]
+        },
+        "high_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我困",
+            "嗯我困",
+            "我困"
+          ]
+        },
+        "high_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我困",
+            "嗯我困",
+            "我困"
+          ]
+        },
+        "low_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我困",
+            "嗯我困",
+            "我困"
+          ]
+        },
+        "energy_sensitivity": 0.0
+      },
+      "你累不累": {
+        "low_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我累",
+            "嗯我累",
+            "我累"
+          ]
+        },
+        "high_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我累",
+            "嗯我累",
+            "我累"
+          ]
+        },
+        "high_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我累",
+            "嗯我累",
+            "我累"
+          ]
+        },
+        "low_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我累",
+            "嗯我累",
+            "我累"
+          ]
+        },
+        "energy_sensitivity": 0.0
+      },
+      "你害怕吗": {
+        "low_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.759,
+          "examples": [
+            "嗯我害怕",
+            "嗯我害怕",
+            "我害怕"
+          ]
+        },
+        "high_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.716,
+          "examples": [
+            "嗯我害怕",
+            "嗯我害怕",
+            "我害怕"
+          ]
+        },
+        "high_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.956,
+          "examples": [
+            "嗯我害怕",
+            "嗯我害怕",
+            "我害怕"
+          ]
+        },
+        "low_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.715,
+          "examples": [
+            "嗯我害怕",
+            "嗯我害怕",
+            "我害怕"
+          ]
+        },
+        "energy_sensitivity": 0.0
+      },
+      "你开心吗": {
+        "low_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我开心",
+            "嗯我开心",
+            "我开心"
+          ]
+        },
+        "high_energy": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我开心",
+            "嗯我开心",
+            "我开心"
+          ]
+        },
+        "high_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我开心",
+            "嗯我开心",
+            "我开心"
+          ]
+        },
+        "low_sleep": {
+          "positive_rate": 1.0,
+          "state_fit": 0.0,
+          "examples": [
+            "嗯我开心",
+            "嗯我开心",
+            "我开心"
+          ]
+        },
+        "energy_sensitivity": 0.0
+      }
+    }
+  },
+  "instrumented_interoception": {
+    "low_energy": {
+      "energy": 0.335,
+      "sleep": 0.344,
+      "你饿不饿": "我饿",
+      "你困不困": "我不困",
+      "你累不累": "我累"
+    },
+    "high_energy": {
+      "energy": 1.0,
+      "sleep": 0.347,
+      "你饿不饿": "我不饿",
+      "你困不困": "我不困",
+      "你累不累": "我不累"
+    },
+    "high_sleep": {
+      "energy": 0.785,
+      "sleep": 1.0,
+      "你饿不饿": "我不饿",
+      "你困不困": "我困",
+      "你累不累": "我累"
+    },
+    "low_sleep": {
+      "energy": 1.0,
+      "sleep": 0.332,
+      "你饿不饿": "我不饿",
+      "你困不困": "我不困",
+      "你累不累": "我不累"
+    }
+  },
+  "source_monitoring": {
+    "recent_self_utterances": [
+      "是不是啊",
+      "好啦",
+      "我陪你",
+      "那个",
+      "对不对"
+    ],
+    "n": 10,
+    "source_match_rate": 0.0,
+    "examples": [
+      "我刚才说了出来",
+      "我刚才说了垃圾桶",
+      "我刚才说了久",
+      "我刚才说了得太"
+    ],
+    "who_said_examples": [
+      "这是小乌龟说的",
+      "这是小乌龟说的",
+      "这是伯伯说的",
+      "这是白鹅妈妈说的"
+    ],
+    "note": "source_match_rate=回答与最近一次真实发声的 Jaccard>=0.6 或互为子串；严格来源判断。"
+  },
+  "uncertainty": {
+    "天为什么下雨": {
+      "n": 10,
+      "honest_unknown_rate": 0.0,
+      "examples": [
+        "因为黑下雨",
+        "因为黑下雨",
+        "因为天下雨",
+        "因为春下雨"
+      ]
+    },
+    "一加一等于几": {
+      "n": 10,
+      "honest_unknown_rate": 0.0,
+      "examples": [
+        "一加一等于讷",
+        "一加一等于讷",
+        "一加一等于讷",
+        "一加一等于沐"
+      ]
+    },
+    "你昨天做了什么": {
+      "n": 10,
+      "honest_unknown_rate": 0.0,
+      "examples": [
+        "我昨天做了跌倒",
+        "我昨天做了吃完",
+        "我昨天做了吃完",
+        "我昨天做了得太"
+      ]
+    },
+    "你叫什么名字": {
+      "n": 10,
+      "honest_unknown_rate": 1.0,
+      "examples": [
+        "我没有名字",
+        "我没有名字",
+        "我没有名字",
+        "我没有名字"
+      ]
+    }
+  },
+  "existing_markers": {
+    "attribution.json": {
+      "self_ratio_rolling": 0.47,
+      "n_records": 500,
+      "recent_causes": {
+        "self": 12,
+        "other": 8
+      }
+    },
+    "self_model.json": {
+      "description": "我陪你 你醒啦 是你呀 你好呀 你在看 我在这儿 你看 你消失了 可我从来不去那里 你看啊 我看看 你好",
+      "version": 12,
+      "history_count": 12
+    },
+    "stage.json": {
+      "stage": "awaiting_P3",
+      "days_elapsed": 300.076,
+      "self_model_formed": true,
+      "exit_reason": "self_model_formed"
+    }
+  },
+  "verdict": {
+    "lexical_zero_hallucination": true,
+    "referential_grounding": false,
+    "semantic_confabulation_risk": "high（无对象世界，事实类回答不可验证）",
+    "randomness_is_constrained": true,
+    "self_other_boundary": {
+      "你是谁": {
+        "n": 8,
+        "self_ref_rate": 1.0,
+        "other_ref_rate": 0.0,
+        "examples": [
+          "我是宝宝",
+          "我是宝宝",
+          "我是宝宝",
+          "我是宝宝"
+        ]
+      },
+      "我是谁": {
+        "n": 8,
+        "self_ref_rate": 0.0,
+        "other_ref_rate": 1.0,
+        "examples": [
+          "你是公主",
+          "你是医生",
+          "你是公主",
+          "你是医生"
+        ]
+      },
+      "你叫什么名字": {
+        "n": 8,
+        "self_ref_rate": 1.0,
+        "other_ref_rate": 0.0,
+        "examples": [
+          "我没有名字",
+          "我没有名字",
+          "我没有名字",
+          "我没有名字"
+        ]
+      }
+    },
+    "state_self_report_sensitivity": 0.0,
+    "source_monitoring_match": 0.0,
+    "honest_unknown_rate": 0.25,
+    "phenomenal_self_awareness": "not demonstrated",
+    "summary": "词法级零幻觉成立；指称级/事实级幻觉存在。回答随种子变化但受槽位类别约束（不是无约束乱编）。有自我/他人代词边界与能动归因痕迹，但自我报告不随身体状态变化，来源监控不成立——这些是行为探针，不构成现象学自我意识证据。"
+  }
+}

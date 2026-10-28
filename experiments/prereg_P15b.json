@@ -1,0 +1,65 @@
+{
+  "experiment": "P15b 反事实校准：把 P15 的 H15b 失败（ρ=0.20）归因到『观测噪声』还是『能力所限（仅能排序、不能定量）』",
+  "created": "2026-10-12",
+  "preregistered_before_data": true,
+  "is_amendment_of": "P15（results_P15.json，1/4 PASS；H15b 校准 ρ=0.198 失败）",
+
+  "diagnostic_that_motivated_this": {
+    "source": "对 P15 既有数据的事后诊断（非确证，只用于定方向）",
+    "finding": "初版『按型聚合』(n≥3) 曾给出 0.44，但改用 n≥5 后崩到 −0.17——说明小样本聚合不可靠。改用稳健的『10 分箱校准曲线』后：full60 ρ_bin=0.153、shuf60=0.042，与逐次 ρ(0.198) 一致 → full60 校准本就偏低。",
+    "implication": "需要一个稳健统计 + 专门降低观测噪声的对照条件（window 60→180），才能判断 0.15 是噪声所致还是结构上限。"
+  },
+
+  "design": {
+    "思路": "只改一个变量：响应模型的积分窗长 window_seconds（60s → 180s）。更长窗口使每次发声窗口内计入的言语条数更多、相对噪声更小（E 与实现率的方差同时下降）。其余（fork 源、听者、60 日、判据窗口末30日）与 P15 完全一致。",
+    "复用": "W=60 条件直接复用 P15 既有 state_P15_full / state_P15_shuf，不重跑。",
+    "新臂": ["full180（response_model.window_seconds=180）", "shuf180（同上的打乱对照）"],
+    "contingent_caregiver": "沿用 P14c 内容敏感听者（r_HIGH=0.95/r_LOW=0.05 + HIGH 短爆 k=3），保证存在真实效果差。",
+    "判据窗口": "末 30 日（t0+30d .. t0+60d），与 P15 同。"
+  },
+
+  "hypotheses": {
+    "H15b1_分箱校准": {"criterion": "按预测值的 10 等量箱校准曲线单调性 ρ_bin ≥ 0.5，且 full180 > full60（P15 的 full60 ρ_bin=0.153）→ 判『噪声为主』。"},
+    "H15b2_去噪有效": {"criterion": "逐次 ρ_inst：full180 − full60（=0.198）≥ 0.15 → 加长窗口确实降低观测噪声。"},
+    "H15b3_归因判定(关键)": {"criterion": "若 full180 的 ρ_bin 仍 <0.5 且 Δρ_inst <0.1 → 判『能力所限：E 仅承载序信息、不承载量信息』；否则『噪声所限』。"}
+  },
+
+  "methods_note": {
+    "为何用分箱而非按型聚合": "初版设计用『型内 n≥5 的按型聚合 ρ』，实测发现型数仅 7–11 个、ρ 随阈值剧烈跳变（n≥3→0.44、n≥5→−0.17），不可靠，故改用分箱校准（用全部实例，稳健）。",
+    "外推 ρ 仅作信息": "『前30日冻结 E → 后30日实现率』的 ρ 在 full 与 shuf 上都可能高（E 在任何臂都追踪真实结果），不具区分性，因此降为信息记录、不作判据。"
+  },
+
+  "predictions_registered": {
+    "H15b1": "不确定但倾向阳：分箱校准 full60=0.153，加长窗口应抬升；能否过 0.5 是本实验核心问题。",
+    "H15b2": "不确定：若噪声是主因，ρ_inst 应明显上升；否则近乎不动。",
+    "H15b3": "两分支都必须如实报告，均是有价值的结论。"
+  },
+
+  "falsification": {
+    "若 H15b1 阳": "校准失败主要由单次观测噪声造成；E 可校准，只是需要足够积分 → 判『噪声所限』。",
+    "若 H15b1 阴且 Δρ_inst 小": "E 结构性只能支持序比较、不支持定量预测 → 判『能力所限』，与 P15 同向但更确定；论文按此写。"
+  },
+
+  "open_risks": {
+    "1_窗口变量混淆": "改变 window_seconds 同时改变 E 的学习动态与选择行为；故只做『60 vs 180』单向比较，不做跨窗拼接。",
+    "2_型样本量": "小 n 型的均值不稳；H15b1 仅纳入型内实例数 ≥ 5 的型，并报告型数。",
+    "3_与 P15 不可混判": "P15b 只回答校准(归因)问题；不回溯修改 P15 的 H15b 判定。"
+  },
+
+  "audits": {
+    "unit_test_required": [
+      "① window_seconds=180 时，note_vocal/advance_clock 的窗口判定正确（发声后 180s 内计入 r_in）。",
+      "② 聚合校准函数：给定构造数据，Spearman 与手工一致；型内 n<5 被排除。",
+      "③ 外推函数：前30日冻结 E 快照取自 history（决策时点），不使用后30日信息。"
+    ],
+    "variable_separation": "full180 相对 full60 仅差 response_model.window_seconds=180；shuf180 相对 full180 仅差 shuffle=true。"
+  },
+
+  "implementation_scope": {
+    "configs": "config_P15b_full180.json / config_P15b_shuf180.json（由 config_P15_full/shuf 派生，仅改 window_seconds=180）。",
+    "analyzer": "experiments/analyze_P15b.py：对 4 个条件（full60/shuf60 读 P15 数据、full180/shuf180 读新数据）计算逐次与聚合 ρ、外推 ρ，输出 results_P15b.json。",
+    "scripts": "run_P15b.sh（TGT=315, MAX=2）、watch_P15b_{analyze,thermal}.sh。"
+  },
+
+  "note": "P15b 只做『校准归因』；不改 P14/P15 判据，阴性如实记录。"
+}

@@ -1,0 +1,616 @@
+{
+  "analyzed_at": "2026-10-10 19:58:47",
+  "experiment": "P5 痛/乐（affect）三臂",
+  "prereg": "experiments/prereg_P5_affect.json",
+  "fork_sim_time": 22002086.380798087,
+  "window": "fork(day 255) → day 285",
+  "arms": {
+    "off": {
+      "arm": "off",
+      "span_days": 29.38,
+      "n_traj": 9796,
+      "M1_explore": 16,
+      "M2_vocal": 129,
+      "M3_retrieval": 857,
+      "M1_rate": 0.5446480953905747,
+      "M2_rate": 4.391225269086508,
+      "M3_rate": 29.172713609357658,
+      "sleep_frac": 0.32104940792160064,
+      "sleep_total_days": 9.431393536889075,
+      "onset_phase_h": 21.044733335703167,
+      "n_onsets": 30,
+      "distress_mean": 0.0,
+      "ease_mean": 0.0
+    },
+    "rec_only": {
+      "arm": "rec_only",
+      "span_days": 29.44,
+      "n_traj": 9485,
+      "M1_explore": 16,
+      "M2_vocal": 129,
+      "M3_retrieval": 857,
+      "M1_rate": 0.5433898210988574,
+      "M2_rate": 4.381080432609537,
+      "M3_rate": 29.10531729260755,
+      "sleep_frac": 0.32293094359515023,
+      "sleep_total_days": 9.50863431168764,
+      "onset_phase_h": 21.041299821537134,
+      "n_onsets": 30,
+      "distress_mean": 0.5514142329994574,
+      "ease_mean": 0.6380298892988949
+    },
+    "on": {
+      "arm": "on",
+      "span_days": 29.62,
+      "n_traj": 5879,
+      "M1_explore": 14,
+      "M2_vocal": 125,
+      "M3_retrieval": 869,
+      "M1_rate": 0.4726790201380787,
+      "M2_rate": 4.220348394089989,
+      "M3_rate": 29.3398620357136,
+      "sleep_frac": 0.3138288824630039,
+      "sleep_total_days": 9.295111835508582,
+      "onset_phase_h": 21.09309949881651,
+      "n_onsets": 30,
+      "distress_mean": 0.5446702840619179,
+      "ease_mean": 0.6424254635142047
+    }
+  },
+  "M": {
+    "off": {
+      "M1_explore_rate": 0.5446,
+      "M2_vocal_rate": 4.3912,
+      "M3_retrieval_rate": 29.1727,
+      "M4_sleep_frac": 0.321,
+      "M4_onset_phase_h": 21.04
+    },
+    "rec_only": {
+      "M1_explore_rate": 0.5434,
+      "M2_vocal_rate": 4.3811,
+      "M3_retrieval_rate": 29.1053,
+      "M4_sleep_frac": 0.3229,
+      "M4_onset_phase_h": 21.04
+    },
+    "on": {
+      "M1_explore_rate": 0.4727,
+      "M2_vocal_rate": 4.2203,
+      "M3_retrieval_rate": 29.3399,
+      "M4_sleep_frac": 0.3138,
+      "M4_onset_phase_h": 21.09
+    }
+  },
+  "hypotheses": {
+    "H1": {
+      "pass": true,
+      "diffs_pct_on_vs_off": {
+        "M1 探索": -13.21,
+        "M2 发声": -3.89,
+        "M3 检索": 0.57,
+        "M4 睡眠占比": -2.25
+      },
+      "hit_metrics": [
+        "M1 探索"
+      ]
+    },
+    "H2": {
+      "pass": true,
+      "detail": [
+        {
+          "metric": "M1 探索",
+          "rec_vs_off_pct": -0.23,
+          "on_vs_off_pct": -13.21,
+          "on_vs_rec_pct": -13.01,
+          "rec_below_10": true,
+          "rel_err_pct": 1.5,
+          "decomposition_ok": true,
+          "pass": true
+        }
+      ],
+      "note": ""
+    },
+    "H4": {
+      "on": {
+        "applicable": true,
+        "distress_p33": 0.4942,
+        "distress_p67": 0.6141,
+        "high_tercile_n": 76,
+        "low_tercile_n": 411,
+        "high_selfref_frac": 0.0921,
+        "low_selfref_frac": 0.1192,
+        "ratio_text": 0.773,
+        "high_tercile_n_events": 76,
+        "low_tercile_n_events": 411,
+        "high_examples": [
+          [
+            22018530.5,
+            "好啦好啦",
+            0.6401
+          ],
+          [
+            22019010.5,
+            "安静哦",
+            0.6507
+          ],
+          [
+            22019730.5,
+            "我在这儿呢",
+            0.6586
+          ],
+          [
+            22021170.5,
+            "安静哦",
+            0.6697
+          ],
+          [
+            22050240.0,
+            "慢一点",
+            0.6608
+          ],
+          [
+            22099080.0,
+            "嗯嗯",
+            0.6218
+          ],
+          [
+            22099560.0,
+            "再看看",
+            0.626
+          ],
+          [
+            22101120.0,
+            "又动了",
+            0.6344
+          ]
+        ],
+        "pass": false
+      },
+      "rec_only": {
+        "applicable": true,
+        "distress_p33": 0.5025,
+        "distress_p67": 0.6233,
+        "high_tercile_n": 79,
+        "low_tercile_n": 418,
+        "high_selfref_frac": 0.0886,
+        "low_selfref_frac": 0.122,
+        "ratio_text": 0.726,
+        "high_tercile_n_events": 79,
+        "low_tercile_n_events": 418,
+        "high_examples": [
+          [
+            22019130.5,
+            "睡吧",
+            0.6522
+          ],
+          [
+            22020810.5,
+            "对了",
+            0.6693
+          ],
+          [
+            22020930.5,
+            "乖",
+            0.6693
+          ],
+          [
+            22050240.0,
+            "对了",
+            0.6648
+          ],
+          [
+            22099200.0,
+            "好啦",
+            0.6277
+          ],
+          [
+            22101480.0,
+            "哦",
+            0.6384
+          ],
+          [
+            22103040.0,
+            "好啦",
+            0.648
+          ],
+          [
+            22104840.0,
+            "好啦",
+            0.6571
+          ]
+        ],
+        "pass": false
+      },
+      "pass": false
+    },
+    "H5": {
+      "n_new_fragments": 0,
+      "n_in_top_tercile": 0,
+      "binomial_p_one_sided": null,
+      "pass": false,
+      "fragments": [],
+      "note": "窗口内无新增片段 → 检验空"
+    },
+    "H6_exploratory": {
+      "on": {
+        "n": 95,
+        "rows": [
+          {
+            "t": 22019730.5,
+            "text": "我在这儿呢",
+            "distress": 0.6586,
+            "pct": 86.3
+          },
+          {
+            "t": 22070520.0,
+            "text": "我陪你",
+            "distress": 0.3686,
+            "pct": 3.2
+          },
+          {
+            "t": 22075200.0,
+            "text": "我在这儿",
+            "distress": 0.3696,
+            "pct": 3.3
+          },
+          {
+            "t": 22082640.0,
+            "text": "我在这儿",
+            "distress": 0.4701,
+            "pct": 25.0
+          },
+          {
+            "t": 22094280.0,
+            "text": "我在这儿",
+            "distress": 0.6024,
+            "pct": 63.6
+          },
+          {
+            "t": 22152960.0,
+            "text": "我在这儿",
+            "distress": 0.3717,
+            "pct": 3.6
+          },
+          {
+            "t": 22184520.0,
+            "text": "我在这儿",
+            "distress": 0.5886,
+            "pct": 59.5
+          },
+          {
+            "t": 22263000.0,
+            "text": "你醒啦",
+            "distress": 0.5554,
+            "pct": 52.6
+          },
+          {
+            "t": 22267680.0,
+            "text": "我在这儿",
+            "distress": 0.5623,
+            "pct": 54.2
+          },
+          {
+            "t": 22322160.0,
+            "text": "我在这儿呢",
+            "distress": 0.3884,
+            "pct": 5.9
+          },
+          {
+            "t": 22350000.0,
+            "text": "我在这儿呢",
+            "distress": 0.514,
+            "pct": 40.9
+          },
+          {
+            "t": 22358160.0,
+            "text": "我在这儿呢",
+            "distress": 0.5979,
+            "pct": 62.8
+          },
+          {
+            "t": 22412760.0,
+            "text": "我在这儿呢",
+            "distress": 0.3675,
+            "pct": 2.9
+          },
+          {
+            "t": 22432920.0,
+            "text": "我在这儿呢",
+            "distress": 0.4977,
+            "pct": 34.6
+          },
+          {
+            "t": 22435800.0,
+            "text": "我在这儿呢",
+            "distress": 0.5108,
+            "pct": 39.7
+          },
+          {
+            "t": 22524000.0,
+            "text": "我陪你",
+            "distress": 0.5059,
+            "pct": 38.1
+          },
+          {
+            "t": 22583160.0,
+            "text": "我在这儿",
+            "distress": 0.4012,
+            "pct": 8.3
+          },
+          {
+            "t": 22593720.0,
+            "text": "我在这儿",
+            "distress": 0.4484,
+            "pct": 18.0
+          },
+          {
+            "t": 22594080.0,
+            "text": "我在这儿呢",
+            "distress": 0.4641,
+            "pct": 22.9
+          },
+          {
+            "t": 22618200.0,
+            "text": "我在这儿",
+            "distress": 0.5945,
+            "pct": 61.7
+          }
+        ]
+      }
+    },
+    "H3_exploratory": {
+      "on": {
+        "daily": [
+          {
+            "day": 254,
+            "peak": 0.67,
+            "mean": 0.597
+          },
+          {
+            "day": 255,
+            "peak": 0.671,
+            "mean": 0.556
+          },
+          {
+            "day": 256,
+            "peak": 0.671,
+            "mean": 0.554
+          },
+          {
+            "day": 257,
+            "peak": 0.636,
+            "mean": 0.543
+          },
+          {
+            "day": 258,
+            "peak": 0.66,
+            "mean": 0.54
+          },
+          {
+            "day": 259,
+            "peak": 0.682,
+            "mean": 0.563
+          },
+          {
+            "day": 260,
+            "peak": 0.682,
+            "mean": 0.556
+          },
+          {
+            "day": 261,
+            "peak": 0.677,
+            "mean": 0.562
+          },
+          {
+            "day": 262,
+            "peak": 0.652,
+            "mean": 0.533
+          },
+          {
+            "day": 263,
+            "peak": 0.669,
+            "mean": 0.553
+          },
+          {
+            "day": 264,
+            "peak": 0.669,
+            "mean": 0.544
+          },
+          {
+            "day": 265,
+            "peak": 0.618,
+            "mean": 0.531
+          },
+          {
+            "day": 266,
+            "peak": 0.607,
+            "mean": 0.489
+          },
+          {
+            "day": 267,
+            "peak": 0.64,
+            "mean": 0.509
+          },
+          {
+            "day": 268,
+            "peak": 0.639,
+            "mean": 0.544
+          },
+          {
+            "day": 269,
+            "peak": 0.636,
+            "mean": 0.519
+          },
+          {
+            "day": 270,
+            "peak": 0.676,
+            "mean": 0.547
+          },
+          {
+            "day": 271,
+            "peak": 0.676,
+            "mean": 0.556
+          },
+          {
+            "day": 272,
+            "peak": 0.679,
+            "mean": 0.521
+          },
+          {
+            "day": 273,
+            "peak": 0.679,
+            "mean": 0.568
+          },
+          {
+            "day": 274,
+            "peak": 0.656,
+            "mean": 0.552
+          },
+          {
+            "day": 275,
+            "peak": 0.647,
+            "mean": 0.545
+          },
+          {
+            "day": 276,
+            "peak": 0.632,
+            "mean": 0.523
+          },
+          {
+            "day": 277,
+            "peak": 0.66,
+            "mean": 0.531
+          },
+          {
+            "day": 278,
+            "peak": 0.66,
+            "mean": 0.549
+          },
+          {
+            "day": 279,
+            "peak": 0.657,
+            "mean": 0.533
+          },
+          {
+            "day": 280,
+            "peak": 0.657,
+            "mean": 0.551
+          },
+          {
+            "day": 281,
+            "peak": 0.699,
+            "mean": 0.551
+          },
+          {
+            "day": 282,
+            "peak": 0.699,
+            "mean": 0.565
+          },
+          {
+            "day": 283,
+            "peak": 0.636,
+            "mean": 0.534
+          }
+        ]
+      },
+      "verdict": "探索性，不判 PASS/FAIL"
+    }
+  },
+  "robustness": {
+    "off": {
+      "explore": {
+        "bins": [
+          5,
+          4,
+          0,
+          3,
+          2,
+          2
+        ],
+        "bin_days": 4.9,
+        "mean_per_bin": 2.67,
+        "std_per_bin": 1.75,
+        "total": 16
+      },
+      "vocal": {
+        "bins": [
+          26,
+          18,
+          23,
+          19,
+          28,
+          15
+        ],
+        "bin_days": 4.9,
+        "mean_per_bin": 21.5,
+        "std_per_bin": 5.01,
+        "total": 129
+      }
+    },
+    "rec_only": {
+      "explore": {
+        "bins": [
+          5,
+          4,
+          0,
+          3,
+          2,
+          2
+        ],
+        "bin_days": 4.91,
+        "mean_per_bin": 2.67,
+        "std_per_bin": 1.75,
+        "total": 16
+      },
+      "vocal": {
+        "bins": [
+          26,
+          18,
+          23,
+          19,
+          28,
+          15
+        ],
+        "bin_days": 4.91,
+        "mean_per_bin": 21.5,
+        "std_per_bin": 5.01,
+        "total": 129
+      }
+    },
+    "on": {
+      "explore": {
+        "bins": [
+          5,
+          3,
+          0,
+          3,
+          2,
+          1
+        ],
+        "bin_days": 4.94,
+        "mean_per_bin": 2.33,
+        "std_per_bin": 1.75,
+        "total": 14
+      },
+      "vocal": {
+        "bins": [
+          17,
+          22,
+          12,
+          26,
+          19,
+          29
+        ],
+        "bin_days": 4.94,
+        "mean_per_bin": 20.83,
+        "std_per_bin": 6.18,
+        "total": 125
+      }
+    },
+    "M1_diff_vs_noise": {
+      "on_minus_off_rate": 0.0719,
+      "segment_noise_rate": 0.3571,
+      "diff_in_sigma": 0.2,
+      "note": "差异 <1σ 视为落在时间涨落噪声带内，不足以判承重"
+    }
+  }
+}

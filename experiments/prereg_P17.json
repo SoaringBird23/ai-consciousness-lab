@@ -1,0 +1,76 @@
+{
+  "experiment": "P17 词汇爆发（developmental vocabulary expansion）：把未启用的 CHILDES 语料按『先巩固、再扩张』的原理逐步放开，检验扩词后指称能力是否保持、统计是否被稀疏冲垮",
+  "created": "2026-10-12",
+  "preregistered_before_data": true,
+  "position": "承接 P16（指称落地）。P16 在 51 型小词表上建立指称；P17 问：把词表按人类发育节奏放大后，指称是否仍然成立。",
+
+  "budget_that_motivated_this": {
+    "现状": "config 里 corpus_file 为空 → 8.3 万型语料从未被采样；系统实听的 51 个型全部来自 language.py 硬编码池。",
+    "纯Zipf不可用": "83,302 型上按频次^exponent 采样，10,400 次抽取得到 7,720~9,796 个型，但每型中位样本=1 → 统计全废。",
+    "topK+采样可用": "top-50→210样本/型；top-200→52；top-500→21；top-1000→10；top-3000→3（崩）。",
+    "结论": "安全区间 top-50 → top-500（每型样本≥20）。"
+  },
+
+  "pre_data_audit_and_fix": {
+    "when": "2026-10-13，修复 P17 首跑 bug 时；首跑数据因 bug 判据失效，无有效数据被用于任何结论 → 本次代码与参数修正均属事前（pre-data）。",
+    "bug_found": "_say() 加载外部语料后对所有通道一律走语料采样，**覆盖了 world-naming 指称通道** → 指称词从未说出口（grounding.jsonl 中 n_world≈0），H17b/H17d 失效。修法：_say 新增 force_pool；状态针对性与指称通道（醒来问候/安抚/无聊召唤/被注视/世界命名）强制用指定池，仅通用内容通道（事件命名 #2 / 安静基流 #6）走语料——词汇发育发生在这里。",
+    "unhuman_side_effect_found": "修复后实测：world-naming 占照护者全部言语 ~43%（wc_rate=8/时）。人类育儿语言中『指物命名』只约 10%，大头是泛化絮语（IDS 总体高频，但命名是少数）。命名占比过高会挤占『词汇发育』通道的采样，很可能使 H17a（grow≥3× fixed）假阴。",
+    "fix": "wc_rate_per_hour 8.0 → 2.0（命名≈11%，贴近人类），三臂一致改动。",
+    "justification": "P17 检验的是『词汇发育』；命名是承重的指称探针通道，应保持为输入分布中的少数（人类事实），不应主导分布。这是『按人类方向发展』的修正，非为凑判据而调参。",
+    "discipline_note": "首跑（2026-10-13 02:21–06:45）判据失效、作废重跑；参数在与判据无关的方向上按人类事实校正，不针对任何阈值的松紧做手脚。"
+  },
+
+  "design": {
+    "环境侧": "开启 corpus_file=corpus/caregiver_corpus.json 且采用『词表档上限 cap』采样：从 top-cap 型中按频次抽取（cap 由各臂规则决定）。world_contingent 照护者保持（P16 前置）。",
+    "扩词规则": {
+      "grow（自适应，主）": "当近 10 日的『每型中位样本 ≥ 20』（当前档已巩固）→ cap 翻倍；上限 1000。原理驱动，非硬编码词表。",
+      "growfast（日历对照）": "每 15 日 cap 翻倍（不看巩固），上限 1000。",
+      "fixed（基线）": "cap 恒 50（≈现状，禁用新语料）。"
+    },
+    "三臂": ["fixed", "grow", "growfast"],
+    "窗口": "60 日；判据窗口=末 30 日（t0+30d..t0+60d）；fork 自 state_exp（day 255）。"
+  },
+
+  "hypotheses": {
+    "H17a_扩词发生(形式)": {"criterion": "grow 末30日实听唯一型数 ≥ 3× fixed，且 ≤ 1000。"},
+    "H17b_指称保持(承重)": {"criterion": "grow 末30日：P16 指称探针（world 词二值解码）acc ≥ 0.75，且 ≥ fixed − 0.05（扩词不显著掉）。"},
+    "H17c_稀疏安全": {"criterion": "grow 末30日每型中位样本 ≥ 10；否则判『过早扩张』。"},
+    "H17d_巩固纪律": {"criterion": "grow 每次扩词后 5 日内 acc 不下降 >0.10（扩张未摧毁已学指称）。"}
+  },
+
+  "predictions_registered": {
+    "H17a": "预期阳（机制确定性）。",
+    "H17b": "不确定：这是本实验核心——扩词到几百型后指称是否仍成立。",
+    "H17c": "预期阳：自适应规则应把样本量维持在阈值以上。",
+    "H17d": "倾向阳但可能弱。"
+  },
+
+  "falsification": {
+    "若 H17b 阴": "扩词摧毁指称 → 『先巩固再扩张』的阈值定得太松，或指称能力与词表规模不相容。如实记录，不得调阈值反复加码掩盖。",
+    "若 H17a 阴": "扩词未发生（规则或采样未生效）→ 机制 bug，须先修。",
+    "若 fixed 臂的指称也低于 P16": "说明是运行条件变化（非扩词）导致 → 需先对齐条件。"
+  },
+
+  "open_risks": {
+    "1_稀疏": "词表越大、每型样本越稀（预算已量化）；H17c 专门看住这条底线。",
+    "2_规则仍为实验者设计": "『巩固再扩张』是环境侧规则（类比家长自然扩词），非系统内部提示；须在论文中写明。",
+    "3_与 P16 不可混判": "P17 只回答扩词问题；不回溯修改 P16 判据。"
+  },
+
+  "audits": {
+    "unit_test_required": [
+      "① cap 采样：给定 cap=K，抽 10^5 次，唯一型数 ≤ K，且每型样本量符合预算（top-50≈210/型/万次量级）。",
+      "② 自适应规则：构造‘每型样本达标/不达标’两种历史，验证 cap 翻倍/不翻。",
+      "③ 上限：cap 不超过 1000。"
+    ],
+    "variable_separation": "三臂仅差扩词规则（fixed/grow/growfast）；其余一致。"
+  },
+
+  "implementation_scope": {
+    "language.py": "新增 corpus_vocab_cap（初始 50）、vocab_growth（adaptive/fixed_fast）、以及在线统计每型样本量以驱动扩词。",
+    "analyzer": "experiments/analyze_P17.py：实听型数曲线、指称探针（复用 P16）、每型样本量、扩词后 acc 变化。",
+    "scripts": "config_P17_{fixed,grow,growfast}.json、run_P17.sh、watch_P17_{analyze,thermal}.sh。"
+  },
+
+  "note": "P17 只在环境侧放开词表；不新增系统内部机制。阴性如实记录。"
+}

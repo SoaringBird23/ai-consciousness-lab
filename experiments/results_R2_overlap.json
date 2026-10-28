@@ -1,0 +1,58 @@
+{
+ "control": "ctl_none",
+ "n_inherit": 8065,
+ "n_control_window_retrievals": 856,
+ "permutations": 2000,
+ "arms": {
+  "dead_gate": {
+   "n_arm_window_retrievals": 856,
+   "n_common_ticks": 856,
+   "phrase_agreement": 1.0,
+   "entry_agreement": 1.0,
+   "permutation_baseline": 0.03326927570093463,
+   "phrase_agreement_over_baseline": 30.057762873746814,
+   "jaccard": 1.0,
+   "first_divergence_t": null
+  },
+  "open_dead_target": {
+   "n_arm_window_retrievals": 856,
+   "n_common_ticks": 856,
+   "phrase_agreement": 1.0,
+   "entry_agreement": 1.0,
+   "permutation_baseline": 0.033595210280373905,
+   "phrase_agreement_over_baseline": 29.76614796140131,
+   "jaccard": 1.0,
+   "first_divergence_t": null
+  },
+  "open_s4_lo": {
+   "n_arm_window_retrievals": 889,
+   "n_common_ticks": 71,
+   "phrase_agreement": 0.15492957746478872,
+   "entry_agreement": 0.1267605633802817,
+   "permutation_baseline": 0.03323943661971827,
+   "phrase_agreement_over_baseline": 4.661016949152548,
+   "jaccard": 0.04241338112305854,
+   "first_divergence_t": 22016130.5
+  },
+  "open_s4_mid": {
+   "n_arm_window_retrievals": 903,
+   "n_common_ticks": 65,
+   "phrase_agreement": 0.2,
+   "entry_agreement": 0.13846153846153847,
+   "permutation_baseline": 0.04115384615384717,
+   "phrase_agreement_over_baseline": 4.859813084112029,
+   "jaccard": 0.03837072018890201,
+   "first_divergence_t": 22015530.5
+  },
+  "open_s4_hi": {
+   "n_arm_window_retrievals": 892,
+   "n_common_ticks": 64,
+   "phrase_agreement": 0.171875,
+   "entry_agreement": 0.140625,
+   "permutation_baseline": 0.0312890625,
+   "phrase_agreement_over_baseline": 5.493133583021224,
+   "jaccard": 0.03800475059382423,
+   "first_divergence_t": 22015530.5
+  }
+ }
+}

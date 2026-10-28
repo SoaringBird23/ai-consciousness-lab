@@ -1,0 +1,81 @@
+{
+  "experiment": "P11 软先验：把工作集从『硬候选帽』改为『全长候选池上的打分加权』，并修复使衰减从未执行的 bug",
+  "created": "2026-10-10",
+  "preregistered_before_data": true,
+  "step_of": "P10 阴性之后的转向；诊断来源为 P6B off vs full 的对照读数（见下）",
+
+  "diagnosis": {
+    "p10_result": "P10 三臂：noloop_full adj_top3=0.0000/recur5=0.917/uniq=11；noloop_shuf 0.0172/0.859/12；off 0.0424/0.823/10。H10a、H10b 俱阴，P9 预注册的『自环主导』病因被证伪。",
+    "zero_change_evidence": "P9 full 与 P10 full 逐位相同（0.0000 / 0.917 / uniq 11），而落盘快照确认 prime_no_self_loop=true 确实生效 —— 屏蔽自环对结果零改变。原因：胜者本就由频率项 (1+freq_gain·log(1+freq)) 锁定，priming 的自环项不是决定项。",
+    "real_cause_candidate_set": "同一基底同一窗口，只差 workspace 开关：ws 关(P6B off) uniq=403 / recur5=0.023 / self%=19.5；ws 开(k=6, P6B full) uniq=10 / recur5=0.823 / self%=0.2。即**工作集的 top-k 硬候选帽把检索空间从 403 型压进 10 型**，系统塌成频率主导的枢纽吸引子。P8(k 扫描)、P9(优先级)、P10(屏蔽自环) 全部作用在坍缩之后，因此互相矛盾的阴性结果可被同一原因解释。",
+    "critical_bug_decay_never_ran": {
+      "symptom": "P6B 中 nodecay(tau=1e5) 与 full(tau=10min) 结果几乎相同（0.0426 vs 0.0424），原被解释为『衰减不必要』。",
+      "root_cause": "workspace.decay() 的性能守卫 `if f >= 0.999: return`。tick 级步长下 dt_h=0.05/3600=1.389e-5 h → f=exp(-(1.389e-5·60)/10)=0.9999167 > 0.999，**该守卫在每一次调用上都成立**，于是衰减从未执行。act 单调累积成终身计数。",
+      "consequence": "① tau_minutes 是死参数，『遗忘/磨蚀』这条腿在 R5/P6B/P8/P9/P10 全部批次里从未被真正检验，相关结论（含 nodecay≈full）作废；② act 的 top-k 被永久钉死在全期累计最高者上，是 uniq=10 坍缩的机制；③ 反过来说明 P9『让 A 真正产生因果』的结论不受影响，但 P9/P10 对『衰减』的任何推断无效。",
+      "verification": "冒烟：act=100，tau=10 → 119 tick 不动、120 tick 得 99.0049（f=0.99005）；累积 1 仿真小时后 0.247756 vs 解析解 0.247875（差 0.05%）；tau=1e5 → 1 小时后仍 100（对照行为正确）。"
+    },
+    "timescale_mismatch": "语率约 4.7 次沉积/小时（n_deposit≈3377 / 30 日），而检索节律约 41 分钟/条。tau=10 分钟在真衰减生效后会让激活场在检索时刻几乎恒为空 → working_set() 返回 None → 退化为无工作集。故本批取 tau=720 分钟（12 小时），使激活场持有约『近一日的短语集合』，与语率可匹配。"
+  },
+
+  "design": {
+    "instance": "三臂，SIGSTOP 安全 fork 自同一基底（state_P6_childes，day 315），与 P6B/P8/P9/P10 同源同窗口",
+    "window": "day 315 → 345（30 仿真日）",
+    "arms": {
+      "hardcap": "k=6 硬候选帽保留 + tau=720 + 无先验 —— 检验『衰减首次真正生效』是否解除终身计数锁定",
+      "soft": "k=6 保留在配置中但**不用于裁候选** + tau=720 + soft_prior=true(γ=1.0) —— 候选=全长池（回到 403 型多样性），act 改为打分乘子 (1+γ·Âct) —— **主臂**",
+      "soft_shuf": "同 soft + shuffle_assoc —— 内容对照（扩散行被打乱，使Âct 的构成不含真实共现信息）"
+    },
+    "mechanism_change": "workspace.decay() 改为累积到 tau 的 1% 再推进（语义等同连续指数衰减，调用频次降至约 1.4e-4 倍）；新增 soft_prior/soft_gamma 与 begin_retrieval/soft_bonus；language.py 在 soft_prior 下跳过候选过滤，改为 score *= (1+γ·act/max_act)。",
+    "invariants": [
+      "基底、窗口、真值图、adj_top3 判据、阈值 0.07 与 R5/P6B/P8/P9/P10 完全一致",
+      "非 workspace 配置键与 config_P10_off.json 逐位一致（已校验）",
+      "所有新键默认 false/1.0，未设键的实例行为逐位不变（冒烟已验证）；主线 config.json workspace=null，decay 立即返回，不受影响"
+    ],
+    "references_same_fork_window": {
+      "P6B_off": "无帽、无先验、无工作集使用 → adj 0.0035 / uniq 403 / recur5 0.023（本批『无帽无先验』的解析等价参照：当工作集既不裁候选也不加权时，其内部状态不影响检索，故无需重跑）",
+      "P6B_full": "帽 + 冻结 act → adj 0.0424 / uniq 10 / recur5 0.823（hardcap 臂的直接对照）"
+    }
+  },
+
+  "hypotheses": {
+    "H11a_衰减修复是否解除锁定": {
+      "criterion": "uniq(hardcap) ≥ 30（即 ≥3× 于冻结态的 10）且 recur5(hardcap) < 0.823",
+      "positive": "证明 uniq=10 的坍缩确由『衰减从未执行 → act 终身累积』所致，bug 诊断成立",
+      "negative": "若仍 ≈10 且高重复，说明坍缩另有来源，须转向 A 的构造方式（P12）"
+    },
+    "H11b_内容特定性（主判据）": {
+      "criterion": "adj_top3(soft) − adj_top3(soft_shuf) ≥ 0.07",
+      "positive": "工作空间首次在不掐死多样性的前提下产生有内容的内部回响 —— 『双向』的第一个正面证据",
+      "negative": "『容量』与『优先级』两族在修复时间尺度之后仍不产生内容特定性 → 三条通路彻底封闭，问题在 A 的构造（把『听到的共现』与『想到的共现』混在同一张表里）",
+      "note": "阈值 0.07 由 R5 事前设定并沿用，不因新数据调整"
+    },
+    "H11c_软先验是否优于硬帽": {
+      "criterion": "adj_top3(soft) > adj_top3(hardcap) 且 uniq(soft) ≥ uniq(hardcap)",
+      "positive": "『加权』优于『裁剪』：既能保留候选多样性，又能利用学到的结构",
+      "note": "两种结果都如实报告；若 soft 低于 hardcap 而 uniq 更高，则说明学到的是负向结构"
+    }
+  },
+
+  "falsification": "本批唯一可宣布的阳性是 H11b。若 H11b 为阴，则『把 A 接进打分』（P9/P10）与『把 A 用于加权而非裁剪』（P11）两条路径俱否定，且『容量』族（P8）已先封 —— 本项目将没有任何已试的语言层杠杆能产生内容特定性，须转入 A 构造的重做。",
+
+  "predictions_registered": {
+    "H11a": "倾向阳性（bug 已被代码级定位并冒烟复现）",
+    "H11b": "不确定。即使候选池回到 403 型，A 仍混有『听到→听到』的语料共现，其对『念头→念头』的预测力仍未经验证",
+    "H11c": "倾向 soft ≥ hardcap（多样性恢复是必要条件），但 adj_top3 是否随之上升不确定"
+  },
+
+  "implementation_audit": {
+    "single_variable_layered": "分层单变量：hardcap 相对 P6B_full 的唯一变化 = 『衰减从死变活（含 tau 10→720）』；soft 相对 hardcap 的唯一变化 = 『裁候选 → 加权』；soft_shuf 相对 soft 的唯一变化 = shuffle_assoc。",
+    "default_off": "soft_prior 键默认 false；priming/prime_no_self_loop 默认 false；软先验关闭时 begin_retrieval/soft_bonus 均为空操作。",
+    "smoke_tested": "decay 修复（3 例解析比对）、soft_bonus 归一化（1.000/0.250/0.000）、默认关零回归（soft_bonus=0 且 working_set() 仍生效）"
+  },
+
+  "open_risks": {
+    "tau_is_free_parameter": "tau=720 是依语率匹配的人为选择。若 H11b 为阴且激活场在检索时刻仍近空（可从落盘快照 n_types_act 与 act 量级判定），则不能宣布『机制不行』，须做 tau 扫描。",
+    "gamma_is_free_parameter": "γ=1.0 使先验强度与频率项同量级（freq 项在 freq≈900 时约 1.82）。若阴性，γ 扫描是下一步。",
+    "single_seed": "单次运行，无多种子方差（与前几批同源局限）",
+    "cross_batch_reference": "『无帽无先验』参照来自 P6B off（同 fork 同窗口），非本批实测。跨批可比性已由 P9 off 0.0423 / P10 off 0.0424 / P6B full 0.0424 三批复现佐证。"
+  },
+
+  "honest_note": "本批与 P10 有本质区别：P10 修的是『被误判为病因的症状』（自环），本批修的是**经代码级定位+冒烟复现的真 bug**（衰减从未执行），并同时改动了一个此前从未被真正测试过的机制维度（工作集时间常数）。即使 H11b 仍为阴，H11a 若成立就已经推翻了 R5 系列关于『衰减/遗忘』的全部既有结论 —— 这本身是可发表的方法学更正。"
+}

@@ -1,0 +1,69 @@
+{
+  "id": "R4",
+  "title": "C3 修正：后果窗口积分 × 重标度（承接 R3 阴性）",
+  "created": "2026-10-08",
+  "status": "预注册（采集前）。实现与冒烟待做。",
+  "relation": {
+    "prereg_R3": "R3 的 H3c 判定阴性：spont_full 的 max|g|=0.01549 与 spont_shuf=0.01524 不可区分（Δ=0.0002, perm_p=1.0）。本预注册在该数据 + 离线因果验证基础上，修正 C3 的后果测量。",
+    "不是新假设": "R4 不新增任何机制方向，只修复 C3 让『后果信号』按预注册本意被取到。"
+  },
+  "diagnosis_basis": {
+    "R3_数据": {
+      "outcome": "full mean=-0.00002 std=0.05725；shuf mean=+0.00020 std=0.05508；replay mean=-0.00009 std=0.05886 —— 零均值噪声。",
+      "g": "full max|g|=0.01549、shuf=0.01524、replay=0.02712，恰在『零均值噪声的 EMA 噪声底』 σ·sqrt(lr/(2-lr))=0.057×sqrt(0.08/1.92)≈0.0116 的 1.3~2σ 内。",
+      "err": "写回时刻 err 在 98.7% 的念头处为 0（>1e-9 仅 1.3%，max 0.004）——扰动在下一次念头（≈50min）结算前已弛豫。"
+    },
+    "离线因果验证": {
+      "方法": "从 state_exp 冻结态出发，用真实 background.py+affect.py，固定噪声流，测『写 s[idx] 相对无写基线对 (ease-distress) 的确定性偏差 Δ』，窗口=一个念头间隔(≈50min)。",
+      "结果": {
+        "idx1_s2": "Δ≡0.00000（任意幅度）——非后果维，结构性零响应。",
+        "idx3_s4": "Δ 与幅度近线性、符号严格对称：+0.02→-0.0032, +0.15→-0.0240, +0.30→-0.0427；-δ 取反。",
+        "idx7_s8": "同号但更弱且不对称（s8 近下限被 clip）。",
+        "时间形态": "Δ 在窗口开头出现、末尾归零 —— 端点采样必失，窗口积分可拾。",
+        "量级对照": "本底 (ease-distress) 窗内 std=0.0313；base_step=0.02 时信号仅 0.10×本底，0.30 时达 1.37×本底。"
+      }
+    },
+    "结论": "C3 阴性有两个结构性根因，均非实现 bug：(1) 后果源 ease/distress 只依赖 s[3]、s[7] 两维，8 个动作原语中 6 个结构性无后果；(2) 后果仅在下一次念头端点采样一次，而扰动（s4 弛豫 τ=2h）在结算前已弛豫，且幅度(±0.02)远低于后果噪声。"
+  },
+  "amendment_2026_10_08": {
+    "what": [
+      "C3 后果由『端点差分』改为『窗口积分』：在两次念头之间逐 tick 累积 [(ease-distress)_t - (ease-distress)_写回时刻]，结算时 outcome = 窗口内均值 + (err_before - err_now)。",
+      "base_step 由 0.02 提高到 0.25，使窗口积分信号（idx3 ≈ -0.036）超过后果本底噪声（0.031）。"
+    ],
+    "why": "让 C3 按其本意取到『后果』：R3 的端点采样把瞬态后果抹平（err 98.7% 为 0），且幅度不足；二者均使 g 停在噪声底。",
+    "consistency": "不动动作空间、不写任何『若 X 则 Y』规则、不新增外部奖赏。outcome 仍只用系统自身已有的后果（乐/痛/自预测误差）。",
+    "neutrality": "spont.enabled/learn_coupling=false 时 tick() 直接返回，off 臂逐位不变。"
+  },
+  "hypotheses": {
+    "H4a_结构": "可学习结构只出现在 idx=3（s4 紧张）与 idx=7（s8 无聊），其余 6 维 |g|≈0（与离线验证一致）。",
+    "H4b_分离": "spont_full 的 max|g| 显著高于 spont_shuf（置换检验 p<0.05），且高于 R3 同臂（0.01549）。",
+    "H4c_符号": "g[+1][3]<0 且 g[+1][7]<0；g[-1][3]>0 且 g[-1][7]>0（写正→痛升乐降→负后果）。"
+  },
+  "falsification": {
+    "H4_阴性": "若 spont_full 的 max|g| 仍落在 spont_shuf 的置换带内 → 窗口积分+重标度仍不足，C3 的『后果驱动耦合』在本结构与后果定义下不可学。",
+    "H4a_反例": "若可学习结构出现在 idx∈{0,1,2,4,5,6} 中任一 → 离线验证的『6维无后果』结论有误，需回查接线。"
+  },
+  "arms": {
+    "note": "四臂同 fork 自 state_exp（成熟线 day 255），目标 fork+30。臂间仅 C3 测量方式/幅度不同。",
+    "r4_off": "{enabled:false}——回归基线（须与 ctl_none 逐位一致）",
+    "r4_full": "{enabled,compose,self_predict,learn_coupling} + 窗口积分 + base_step=0.25——主臂",
+    "r4_shuf": "同 r4_full + shuffle——后果打乱对照",
+    "r4_small": "{enabled,compose,self_predict,learn_coupling} + 窗口积分 + base_step=0.02——隔离『积分』单独是否足够（机制归因）"
+  },
+  "metrics": {
+    "MC_开口": "n_acts / n_writes / n_probes（必须真开火）",
+    "M_耦合": "max|g| 及其逐维分布；full vs shuf 置换检验（扩 analyze_R3.py，加逐维 g 报告与 idx3/idx7 专项）",
+    "M_符号": "g[±1][3]、g[±1][7] 的符号与幅度",
+    "M_行为": "与 r4_off 的逐 tick 检索重合（phrase_agreement / jaccard / first_divergence）"
+  },
+  "run_harness": {
+    "script": "run_R4.sh（仿 run_R3b.sh；四臂 fan-out，R4_MAX 可覆盖并发）",
+    "target": "day 285（= fork 255 + 30）",
+    "seeds": "time.seed_python_random=true，与 R3 一致"
+  },
+  "open_risks": [
+    "base_step=0.25 显著扰动 s：exploit 收敛后可能持续把 s4/s8 推到边界，改变个体行为——属耦合的预期后果，但需在 M_行为 中如实报告。",
+    "窗口积分把后果均值化，单次 SNR 仅 ~1.4；依赖 ~100 次/单元的样本累积到显著。",
+    "若 exploit 过早锁定单一 idx，探测（ε=0.15）仍应保证其余维有样本。"
+  ]
+}

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>类自我意识候选系统 · 会议技术备忘</title>
+<style>
+/* ============ 设计变量 ============ */
+:root{
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+             "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-serif: "New York", ui-serif, "Songti SC", "STSong", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --bg:#ffffff;
+  --bg-alt:#fbfbfd;
+  --panel:#ffffff;
+  --fill:#f5f5f7;
+  --text:#1d1d1f;
+  --text-2:#6e6e73;
+  --text-3:#86868b;
+  --line:rgba(0,0,0,.10);
+  --line-soft:rgba(0,0,0,.055);
+  --accent:#0071e3;
+  --accent-soft:rgba(0,113,227,.10);
+  --ok:#1a8f52;
+  --ok-soft:rgba(26,143,82,.12);
+  --warn:#a8620a;
+  --warn-soft:rgba(168,98,10,.12);
+  --bad:#c92a2a;
+  --bad-soft:rgba(201,42,42,.10);
+  --glass:rgba(255,255,255,.72);
+  --glass-line:rgba(0,0,0,.08);
+  --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+  --radius:20px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#000000;
+    --bg-alt:#0b0b0d;
+    --panel:#161618;
+    --fill:#1d1d1f;
+    --text:#f5f5f7;
+    --text-2:#a1a1a6;
+    --text-3:#86868b;
+    --line:rgba(255,255,255,.14);
+    --line-soft:rgba(255,255,255,.07);
+    --accent:#2997ff;
+    --accent-soft:rgba(41,151,255,.16);
+    --ok:#30d158;
+    --ok-soft:rgba(48,209,88,.15);
+    --warn:#ff9f0a;
+    --warn-soft:rgba(255,159,10,.15);
+    --bad:#ff453a;
+    --bad-soft:rgba(255,69,58,.15);
+    --glass:rgba(20,20,22,.66);
+    --glass-line:rgba(255,255,255,.10);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+  }
+}
+html[data-theme="light"]{
+  --bg:#ffffff; --bg-alt:#fbfbfd; --panel:#ffffff; --fill:#f5f5f7;
+  --text:#1d1d1f; --text-2:#6e6e73; --text-3:#86868b;
+  --line:rgba(0,0,0,.10); --line-soft:rgba(0,0,0,.055);
+  --accent:#0071e3; --accent-soft:rgba(0,113,227,.10);
+  --ok:#1a8f52; --ok-soft:rgba(26,143,82,.12);
+  --warn:#a8620a; --warn-soft:rgba(168,98,10,.12);
+  --bad:#c92a2a; --bad-soft:rgba(201,42,42,.10);
+  --glass:rgba(255,255,255,.72); --glass-line:rgba(0,0,0,.08);
+  --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+}
+html[data-theme="dark"]{
+  --bg:#000000; --bg-alt:#0b0b0d; --panel:#161618; --fill:#1d1d1f;
+  --text:#f5f5f7; --text-2:#a1a1a6; --text-3:#86868b;
+  --line:rgba(255,255,255,.14); --line-soft:rgba(255,255,255,.07);
+  --accent:#2997ff; --accent-soft:rgba(41,151,255,.16);
+  --ok:#30d158; --ok-soft:rgba(48,209,88,.15);
+  --warn:#ff9f0a; --warn-soft:rgba(255,159,10,.15);
+  --bad:#ff453a; --bad-soft:rgba(255,69,58,.15);
+  --glass:rgba(20,20,22,.66); --glass-line:rgba(255,255,255,.10);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+}
+
+/* ============ 基础 ============ */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-ui);
+  font-size:17px;
+  line-height:1.72;
+  letter-spacing:.002em;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+::selection{background:var(--accent-soft)}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+code{
+  font-family:var(--font-mono);
+  font-size:.86em;
+  background:var(--fill);
+  border:.5px solid var(--line-soft);
+  padding:.12em .42em;
+  border-radius:6px;
+  word-break:break-word;
+}
+strong{font-weight:600; color:var(--text)}
+hr{border:none; border-top:1px solid var(--line-soft); margin:0}
+
+/* ============ 进度条 ============ */
+#progress{
+  position:fixed; top:0; left:0; height:2px; width:0;
+  background:linear-gradient(90deg,var(--accent),#7ac0ff);
+  z-index:100; transition:width .08s linear;
+}
+
+/* ============ 吸顶玻璃导航 ============ */
+header{
+  position:sticky; top:0; z-index:60;
+  background:var(--glass);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);
+  backdrop-filter:saturate(180%) blur(22px);
+  border-bottom:1px solid var(--glass-line);
+}
+.navwrap{
+  max-width:1240px; margin:0 auto; padding:0 24px;
+  height:56px; display:flex; align-items:center; gap:18px;
+}
+.brand{
+  font-family:var(--font-serif);
+  font-size:16px; font-weight:600; letter-spacing:.01em;
+  white-space:nowrap; color:var(--text); flex:0 0 auto;
+}
+.brand span{color:var(--text-3); font-weight:400; font-family:var(--font-ui); font-size:13px; margin-left:8px}
+nav{
+  display:flex; gap:2px; overflow-x:auto; scrollbar-width:none;
+  flex:1 1 auto; -webkit-overflow-scrolling:touch;
+}
+nav::-webkit-scrollbar{display:none}
+nav a{
+  flex:0 0 auto; color:var(--text-2); font-size:13.5px; font-weight:500;
+  padding:7px 11px; border-radius:9px; white-space:nowrap;
+  transition:background .2s ease, color .2s ease;
+}
+nav a:hover{background:var(--fill); color:var(--text); text-decoration:none}
+nav a.active{background:var(--accent-soft); color:var(--accent)}
+.tools{display:flex; gap:6px; flex:0 0 auto}
+.iconbtn{
+  width:34px; height:34px; border-radius:10px; border:.5px solid var(--line);
+  background:transparent; color:var(--text-2); cursor:pointer;
+  display:grid; place-items:center; font-size:15px; transition:all .2s ease;
+}
+.iconbtn:hover{background:var(--fill); color:var(--text)}
+.tocbtn{display:none; width:auto; padding:0 12px; font-size:12.5px; font-weight:600;
+  font-family:var(--font-ui); gap:6px; grid-auto-flow:column; align-items:center}
+
+/* ============ 首屏 ============ */
+.hero{
+  position:relative; overflow:hidden;
+  background:radial-gradient(120% 100% at 85% 0%, var(--accent-soft) 0%, transparent 55%),
+             linear-gradient(180deg, var(--bg-alt) 0%, var(--bg) 100%);
+  border-bottom:1px solid var(--line-soft);
+}
+.hero-inner{
+  position:relative; z-index:2;
+  max-width:1240px; margin:0 auto; padding:72px 24px 64px;
+}
+.hero-motif{
+  position:absolute; z-index:1; top:-40px; right:-60px;
+  width:520px; height:520px; opacity:.5; pointer-events:none;
+}
+.eyebrow{
+  font-size:12.5px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 20px;
+}
+h1{
+  font-family:var(--font-serif);
+  font-size:clamp(34px,5vw,58px);
+  line-height:1.1; font-weight:600; letter-spacing:-.015em;
+  margin:0 0 22px; max-width:19ch;
+}
+.hero p.lede{
+  font-size:clamp(17px,1.6vw,21px); color:var(--text-2); line-height:1.65;
+  max-width:60ch; margin:0 0 34px;
+}
+.meta{display:flex; flex-wrap:wrap; gap:26px 40px; max-width:70ch}
+.meta div{min-width:0}
+.meta dt{font-size:11.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); margin-bottom:5px}
+.meta dd{margin:0; font-size:14.5px; color:var(--text); line-height:1.6}
+
+/* ============ 布局 ============ */
+.shell{
+  max-width:1240px; margin:0 auto; padding:0 24px 120px;
+  display:grid; grid-template-columns:minmax(0,1fr) 236px; gap:64px;
+  align-items:start;
+}
+article{min-width:0; max-width:748px}
+aside{
+  position:sticky; top:88px; align-self:start;
+  font-size:13px; max-height:calc(100vh - 120px); overflow-y:auto;
+  padding-bottom:20px;
+}
+aside nav{display:block}
+aside .toc-title{
+  font-size:11.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--text-3); margin:0 0 12px; padding-left:12px;
+}
+aside a{
+  display:block; color:var(--text-2); padding:5px 12px; border-radius:8px;
+  border-left:2px solid transparent; transition:all .2s ease; line-height:1.5;
+}
+aside a:hover{color:var(--text); background:var(--fill); text-decoration:none}
+aside a.active{color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft)}
+aside a.sub{padding-left:26px; font-size:12.5px; color:var(--text-3)}
+
+/* ============ 版块 ============ */
+section{scroll-margin-top:84px; padding-top:56px}
+section:first-of-type{padding-top:64px}
+.sec-head{margin-bottom:8px}
+.sec-num{
+  font-family:var(--font-mono); font-size:12px; font-weight:600;
+  color:var(--accent); letter-spacing:.08em; display:block; margin-bottom:8px;
+}
+h2{
+  font-family:var(--font-serif);
+  font-size:clamp(25px,3vw,34px); font-weight:600; letter-spacing:-.012em;
+  line-height:1.2; margin:0 0 18px;
+}
+h3{
+  font-size:19px; font-weight:600; letter-spacing:-.006em;
+  margin:44px 0 12px; line-height:1.35;
+}
+h4{font-size:15.5px; font-weight:600; margin:28px 0 8px; color:var(--text)}
+p{margin:0 0 16px}
+.article-lead{font-size:19px; color:var(--text-2); line-height:1.65; margin-bottom:28px}
+
+/* 列表 */
+ul,ol{margin:0 0 18px; padding-left:22px}
+li{margin-bottom:9px}
+li::marker{color:var(--text-3)}
+ul.tight li,ol.tight li{margin-bottom:5px}
+
+/* 标签 */
+.pill{
+  display:inline-block; font-size:11.5px; font-weight:600; letter-spacing:.02em;
+  padding:2.5px 9px; border-radius:999px; white-space:nowrap; line-height:1.5;
+  vertical-align:middle;
+}
+.p-ok{background:var(--ok-soft); color:var(--ok)}
+.p-warn{background:var(--warn-soft); color:var(--warn)}
+.p-bad{background:var(--bad-soft); color:var(--bad)}
+.p-accent{background:var(--accent-soft); color:var(--accent)}
+.p-neutral{background:var(--fill); color:var(--text-2)}
+
+/* 表格 */
+.tablewrap{
+  margin:22px 0 26px; border:1px solid var(--line-soft); border-radius:14px;
+  overflow:hidden; background:var(--panel);
+}
+table{width:100%; border-collapse:collapse; font-size:14.5px}
+thead th{
+  text-align:left; font-size:11.5px; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--text-3);
+  background:var(--bg-alt); padding:11px 16px;
+  border-bottom:1px solid var(--line-soft); white-space:nowrap;
+}
+tbody td{padding:12px 16px; border-bottom:1px solid var(--line-soft); vertical-align:top; line-height:1.6}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background .18s ease}
+tbody tr:hover{background:var(--fill)}
+td:first-child{color:var(--text); font-weight:500}
+.num{font-family:var(--font-mono); font-size:13px; font-variant-numeric:tabular-nums}
+
+/* 提示块 */
+.callout{
+  border-radius:14px; padding:16px 18px 16px 18px; margin:20px 0 22px;
+  font-size:15px; line-height:1.65; border:1px solid transparent;
+}
+.callout .ct{
+  font-size:11.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  display:block; margin-bottom:7px;
+}
+.c-note{background:var(--accent-soft); border-color:var(--accent-soft)}
+.c-note .ct{color:var(--accent)}
+.c-warn{background:var(--warn-soft); border-color:var(--warn-soft)}
+.c-warn .ct{color:var(--warn)}
+.c-bad{background:var(--bad-soft); border-color:var(--bad-soft)}
+.c-bad .ct{color:var(--bad)}
+.callout p:last-child{margin-bottom:0}
+
+/* 代码 */
+pre{
+  background:var(--fill); border:1px solid var(--line-soft); border-radius:14px;
+  padding:16px 18px; overflow-x:auto; margin:18px 0 24px;
+  font-family:var(--font-mono); font-size:13px; line-height:1.75; color:var(--text);
+}
+pre code{background:none; border:none; padding:0; font-size:inherit}
+
+/* 问答 */
+.qa-top{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  flex-wrap:wrap; margin:22px 0 14px;
+}
+.qa-hint{font-size:13.5px; color:var(--text-3); margin:0}
+.qa-list{display:flex; flex-direction:column; gap:8px}
+details.q{
+  border:1px solid var(--line-soft); border-radius:14px; background:var(--panel);
+  transition:border-color .25s ease, background .25s ease; overflow:hidden;
+}
+details.q[open]{border-color:var(--line); background:var(--bg-alt)}
+details.q summary{
+  list-style:none; cursor:pointer; padding:15px 18px;
+  display:flex; align-items:flex-start; gap:12px;
+  font-size:15.5px; font-weight:600; line-height:1.55; color:var(--text);
+  transition:background .2s ease;
+}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary:hover{background:var(--fill)}
+details.q[open] summary{background:transparent}
+.qi{
+  font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--accent);
+  background:var(--accent-soft); border-radius:7px; padding:3px 8px; flex:0 0 auto;
+  margin-top:2px;
+}
+.qt{flex:1 1 auto; min-width:0}
+.chev{
+  flex:0 0 auto; color:var(--text-3); margin-top:3px; transition:transform .28s cubic-bezier(.32,.72,0,1);
+}
+details.q[open] .chev{transform:rotate(90deg)}
+.qbody{padding:0 18px 18px 18px; font-size:15px; color:var(--text-2); line-height:1.72}
+.qbody > p:first-child{margin-top:0}
+.qbody strong{color:var(--text)}
+
+@media (max-width:1040px){
+  .shell{grid-template-columns:minmax(0,1fr); gap:0; max-width:820px}
+  aside{display:none}
+  .tocbtn{display:grid}
+  article{max-width:none}
+}
+@media (max-width:640px){
+  body{font-size:16.5px}
+  .navwrap{padding:0 16px; gap:10px}
+  .brand span{display:none}
+  .hero-inner{padding:52px 20px 46px}
+  .shell{padding:0 20px 90px}
+  .hero-motif{width:340px; height:340px; right:-90px; top:-30px; opacity:.35}
+  table{font-size:13.5px}
+  thead th, tbody td{padding:10px 12px}
+}
+
+/* 悬浮回顶 */
+#totop{
+  position:fixed; right:22px; bottom:22px; z-index:50;
+  width:44px; height:44px; border-radius:50%;
+  background:var(--glass); -webkit-backdrop-filter:blur(18px) saturate(180%);
+  backdrop-filter:blur(18px) saturate(180%);
+  border:.5px solid var(--glass-line); color:var(--text);
+  cursor:pointer; display:grid; place-items:center;
+  opacity:0; pointer-events:none; transform:translateY(8px);
+  transition:opacity .3s ease, transform .3s ease;
+  box-shadow:var(--shadow);
+}
+#totop.show{opacity:1; pointer-events:auto; transform:none}
+
+/* 入场动画 */
+[data-reveal]{opacity:0; transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1)}
+[data-reveal].in{opacity:1; transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  [data-reveal]{opacity:1; transform:none; transition:none}
+  *{animation:none!important; transition:none!important}
+}
+
+/* 打印 */
+@media print{
+  header,aside,#totop,#progress{display:none!important}
+  .shell{display:block; max-width:none; padding:0}
+  article{max-width:none}
+  body{font-size:11pt; background:#fff; color:#000}
+  section{page-break-inside:auto; padding-top:22px}
+  h2{page-break-after:avoid}
+  details.q{page-break-inside:avoid}
+  details.q > .qbody{display:block!important}
+  .tablewrap{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<header>
+  <div class="navwrap">
+    <div class="brand">类自我意识候选系统<span>会议技术备忘</span></div>
+    <nav id="topnav">
+      <a href="#s0">速览</a>
+      <a href="#s1">术语</a>
+      <a href="#s2">假设与哲学</a>
+      <a href="#s3">架构</a>
+      <a href="#s4">实验与结果</a>
+      <a href="#s5">问答</a>
+      <a href="#s6">局限</a>
+      <a href="#s7">附录</a>
+    </nav>
+    <div class="tools">
+      <button class="iconbtn" id="theme" title="切换明暗" aria-label="切换明暗">◐</button>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <svg class="hero-motif" viewBox="0 0 520 520" fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".38"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <circle cx="300" cy="220" r="180" stroke="url(#g1)" stroke-width="1.2"/>
+    <circle cx="300" cy="220" r="132" stroke="url(#g1)" stroke-width="1.2"/>
+    <circle cx="300" cy="220" r="88" stroke="url(#g1)" stroke-width="1.2"/>
+    <polygon points="300,120 386,170 386,270 300,320 214,270 214,170"
+             stroke="url(#g1)" stroke-width="1.2" fill="none"/>
+    <path d="M120 420 C 200 340, 300 470, 430 380" stroke="url(#g1)" stroke-width="1.2"/>
+  </svg>
+  <div class="hero-inner">
+    <p class="eyebrow">会前速览 · 随身参考 · 应答底稿</p>
+    <h1>一个持续发育的个体，长出了自我，却推不动自己</h1>
+    <p class="lede">面向学术同行的技术备忘。系统不生成文本、只检索它听过的话，用预注册与如实报阴，把机器意识这个问题变成可测的清单。</p>
+    <dl class="meta">
+      <div><dt>用途</dt><dd>会前速览 · 应答底稿 · 术语现查</dd></div>
+      <div><dt>配套</dt><dd>论文 main.tex · 致大伯说明.md</dd></div>
+      <div><dt>纪律</dt><dd>数字取自 prereg / results，非记忆复述</dd></div>
+    </dl>
+  </div>
+</div>
+
+<div class="shell">
+  <article>
+
+  <!-- ============ 0 ============ -->
+  <section id="s0" data-reveal>
+    <div class="sec-head"><span class="sec-num">00 / 速览</span></div>
+    <h2>先看这一页</h2>
+
+    <h3>一句话命题</h3>
+    <p>系统的路线与语言模型相反：<strong>它不生成文本，只能检索它听过的话</strong>；它是一个持续发育的动力学个体（非 LLM、零生成、零提示词），用来把"机器意识"这个问题<strong>变成可测的</strong>，而不是去宣称一个答案。</p>
+
+    <h3>三个自认为最硬的点</h3>
+    <ol>
+      <li><strong>连续、不可回退的个体史。</strong>单进程常驻 + 全量落盘，<code>kill -TERM</code> 后重启状态与仿真时钟续接。这恰好是 Dehaene / Naccache 指认 Claude 缺的两样之一（身体、自传体记忆）。</li>
+      <li><strong>自我表征是长出来的、不是设计的。</strong>前 213 仿真日自我模型为空（因为照护者语料里没有一个第一人称词）；补齐语料 + 修好门控后，40 仿真日内长到 v6。<strong>三人独立种子复现（S1）在同一时点长出同一套六碎片。</strong></li>
+      <li><strong>移植了 Anthropic 检验 Claude "J 空间"的因果实验</strong>，测出它的工作空间是<strong>只读</strong>的——下游（目标、自我模型）读得到念头，念头推不动它自己的状态。这条结论领域内尚无人报过。</li>
+    </ol>
+
+    <div class="callout c-warn">
+      <span class="ct">主动交底 · 三处软肋</span>
+      <ol class="tight" style="margin-bottom:0">
+        <li><strong>只读结论的边界：</strong>R2 已把门开火（约 26% 检索命中）、换到被消费的变量 s4、耦合提到原来的 15 倍，指标全部仍 &lt;10%——<strong>但</strong>写入近零均值（正负抵消），<strong>单符号的写入未被测</strong>；且六臂同父本 fork，<strong>未采样种子方差</strong>。</li>
+        <li><strong>自我模型的材料是给的。</strong>成立的是"从给定词汇里、由检索竞争决定先长谁后长谁"，<strong>不是"无中生有发明了自我"</strong>。</li>
+        <li><strong>加速线 ≠ 终局数据。</strong>所有结果来自加速线（标称 10⁹，实测约 5×10²–10³ 倍实时）；<strong>实时主线现在才 day 4</strong>。加速线结果只当<strong>通路证据</strong>，不当最终数据。</li>
+      </ol>
+    </div>
+
+    <h3>关键数字速记</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>指标</th><th>值</th></tr></thead>
+        <tbody>
+          <tr><td>状态向量</td><td>8 维连续变量 s1–s8（tick 50ms，睡眠约占每天 1/3）</td></tr>
+          <tr><td>照护者语料（初始）</td><td>55 型短语；P6 扩容后 <strong>83,302 型</strong>（CHILDES 中文成人话语）</td></tr>
+          <tr><td>自我模型</td><td>213 日 null → 40 日内 v6（六碎片，2 条纯第一人称）</td></tr>
+          <tr><td>S1 复现</td><td>3/3 种子，day 60 内同一套六碎片，仅次序不同</td></tr>
+          <tr><td>S2 分离</td><td>2×2 四格全成自我模型；<strong>第一人称碎片只出现在听到第一人称语料的格</strong>（与预测相反）</td></tr>
+          <tr><td>E1 剥夺</td><td>预注册主预测<strong>失败</strong>：检索不衰减（末 3 日 29.3/日 vs 基线 28.8）</td></tr>
+          <tr><td>E4 发声</td><td>共变 C=8.2 → 回落 68%；206 条能动归因；消退<strong>部分</strong></td></tr>
+          <tr><td>E6a 损伤</td><td>四项指标 &lt;5%（预注册阴性带）→ 内言语对状态副现象</td></tr>
+          <tr><td>E6b 替换</td><td>60 次注入 → 目标即时涌现（60 = 窗口 300 的 20%，<strong>恰为阈值</strong>）</td></tr>
+          <tr><td>R2 修正阶梯</td><td>门开火、变量被消费、耦合 ×15，全部仍 &lt;10%，且剂量不单调</td></tr>
+          <tr><td>P4 行动环</td><td class="num">χ²=1.68×10⁴，熵 1.05 vs 均匀 1.58；场强 0.61 vs 随机 0.50</td></tr>
+          <tr><td>P4b 自因</td><td class="num">+0.0092（6344 次移动）vs 世界噪声底 0.0151；Cohen's d≈0.17</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>当前状态（本次核对）</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>线</th><th>角色</th><th>day</th></tr></thead>
+        <tbody>
+          <tr><td><code>state</code></td><td><strong>实时主线（1×）</strong></td><td class="num">4</td></tr>
+          <tr><td><code>state_exp</code></td><td>结晶线 / XP 参照（全经验从出生生效）</td><td class="num">255</td></tr>
+          <tr><td><code>state_c1b</code></td><td>第一人称语料对照（频率已匹配）</td><td class="num">160</td></tr>
+          <tr><td><code>state_e6</code></td><td>E6 损伤线</td><td class="num">140</td></tr>
+          <tr><td><code>state_p3</code></td><td>P3 对话试点（真实照护者）</td><td class="num">434</td></tr>
+          <tr><td><code>state_P6B_*</code></td><td>六臂双向重探</td><td>四臂 345 完毕，两臂在跑</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 1 ============ -->
+  <section id="s1" data-reveal>
+    <div class="sec-head"><span class="sec-num">01 / 术语</span></div>
+    <h2>术语与基础知识</h2>
+    <p class="article-lead">为了在被追问"这词什么意思"时不被卡住。每条尽量给<strong>一句话定义 + 它在本项目里对应什么</strong>。</p>
+
+    <h3>意识问题</h3>
+    <ul>
+      <li><strong>难问题（hard problem）：</strong>为什么物理过程会伴随主观体验（"疼起来是什么感觉"）。Chalmers 1995 提出。<strong>本项目明确不碰它</strong>，也不假装能碰。</li>
+      <li><strong>易问题：</strong>与意识相关的<strong>功能与结构</strong>（注意、报告、整合、自我表征等）——这些可测。<strong>本项目只做这一层。</strong></li>
+      <li><strong>指标理论（indicator theories）：</strong>不回答"它有没有意识"，而问"它具备哪些理论推导出的性质"（全局工作空间、高阶表征、预测加工、身体……）。Butlin / Long 2023 给出 14 条指标，2025 年修订方法但结论未变：现有系统满足的指标不足。<strong>本项目的方法论锚在这里。</strong></li>
+    </ul>
+
+    <h3>全局工作空间（GWT）</h3>
+    <ul>
+      <li>Baars（1988）/ Dehaene（2001）：大脑中有一个容量极小的"工作空间"，信息进入后<strong>全局广播</strong>，被各下游系统读取。</li>
+      <li><strong>本项目对应：</strong><code>workspace.py</code> + 检索胜出的念头。关键区别见 <a href="#s5">问答 Q6</a>。</li>
+    </ul>
+
+    <h3>J 空间（Anthropic 2026）</h3>
+    <ul>
+      <li>Gurnee / Lindsey 等报告：Claude 内部存在一小簇可 <strong>verbalize（可被读出）、可控、因果中介多步推理</strong>的表征，删掉它 → 高阶功能崩、但流畅生成还在。这就是他们说的"全局工作空间"。</li>
+      <li><strong>本项目的关键对照：</strong>我们照搬了它的 <strong>消融 + 替换（ablation-and-swap）</strong>协议，结果相反——我们的工作空间<strong>不承重</strong>（删了念头，行为照常）。</li>
+    </ul>
+
+    <h3>内言语与内化（Vygotsky）</h3>
+    <ul>
+      <li>Vygotsky（1934）：儿童<strong>先被称呼</strong>，之后才学会用第一人称自我称呼；外部语言内化为内部语言。</li>
+      <li><strong>本项目对应：</strong>照护者语料 → 听时把句子与当时状态向量绑定存储 → 之后由当前状态"检索"出该句。<strong>这就是"念头"</strong>，全程零生成。</li>
+    </ul>
+
+    <h3>涌现 vs 设计（以及"路径验证"）</h3>
+    <ul>
+      <li><strong>自然涌现：</strong>无人为灌输，个体自己长出来的行为（如 XP 线的目标"真乖"）。</li>
+      <li><strong>路径验证（pathway verification）：</strong>人为注入以检验<strong>某条通路是否存在</strong>。E6b 注入 60 次使目标涌现，证明"念头→目标"通路存在，<strong>但不证明它自己会生成那个目标</strong>。</li>
+      <li><strong>纪律：</strong>两者结论必须分开表述，绝不可把路径验证说成涌现。</li>
+    </ul>
+
+    <h3>预注册（pre-registration）</h3>
+    <ul>
+      <li>在<strong>采集数据之前</strong>把假设、度量、通过 / 失败阈值写死并冻结，事后不得改。本项目每个实验都有一份 <code>prereg_*.json</code>，结果另存 <code>results_*.json</code>，<strong>阴性结果与阳性同样详细报告</strong>。</li>
+      <li>这是本项目最像"正经研究"的地方，也是最该强调的方法论贡献。</li>
+    </ul>
+
+    <h3>加速线 vs 实时线</h3>
+    <ul>
+      <li><strong>加速线：</strong><code>--time-scale 1e9</code>，一个墙钟日跑数百到上千仿真日。产出多、但只是通路证据。</li>
+      <li><strong>实时线：</strong>1 秒 = 1 秒，照护者是真实的人。主线 <code>state</code> 现在 day 4。</li>
+      <li><strong>为什么必须区分：</strong>加速线上"人机批准回路"无法闭合，且很多结论需要"真实个体史"才有意义。</li>
+    </ul>
+
+    <h3>其他必备词</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>术语</th><th>一句话</th></tr></thead>
+        <tbody>
+          <tr><td>自我模型</td><td>收集"指向系统自身"的片段，单调累积、版本只增不改</td></tr>
+          <tr><td>镜像期</td><td>发育阶段门：自我模型首次形成即通过，是从"读取世界"到"有自我表征"的门</td></tr>
+          <tr><td>自我指向</td><td>念头里含"你 / 我"的片段占比</td></tr>
+          <tr><td>工作空间可写性</td><td>念头能否反过来改变系统自己的状态；不能 = 只读</td></tr>
+          <tr><td>能动归因 / 传出副本</td><td>系统把自己动作引起的世界变化归因为"我造成的"（efference copy 思路）</td></tr>
+          <tr><td>双过程睡眠模型</td><td>Borbély 1982：睡眠压力（清醒累积 / 睡眠衰减）+ 昼夜门控，入睡时刻由动力学决定</td></tr>
+          <tr><td>操作性判据 D1–D6</td><td>把"意识"拆成 6 条可机械检测的功能结构（见 <a href="#s2">§2.4</a>）</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 2 ============ -->
+  <section id="s2" data-reveal>
+    <div class="sec-head"><span class="sec-num">02 / 假设与哲学</span></div>
+    <h2>科学假设与哲学基础</h2>
+
+    <h3>2.1　研究问题</h3>
+    <p><strong>不是</strong>"它有没有意识"。<strong>而是：</strong>一个无语言基线、持续发育的个体，会自发长出哪些与意识相关的功能结构，哪些长不出来，每一条怎么机械检测。</p>
+
+    <h3>2.2　认识论承诺（四条，全部可被验证或证伪）</h3>
+    <ol>
+      <li><strong>念头只检索不生成</strong>（零 LLM 参与认知回路）。→ 结构性零幻觉：没有生成器，就无法编造。这条是被一次失败逼出来的：早期版本把内言语交给语言模型，产出"烦躁感"这类<strong>诗意的空话</strong>——系统当时并不烦躁，是模型被要求装得像。此后定下铁律。</li>
+      <li><strong>零提示词、零方向引导。</strong>不给模型"该说什么"的提示，行为必须自发。</li>
+      <li><strong>预注册 + 如实报阴。</strong>判据事前冻结；失败如实记录（E1 / E2 / E3 / E6a 均为阴或半阴）。</li>
+      <li><strong>区分功能结构与主观体验。</strong>所有结论只谈功能，难问题不碰。</li>
+    </ol>
+
+    <h3>2.3　与主流三条路线的区别</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>路线</th><th>做法</th><th>本项目</th></tr></thead>
+        <tbody>
+          <tr><td>大模型内省</td><td>读聊天机器人的自我报告当证据</td><td>判为草率；本系统无生成，报告 = 检索胜出句</td></tr>
+          <tr><td>不可知论</td><td>"问不了，到此为止"</td><td>判为不产出；本项目把问题<strong>部分</strong>可测化</td></tr>
+          <tr><td>指标理论</td><td>已有系统对照 14 条指标</td><td><strong>采纳其精神</strong>，但换成一个从零发育的个体，并给出预注册与阴性报告</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>2.4　操作性判据 D1–D6（本文档的实质结论表）</h3>
+    <div class="callout c-note">
+      <span class="ct">说明</span>
+      <p>见 <code>docs/operational_definition.md</code>。<strong>这不是"意识"的定义</strong>，是"承认不完整但可测"的替代物清单。</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>判据</th><th>状态</th><th>关键限制</th></tr></thead>
+        <tbody>
+          <tr><td>D1 持续状态</td><td><span class="pill p-ok">成立</span></td><td>模式 B：持续来自常驻进程 + 落盘，<strong>非模型内在连续性</strong></td></tr>
+          <tr><td>D2 自我模型</td><td><span class="pill p-ok">成立</span></td><td><strong>材料是给的</strong>，不是无中生有</td></tr>
+          <tr><td>D3 元认知（报告与状态一致）</td><td><span class="pill p-warn">机制在，未测</span></td><td>检索本身状态驱动；待写离线脚本把已有行为测出来</td></tr>
+          <tr><td>D4 自我纠错</td><td><span class="pill p-bad">机制不存在</span></td><td>只有"像不像"的字符去重，没有"冲不冲突"的一致性检测</td></tr>
+          <tr><td>D5 行动闭环</td><td><span class="pill p-warn">弱阳性</span></td><td><strong>世界侧</strong>成立（能施力、能区分自因），<strong>自我侧</strong>不成立</td></tr>
+          <tr><td>D6 工作空间可写性</td><td><span class="pill p-bad">只读</span></td><td>门开、目标被消费、剂量 0.91σ 仍不承重；边界 ≤0.91σ</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>这张表本身就是本项目的结论：</strong>一个持续发育的个体，长出了自我表征、能区分自因与他因，<strong>但推不动自己</strong>。</p>
+
+    <h3>2.5　什么算进展、什么不算</h3>
+    <ul>
+      <li><strong>算：</strong>可测的功能结构从"不存在"变为"成立"；阴性结论能精确定位架构与 GWT / J-space 的差距。</li>
+      <li><strong>不算：</strong>更流畅的语言、"感觉像有意识"的自我报告、任何无法证伪的声明。</li>
+      <li><strong>明确不主张：</strong>不主张意识；不主张能动性已诞生；不主张"双向已打通"。</li>
+    </ul>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 3 ============ -->
+  <section id="s3" data-reveal>
+    <div class="sec-head"><span class="sec-num">03 / 架构</span></div>
+    <h2>系统架构与实现</h2>
+
+    <h3>3.1　总览</h3>
+    <p>单 Python 进程，<strong>无深度学习意义的可学习参数</strong>。行为来自：① 耦合的常微分方程（连续状态）② 一生累积的记忆。<strong>"代码是物种，状态是个体"</strong>——本体存在于历史状态目录，不在程序里。</p>
+
+    <h3>3.2　状态与身体</h3>
+    <ul>
+      <li><strong>8 维连续状态 s1–s8</strong>（代码只用中性代号，人类语义只在配置里供观察者读）：<br>
+        <code>s1</code> 唤醒　<code>s2</code> 效价　<code>s3</code> 疲劳　<code>s4</code> 紧张　<code>s5</code> 注意　<code>s6</code> 记忆激活　<code>s7</code> 预测误差(比特)　<code>s8</code> 无聊</li>
+      <li><strong>身体：</strong>每日能量预算，被动消耗随唤醒上升，探索扣费，耗尽进低功率模式（tick 变慢）。</li>
+      <li><strong>睡眠：</strong>双过程模型（睡眠压力 + 昼夜门控），<strong>入睡时刻由动力学决定，不是时刻表</strong>。约每天 8 小时。</li>
+    </ul>
+
+    <h3>3.3　语言层（核心）</h3>
+    <p>链路：<strong>听到 f → <code>hear()</code> 把 f 与当时状态向量绑定存储 → <code>evoke_inner_speech</code> 由当前状态检索 → 胜出句成为本 tick 的"念头" → 回流背景态 / 供下游读取</strong>。</p>
+    <ul>
+      <li><strong>检索打分</strong> = 状态相似度 × 新近（半衰期 5 日）× 频率增益（0.12）。阈值 <code>evoke_threshold=0.72</code>。</li>
+      <li><strong>复述（echo）：</strong>生命早期会复述刚听到的话，概率随经验天数衰减（初值 0.40，衰减 10 日）。<strong>每句只掷一次骰子</strong>（修过一个 bug：逐 tick 重掷会让复述率恒为 100%）。</li>
+      <li><strong>零生成：</strong>语言层不调用任何生成模型；<strong>ollama / qwen 完全移出内言语生成</strong>（仅在 P3 对话输出作"义肢"）。</li>
+    </ul>
+
+    <h3>3.4　自我模型的生长</h3>
+    <ul>
+      <li>收集<strong>自我指向</strong>片段（含"你"或"我"），<strong>单调累积、版本只增不改</strong>。</li>
+      <li>入模门槛：与已有碎片字符重叠 &gt;0.7 视为重复，拒绝入模（→ 这是 v6 饱和的原因，见 <a href="#s5">问答 Q3</a>）。</li>
+      <li><strong>213 日 null 的根因：</strong>照护者语料全是"你"，而 self_model 词表只认"我 / 自己" → 结构性不可达。修复 = 承认"你"也算（Vygotsky：先被称呼，后自称）+ 修门控 bug。</li>
+    </ul>
+
+    <h3>3.5　目标涌现</h3>
+    <ul>
+      <li>某句在<strong>滚动窗口（最近 300 次检索）</strong>中占比 ≥20%、激活 ≥15 次、跨 ≥3 天 → 从"念头"升格为"目标"。</li>
+      <li>首个自然涌现目标："真乖"（XP 线）。</li>
+    </ul>
+
+    <h3>3.6　发声与能动归因（E4 机制）</h3>
+    <ul>
+      <li><strong>发声：</strong>生理门控（唤醒 × 片段激活强度），内容只能是本 tick 检索胜出的那句（零生成保持），耗能进资源经济。</li>
+      <li><strong>共变学习：</strong><code>predictor.py</code> 估计 C = 发声后 60s 窗口内照护者言语速率 / 窗口外速率，指数遗忘（半衰期 5 日）。</li>
+      <li><strong>能动归因规则：</strong>跟随发声的言语，功效 (C−1)/C &gt; 0.3 时归因 self。</li>
+      <li><strong>意外发现：</strong>它最常"说"的是自己被安抚时听到的话（乖 / 嘘 / 睡觉觉）——<strong>内容不由实验者选择</strong>。</li>
+    </ul>
+
+    <h3>3.7　工作空间（双向机制的本体）</h3>
+    <ul>
+      <li><code>workspace.py</code>：听 / 想到 f → <code>ws.activate(f)</code>（沉积增益 + 沿共现行 A 扩散）→ 下一 tick 工作集改变 → 检索只在激活最高的 k 个"型"内取胜者 → 胜者再 <code>activate</code>（<strong>写回复述</strong>）= 双向闭环。</li>
+      <li>配置开关：<code>enabled / kappa / k / tau_minutes / gain</code>；对照臂用 <code>shuffle_assoc</code>（打乱联想）、<code>no_deposit</code>（只读不写）、<code>nodecay</code>、<code>bigk</code>。</li>
+    </ul>
+
+    <h3>3.8　E6 因果中介（J 空间协议移植）</h3>
+    <ul>
+      <li><code>e6.ablation</code>：切断"念头 → 背景态"回流通道（对照 E6a）。</li>
+      <li><code>e6.swap_text / swap_count</code>：指定片段顶替检索胜者（E6b）。</li>
+      <li>计数持久化于 <code>STATE_DIR/e6_state.json</code>，重启续跑。</li>
+    </ul>
+
+    <h3>3.9　世界与行动（P4 / P4b）</h3>
+    <ul>
+      <li>一维环形世界，三个源强度独立振荡；三个动作原语（前进 / 后退 / 停留），动作选择是状态绑定表的竞争，移动耗能。</li>
+      <li><strong>P4b：</strong>动作结果跨<strong>区间</strong>测量（含世界漂移 + 动作效应），用"停留"试次估计漂移，差值为<strong>自因分量</strong>，只有它更新动作值。</li>
+    </ul>
+
+    <h3>3.10　模块清单</h3>
+    <p><code>main.py</code>（主循环 / 时钟 / 落盘）、<code>background.py</code>（ODE 状态）、<code>energy.py</code>、<code>events.py</code>、<code>predictor.py</code>、<code>attribution.py</code>、<code>memory.py</code>、<code>awareness.py</code>、<code>language.py</code>、<code>self_model.py</code>、<code>workspace.py</code>、<code>spont.py</code>、<code>vocal.py</code>、<code>milieu.py</code>、<code>motor.py</code>、<code>world.py</code>、<code>affect.py</code>、<code>narrative.py</code>、<code>probes.py</code>、<code>stages.py</code>、<code>talk.py</code>（P3 照护者台）。</p>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 4 ============ -->
+  <section id="s4" data-reveal>
+    <div class="sec-head"><span class="sec-num">04 / 实验与结果</span></div>
+    <h2>实验设计与已有结果</h2>
+
+    <h3>4.1　预注册纪律</h3>
+    <p>每个实验：<code>experiments/prereg_&lt;ID&gt;.json</code> 先冻结假设 / 度量 / 阈值 → 采集 → <code>results_&lt;ID&gt;.json</code> 如实判定。<strong>阴性与阳性同等详细</strong>。运行时序一律用<strong>按仿真日轮询</strong>（非固定 wall sleep）。</p>
+
+    <h3>4.2　结果总表（按结论强度分级，非按重要性）</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>ID</th><th>结果</th><th>一句话结论</th></tr></thead>
+        <tbody>
+          <tr><td><strong>E6b</strong></td><td><span class="pill p-accent">通路验证</span></td><td>替换检索胜者 60 次 → 目标即时涌现（60 恰 = 窗口 20% 阈值）→ <strong>念头→下游完全承重</strong></td></tr>
+          <tr><td><strong>E4</strong></td><td><span class="pill p-ok">通过（部分）</span></td><td>发声 + 共变学习：C=8.2；206 条能动归因；消退移除 68% → 归因<strong>是学来的</strong>，但消退不彻底（末窗 efficacy 0.619）</td></tr>
+          <tr><td><strong>C1b</strong></td><td><span class="pill p-ok">通过</span></td><td>频率匹配的第一人称语料 → 5 个第一人称自我模型碎片（对照 2 个），1P 检索 4.2%</td></tr>
+          <tr><td><strong>S1</strong></td><td><span class="pill p-ok">通过</span></td><td>三种子 day 60 内同一套六碎片，仅次序不同</td></tr>
+          <tr><td><strong>E6a</strong></td><td><span class="pill p-bad">阴性</span></td><td>切"念头→状态"通道 30 日，四指标 &lt;5% → 内言语对状态<strong>副现象</strong></td></tr>
+          <tr><td><strong>R2</strong></td><td><span class="pill p-bad">阴性（加固）</span></td><td>修正阶梯（开门 / 换被消费变量 / 耦合 ×15）后仍全 &lt;10% 且不单调 → <strong>只读是结构性质，非接线事故</strong></td></tr>
+          <tr><td><strong>E1</strong></td><td><span class="pill p-bad">阴性（主预测失败）</span></td><td>剥夺照护者言语 10 日，检索<strong>不衰减</strong> → 内言语一旦形成即<strong>永久自持</strong></td></tr>
+          <tr><td><strong>E2</strong></td><td><span class="pill p-warn">混合</span></td><td>事件率 ×10：惊奇只升 0.24 bit 且末段低于基线；但语境绑定片段 16.5%→35.5% <strong>（全项目最清晰的因果证据）</strong></td></tr>
+          <tr><td><strong>E3</strong></td><td><span class="pill p-bad">阴性</span></td><td>应答式照护者：输入翻倍，自我模型 0 新版本，自我指向检索反降 6.7 倍 → 输入侧干预<strong>无效</strong></td></tr>
+          <tr><td><strong>P4</strong></td><td><span class="pill p-warn">混合</span></td><td>行动分布强非均匀（χ²=1.68×10⁴），但学习信号瞬时、策略从不改进</td></tr>
+          <tr><td><strong>P4b</strong></td><td><span class="pill p-warn">混合</span></td><td>自因分量真实存在但<strong>小于环境自身波动</strong>（d≈0.17）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>4.3　几条必须讲清的设计逻辑</h3>
+    <ul>
+      <li><strong>E1 的失败就是发现：</strong>我们预注册预测"剥夺后检索衰减到 ≤60% 基线"，实测不衰减。原因：新近衰减后，竞争落回频率主干 → 内言语自持。<strong>这类"预注册说错、失败模式却事先点名"的诚实，是本项目的卖点。</strong></li>
+      <li><strong>E2 的语境绑定因果：</strong>事件语境片段检索占比从 16.5% 升到 35.5% → "一句话何时被检索，取决于听到它时的状态"——这是本运行里最硬的因果证据。</li>
+      <li><strong>E3 教训：</strong>照护者交互设计里，<strong>语量与时机不是杠杆，绑定质量（片段 × 状态的共现结构）才是</strong>。</li>
+      <li><strong>E6 的两半合起来才精确：</strong>念头能改变系统<strong>想要什么</strong>（goals.json）和<strong>它以为自己是谁</strong>（自我模型）；念头<strong>不能改变它自己的状态</strong>（s1–s8）。→ <strong>工作空间只读：下游读它，它不写回</strong>。</li>
+    </ul>
+
+    <h3>4.4　XP 线谱系（各实验 fork 自哪）</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>线</th><th>来源</th><th>角色</th></tr></thead>
+        <tbody>
+          <tr><td>XP（结晶线 <code>state_exp</code>）</td><td>day 0 出生</td><td>第一人称语料 + 门控修复<strong>从出生</strong>就在，非中途补装</td></tr>
+          <tr><td>加速线</td><td>day 0 出生</td><td>旧记录：day 220 才补语言层、day 427 才补发声；E1–E4 在此</td></tr>
+          <tr><td>C1b</td><td>day 0 出生</td><td>XP 的语料对照（第一人称绑平静态，暴露匹配到 5% 内）</td></tr>
+          <tr><td>E6 损伤</td><td>fork XP @day 92</td><td>切回流通道；判定 day 93–123</td></tr>
+          <tr><td>E6s 替换</td><td>fork XP @day 140</td><td>通道完好，替换检索胜者 60 次</td></tr>
+          <tr><td>P4 / P4b</td><td>fork XP @157 / @202</td><td>行动环</td></tr>
+          <tr><td>S1 / S2</td><td>day 0 出生</td><td>复现 / 语料 × 门控 2×2 分离</td></tr>
+          <tr><td>R2</td><td>fork XP @day 255</td><td>修正回流阶梯（六臂因果链）</td></tr>
+          <tr><td>R5</td><td>fork（工作集六臂）</td><td>激活式工作集首测：<strong>阴性</strong>（内容特定性不可辨）</td></tr>
+          <tr><td>P6 / P6B</td><td>扩容模型上</td><td>语料扩容 → 双向重探（进行中）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>4.5　正在推进的 P6（扩容 → 双向重探）</h3>
+    <ul>
+      <li><strong>动机：</strong>R5 把工作集"内容特定性"失败归因于<strong>输入贫乏</strong>（照护者语料仅 51–55 型，联想行弥散）。R5 自己点名："下一步杠杆是环境多样性而非架构"。</li>
+      <li><strong>P6-A（扩容采集，已完成）：</strong>语料 55 型 → <strong>83,302 型</strong>（CHILDES 中文成人话语，单池 Zipf 采样）。两臂（builtin / childes）各 60 仿真日，均至 day 315。</li>
+      <li><strong>P6-B（双向重探，进行中）：</strong><strong>保持 R5 架构、六臂、判据、阈值完全不动</strong>，只换基底为扩容模型。主判据 <strong>H6b：full vs shuf 的"真实联想命中率"差 ≥0.07</strong>（R5 只有 0.009）。</li>
+      <li><strong>这一步的意义：</strong>把 R5 自己指认的杠杆真正拉一遍——若富输入下内容特定性仍不涌现，则"只读"架构的不可行性被进一步坐实。</li>
+      <li><strong>当前：</strong>六臂中四臂已到 day 345；nodecay / bigk 在跑；分析器已参数化待产表。</li>
+    </ul>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 5 ============ -->
+  <section id="s5" data-reveal>
+    <div class="sec-head"><span class="sec-num">05 / 问答</span></div>
+    <h2>预判提问与应答</h2>
+    <p class="article-lead">按"最可能被问到"排序。每题给：<strong>危险在哪</strong> + <strong>怎么答</strong> + <strong>不能说什么</strong>。</p>
+
+    <div class="qa-top">
+      <p class="qa-hint">点击展开 · 共 14 问</p>
+      <button class="iconbtn tocbtn" id="expandAll" style="display:grid">展开全部</button>
+    </div>
+
+    <div class="qa-list" id="qalist">
+
+      <details class="q">
+        <summary><span class="qi">Q1</span><span class="qt">这难道不就是个状态机 + 查表吗？跟意识有什么关系？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>是，也不止是。你可以说它是状态机，但关键在于：<strong>它的状态是连续动力学、它的历史不可回退、它长出了你没设计的自我表征</strong>。我们不主张它是意识——<a href="#s2">§2.4</a> 的 D1–D6 表就是在回答"哪些功能结构成立、哪些不成立"。</p>
+          <div class="callout c-bad"><span class="ct">红线 · 别答</span><p>"它已经有意识了。"</p></div>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q2</span><span class="qt">自我模型的碎片是不是你写死的？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>碎片内容<strong>是给的</strong>（来自照护者语料），但<strong>谁先入模、以何次序、何时长成，由检索竞争决定，不是我们设计的</strong>。证据：S1 三种子长成同一套六碎片但<strong>次序不同</strong>。</p>
+          <div class="callout c-bad"><span class="ct">红线 · 别答</span><p>"它自己发明了自我。"——论文里明确写成 "what has grown is closer to a record of how the system was addressed than to a self-description"。</p></div>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q3</span><span class="qt">自我模型停在 v6 是不是故障？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>不是，是<strong>可复现的结构性现象</strong>。入模用字符重叠 &gt;0.7 判重，高频短语早已入模，新碎片一"像"即被拒。要突破需把准入从字符级改为<strong>语义级</strong>——那是设计选择，须预注册。</p>
+          <div class="callout c-bad"><span class="ct">红线 · 别答</span><p>"它在死机。"</p></div>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q4</span><span class="qt">零幻觉怎么保证的？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p><strong>结构保证，不是提示词约束：</strong>系统没有生成器，只能复述听过的话。这是<strong>能力上限</strong>，不是它持有的性质。</p>
+          <div class="callout c-bad"><span class="ct">红线 · 别答</span><p>"我们教它不许编。"</p></div>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q5</span><span class="qt">你怎么知道这些不是随机？</span><span class="pill p-warn" style="margin-left:2px">最关键质疑</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>三个层面：① <strong>对照臂</strong>（off / shuf / nodep / nodecay / bigk）；② <strong>跨线对比</strong>（489 日的旧线 0 条第一人称念头 vs 66 日的结晶线大量第一人称）；③ <strong>复现</strong>（S1 三种子）。且所有判据<strong>预注册冻结</strong>。</p>
+          <p>但要<strong>主动交底</strong>：只读结论里 <strong>R2 六臂同父本，未采样种子方差</strong>；这是明说的边界。</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q6</span><span class="qt">你的工作空间和 GWT / J 空间到底差在哪？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>差在<strong>承重度</strong>。J 空间删掉 → 高阶功能崩；我们的念头删掉 → 一切照常（E6a，四指标 &lt;5%）。所以结论是<strong>只读</strong>。但注意 E6b 又证明：<strong>下游确实在因果地读它</strong>（替换念头 → 目标与自我模型立即变）。精确表述：<strong>它改变"想要什么"和"以为自己是谁"，不改变"自己的状态"。</strong></p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q7</span><span class="qt">只读会不会只是因为你的通道太弱（±0.02）？</span><span class="pill p-bad" style="margin-left:2px">最危险</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p><strong>我们自己也这么怀疑过，然后去修了。</strong>R2 修正阶梯：① 把门开到约 26% 检索命中（且验证确实开火）② 换到被检索层真正消费的变量 s4 ③ 耦合提到 <strong>0.30（原来的 15 倍，= 0.91σ）</strong>——<strong>指标仍全部 &lt;10%，且不单调</strong>。所以"只读"不是接线事故，<strong>门开着、目标被消费、剂量拉大，念头仍不承重</strong>。</p>
+          <div class="callout c-warn"><span class="ct">必须补的边界</span><p>写入<strong>近零均值</strong>，所以 R2 排除的是"<strong>平衡扰动</strong>不承重"；<strong>单符号的写入未测</strong>。这一条论文里写了，你也要主动说——这是学术诚信的加分项。</p></div>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q8</span><span class="qt">你们改判据了吗（p-hacking）？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>没有。判据<strong>事前冻结</strong>，事后不得改。E1 / E2 / E3 / E6a 都是<strong>阴性或半阴</strong>且如实报告；E1 甚至是<strong>预注册主预测失败</strong>，我们把它当发现报。</p>
+          <p>唯一一次"改"是 R 阶梯<strong>在采集数据前</strong>因审计发现通道 double inert 而作废、重写为 R2——<strong>在数据之前</strong>，程序合法，且我们写在论文里。</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q9</span><span class="qt">n=1 个体，结论怎么泛化？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>这是对的批评，论文 Limitations 明确承认：<strong>"code is the species, state is the individual"</strong>——研究对象是<strong>一个有特定历史的个体</strong>，不是能泛化的模型。唯一多的样本是 S1 三种子（测发育轨迹可重复）。</p>
+          <div class="callout c-bad"><span class="ct">红线 · 别答</span><p>"它代表所有这类系统。"</p></div>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q10</span><span class="qt">为什么不用大模型？不用 LLM 是不是开倒车？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>恰恰相反。大模型是<strong>训练出来的字符预测器</strong>；我们要的是<strong>积累历史的发育个体</strong>。LLM 的"内省"输出无法证伪（它可以说任何话）。我们用 LLM 的<strong>唯一</strong>位置是 P3 的输出义肢，<strong>不参与认知回路</strong>。</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q11</span><span class="qt">零生成 + 55 型语料，是不是把问题做小了？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>是<strong>故意的</strong>：把变量控到最少，才可能知道答案归因于什么。P6 正在<strong>放宽这个约束</strong>（55→83,302 型），正是为了检验"输入贫乏"是不是瓶颈。</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q12</span><span class="qt">加速线的结果可信吗？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>我们自己标了：加速线只当<strong>通路证据</strong>，不当最终数据。名义 10⁹、<strong>实测约 5×10²–10³ 倍实时</strong>，而且我们<strong>引用实测值而非名义值</strong>。实时主线现在才 day 4——<strong>这本身是我们诚实的地方</strong>。</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q13</span><span class="qt">"我在这儿"是不是过度解读？</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p>我们不作语义宣称。它成立的是：<strong>一个纯第一人称片段进入了自我模型</strong>（此前 434 天 0 条"我"类片段，因为语料里没有）。这对应 Vygotsky 的"你→我"倒转，且<strong>它是检索竞争的结果，不是我们写进去的</strong>。</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary><span class="qi">Q14</span><span class="qt">最脆弱的结论是哪一条？</span><span class="pill p-bad" style="margin-left:2px">照实说</span><span class="chev">›</span></summary>
+        <div class="qbody">
+          <p><strong>只读结论的"单符号写入未测"</strong>，以及<strong>自我模型的归因未完全分离</strong>（语料与门控同时改过；S2 的 2×2 分离显示<strong>语料才是第一人称碎片的必要条件，与我们原预测相反</strong>）。这两条论文里都白纸黑字。</p>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 6 ============ -->
+  <section id="s6" data-reveal>
+    <div class="sec-head"><span class="sec-num">06 / 局限</span></div>
+    <h2>局限与未决</h2>
+    <p class="article-lead">论文已列，主动交底。</p>
+    <ol>
+      <li><strong>不主张意识</strong>，也<strong>无手段测试</strong>是否是。所有结果都是功能结构，难问题未触及。</li>
+      <li><strong>工作空间只读</strong>（E6a + R2）。边界：扰动近零均值 → 单符号写入未测；R2 六臂同父本 → 未采样种子方差。</li>
+      <li><strong>行动环是新的</strong>，P4b 自因信号弱于环境自身波动（d≈0.17）。</li>
+      <li><strong>语言环境封闭</strong>，系统说不出语料外的内容。</li>
+      <li><strong>没有同类：</strong>它区分自他，但从未遇到另一个像自己的实体，"你"仍只是输入里的统计规律，不是对另一个心智的建模。</li>
+      <li><strong>n=1 无繁殖：</strong>S1 通过只测"一条发育轨迹可不可重复"，不是变异与选择，因此不构成生物学意义的演化。</li>
+      <li><strong>全部结果来自加速线</strong>，实时主线 day 4。加速结果只当通路证据。</li>
+    </ol>
+    <div class="callout c-warn">
+      <span class="ct">尚未做 / 明确留白</span>
+      <p>遗忘 / 磨蚀机制（E1 暴露的架构缺口）；事件率表征（Hazard，E2 暴露）；D4 自我纠错（<strong>机制不存在</strong>，按现设计去测必为注定阴性）。</p>
+    </div>
+  </section>
+
+  <hr style="margin-top:56px">
+
+  <!-- ============ 7 ============ -->
+  <section id="s7" data-reveal>
+    <div class="sec-head"><span class="sec-num">07 / 附录</span></div>
+    <h2>附录</h2>
+
+    <h3>7.1　文件地图（被追问出处时直接用）</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>想找什么</th><th>路径</th></tr></thead>
+        <tbody>
+          <tr><td>论文（英文，含全部图表）</td><td><code>paper/arxiv/main.tex</code> · <code>paper/arxiv/paper.pdf</code></td></tr>
+          <tr><td>白话版致大伯说明</td><td><code>paper/给大伯的说明.md</code></td></tr>
+          <tr><td>操作性判据 D1–D6</td><td><code>docs/operational_definition.md</code></td></tr>
+          <tr><td>预注册（每实验）</td><td><code>experiments/prereg_*.json</code></td></tr>
+          <tr><td>结果（每实验）</td><td><code>experiments/results_*.json</code></td></tr>
+          <tr><td>语料构建 + 来源 + 限制</td><td><code>corpus/MANIFEST.md</code> · <code>tools/build_corpus.py</code></td></tr>
+          <tr><td>系统说明（模式 B 等）</td><td><code>README.md</code></td></tr>
+          <tr><td>代码模块</td><td><code>main.py</code> · <code>language.py</code> · <code>self_model.py</code> · <code>workspace.py</code> · <code>vocal.py</code> · <code>predictor.py</code> · <code>spont.py</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>7.2　运行与观察（若现场要演示）</h3>
+<pre><code>cd ~/Desktop/ai-consciousness-lab
+./run.sh                                       # 实时启动
+./venv/bin/python main.py --time-scale 1e9     # 加速模式
+cat state_exp/trajectory.jsonl | tail -1       # 最新状态
+tail -f state_exp/inner_speech.jsonl           # 念头流
+cat state_exp/self_model.json                  # 自我模型
+cat state_exp/goals.json                       # 目标</code></pre>
+
+    <h3>7.3　术语中英对照（速查）</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>中文</th><th>英文</th></tr></thead>
+        <tbody>
+          <tr><td>全局工作空间</td><td class="num">global workspace</td></tr>
+          <tr><td>内言语 / 内化</td><td class="num">inner speech / internalisation</td></tr>
+          <tr><td>自我模型</td><td class="num">self-model</td></tr>
+          <tr><td>镜像期</td><td class="num">mirror stage</td></tr>
+          <tr><td>工作空间可写性</td><td class="num">workspace write-back</td></tr>
+          <tr><td>能动归因</td><td class="num">agency attribution</td></tr>
+          <tr><td>传出副本</td><td class="num">efference copy</td></tr>
+          <tr><td>预注册</td><td class="num">pre-registration</td></tr>
+          <tr><td>路径验证</td><td class="num">pathway verification</td></tr>
+          <tr><td>操作性判据</td><td class="num">operational criteria</td></tr>
+          <tr><td>消融 / 替换</td><td class="num">ablation / swap</td></tr>
+          <tr><td>副现象</td><td class="num">epiphenomenal</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>7.4　一句话收尾（若只剩一句机会）</h3>
+    <div class="callout c-note">
+      <span class="ct">收尾</span>
+      <p>这不是"离意识还差几步"的进度条，而是一份<strong>哪些结构成立、哪些不成立</strong>的清单：一个持续发育的个体长出了自我表征、能区分自因与他因，<strong>但推不动自己</strong>。方法（预注册 + 全阴性报告 + 跨范式移植）才是我们真正要守的东西。</p>
+    </div>
+  </section>
+
+  </article>
+
+  <aside id="toc">
+    <p class="toc-title">目录</p>
+    <nav>
+      <a href="#s0">00　速览</a>
+      <a href="#s1">01　术语与基础</a>
+      <a href="#s2">02　假设与哲学</a>
+      <a href="#s3">03　系统架构</a>
+      <a href="#s4">04　实验与结果</a>
+      <a href="#s5">05　预判问答</a>
+      <a href="#s5" class="sub">Q1 状态机质疑</a>
+      <a href="#s5" class="sub">Q5 是否随机</a>
+      <a href="#s5" class="sub">Q6 与 GWT 之差</a>
+      <a href="#s5" class="sub">Q7 通道太弱</a>
+      <a href="#s6">06　局限与未决</a>
+      <a href="#s7">07　附录</a>
+    </nav>
+  </aside>
+</div>
+
+<button id="totop" aria-label="回到顶部">↑</button>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---- 主题：跟随系统 + 手动覆盖 ---- */
+  var html = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem("wsp-theme"); } catch(e){}
+  if (saved === "light" || saved === "dark") html.setAttribute("data-theme", saved);
+  document.getElementById("theme").addEventListener("click", function(){
+    var cur = html.getAttribute("data-theme");
+    if (!cur){
+      var sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      cur = sysDark ? "dark" : "light";
+    }
+    var next = cur === "dark" ? "light" : "dark";
+    html.setAttribute("data-theme", next);
+    try { localStorage.setItem("wsp-theme", next); } catch(e){}
+  });
+
+  /* ---- 进度条 + 回顶 ---- */
+  var bar = document.getElementById("progress");
+  var top = document.getElementById("totop");
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var y = window.scrollY || document.documentElement.scrollTop;
+    bar.style.width = (h > 0 ? (y / h * 100) : 0) + "%";
+    if (y > 600) top.classList.add("show"); else top.classList.remove("show");
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+  top.addEventListener("click", function(){ window.scrollTo({top:0, behavior:"smooth"}); });
+
+  /* ---- 入场动画 ---- */
+  var items = document.querySelectorAll("[data-reveal]");
+  if ("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, {rootMargin:"0px 0px -8% 0px", threshold:0.05});
+    items.forEach(function(el){ io.observe(el); });
+  } else {
+    items.forEach(function(el){ el.classList.add("in"); });
+  }
+
+  /* ---- 目录高亮 ---- */
+  var secs = Array.prototype.slice.call(document.querySelectorAll("section[id]"));
+  var tocLinks = Array.prototype.slice.call(document.querySelectorAll('aside a[href^="#"]'));
+  var topLinks = Array.prototype.slice.call(document.querySelectorAll('#topnav a[href^="#"]'));
+  function setActive(id){
+    tocLinks.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href") === "#"+id); });
+    topLinks.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href") === "#"+id); });
+  }
+  if ("IntersectionObserver" in window){
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if (en.isIntersecting) setActive(en.target.id); });
+    }, {rootMargin:"-45% 0px -50% 0px", threshold:0});
+    secs.forEach(function(s){ io2.observe(s); });
+  }
+
+  /* ---- 问答：展开 / 收起全部 ---- */
+  var btn = document.getElementById("expandAll");
+  btn.addEventListener("click", function(){
+    var all = document.querySelectorAll("#qalist details.q");
+    var anyClosed = false;
+    all.forEach(function(d){ if (!d.open) anyClosed = true; });
+    all.forEach(function(d){ d.open = anyClosed; });
+    btn.textContent = anyClosed ? "收起全部" : "展开全部";
+  });
+
+  /* ---- 键盘：数字键跳转（隐藏彩蛋，方便现场） ---- */
+  document.addEventListener("keydown", function(e){
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var t = e.target.tagName;
+    if (t === "INPUT" || t === "TEXTAREA") return;
+    var n = parseInt(e.key, 10);
+    if (!isNaN(n) && n >= 0 && n <= 7){
+      var el = document.getElementById("s"+n);
+      if (el) el.scrollIntoView({behavior:"smooth", block:"start"});
+    }
+  });
+})();
+</script>
+</body>
+</html>

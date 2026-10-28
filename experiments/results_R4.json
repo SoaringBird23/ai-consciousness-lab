@@ -1,0 +1,251 @@
+{
+ "fork_day": 255,
+ "n_inherit": 8065,
+ "arms": {
+  "off": {
+   "gen": {
+    "n_window": 897,
+    "n_echo": 41,
+    "n_retrieval": 856,
+    "n_composed": 0,
+    "composed_rate": 0.0,
+    "composed_rate_slope_per_day": 0.0,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": false,
+    "compose": false,
+    "self_predict": false,
+    "learn_coupling": false,
+    "shuffle": false,
+    "base_step": null,
+    "n_obs": 0,
+    "n_acts": 0,
+    "n_writes": 0,
+    "n_probes": 0,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "g_neg": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "max_abs_g": 0.0,
+    "max_abs_g_pos": 0.0,
+    "max_abs_g_neg": 0.0
+   },
+   "err_slope_per_day": null,
+   "overlap": null
+  },
+  "full": {
+   "gen": {
+    "n_window": 921,
+    "n_echo": 40,
+    "n_retrieval": 881,
+    "n_composed": 875,
+    "composed_rate": 0.9931895573212258,
+    "composed_rate_slope_per_day": 0.0012096774193548388,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": true,
+    "self_predict": true,
+    "learn_coupling": true,
+    "shuffle": false,
+    "base_step": null,
+    "n_obs": 50977610,
+    "n_acts": 921,
+    "n_writes": 921,
+    "n_probes": 131,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     -0.001741,
+     -0.010592,
+     -0.007438,
+     -0.0059,
+     -0.006705,
+     -0.007329,
+     -0.006809,
+     -0.006256
+    ],
+    "g_neg": [
+     -0.003139,
+     -0.006883,
+     -0.005094,
+     0.000826,
+     -0.003598,
+     -0.002201,
+     -0.012723,
+     0.005524
+    ],
+    "max_abs_g": 0.012723,
+    "max_abs_g_pos": 0.010592,
+    "max_abs_g_neg": 0.012723
+   },
+   "err_slope_per_day": 1.3342296101671072e-07,
+   "overlap": {
+    "n_common": 47,
+    "phrase_agreement": 0.0425531914893617,
+    "entry_agreement": 0.0425531914893617,
+    "permutation_baseline": 0.0019893617021276636,
+    "jaccard": 0.027810650887573965,
+    "first_divergence_t": 22004130.5
+   }
+  },
+  "shuf": {
+   "gen": {
+    "n_window": 870,
+    "n_echo": 35,
+    "n_retrieval": 835,
+    "n_composed": 830,
+    "composed_rate": 0.9940119760479041,
+    "composed_rate_slope_per_day": 0.0013440860215053767,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": true,
+    "self_predict": true,
+    "learn_coupling": true,
+    "shuffle": true,
+    "base_step": null,
+    "n_obs": 51101338,
+    "n_acts": 870,
+    "n_writes": 870,
+    "n_probes": 130,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     -0.004809,
+     -0.008516,
+     -0.005532,
+     -0.008518,
+     -0.007778,
+     -0.004359,
+     -0.003844,
+     -0.00379
+    ],
+    "g_neg": [
+     -0.02329,
+     -0.008729,
+     -0.017324,
+     -0.008531,
+     -0.005332,
+     -0.010386,
+     -0.017194,
+     -0.009955
+    ],
+    "max_abs_g": 0.02329,
+    "max_abs_g_pos": 0.008518,
+    "max_abs_g_neg": 0.02329
+   },
+   "err_slope_per_day": 6.435297004278513e-08,
+   "overlap": {
+    "n_common": 35,
+    "phrase_agreement": 0.05714285714285714,
+    "entry_agreement": 0.05714285714285714,
+    "permutation_baseline": 0.005614285714285697,
+    "jaccard": 0.021135265700483092,
+    "first_divergence_t": 22004130.5
+   }
+  },
+  "small": {
+   "gen": {
+    "n_window": 878,
+    "n_echo": 42,
+    "n_retrieval": 836,
+    "n_composed": 832,
+    "composed_rate": 0.9952153110047847,
+    "composed_rate_slope_per_day": 0.000759013282732448,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": true,
+    "self_predict": true,
+    "learn_coupling": true,
+    "shuffle": false,
+    "base_step": null,
+    "n_obs": 51006448,
+    "n_acts": 878,
+    "n_writes": 878,
+    "n_probes": 123,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     -0.005924,
+     0.001764,
+     -0.007644,
+     -0.007093,
+     -0.005752,
+     -0.007767,
+     -0.005493,
+     -0.005777
+    ],
+    "g_neg": [
+     -0.006686,
+     -0.008957,
+     -0.005527,
+     -0.001107,
+     -0.007181,
+     -0.005505,
+     -0.00565,
+     -0.00752
+    ],
+    "max_abs_g": 0.008957,
+    "max_abs_g_pos": 0.007767,
+    "max_abs_g_neg": 0.008957
+   },
+   "err_slope_per_day": -1.6606186150108286e-06,
+   "overlap": {
+    "n_common": 51,
+    "phrase_agreement": 0.0392156862745098,
+    "entry_agreement": 0.0392156862745098,
+    "permutation_baseline": 0.0024705882352941116,
+    "jaccard": 0.031078610603290677,
+    "first_divergence_t": 22004130.5
+   }
+  }
+ },
+ "coupling_test": {
+  "full_max_abs_g": 0.012723,
+  "shuf_max_abs_g": 0.02329,
+  "diff": -0.010567000000000002,
+  "perm_p_two_sided": 0.2195,
+  "n_cells": 16,
+  "caveat": "单次运行、n=16 单元，p 仅作序性参考"
+ }
+}

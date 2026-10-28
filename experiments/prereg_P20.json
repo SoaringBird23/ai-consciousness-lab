@@ -1,0 +1,42 @@
+{
+  "experiment": "P20",
+  "title": "构造语法：听懂句式并重组词句（发育版）",
+  "registered_at": "2026-10-19",
+  "question": "当语言输入不再被 250 型词表卡住，且系统学会「句式+槽位」后，它能否听懂没听过的整句，并用听过的词/句式重组出没听过的回答？",
+  "fork_from": "state_P19b_full（P19b full 臂，day>=315）",
+  "arm": {
+    "name": "P20:grammar",
+    "config": "config_P20.json",
+    "state": "state_p20_run",
+    "changes_vs_P19b_full": [
+      "caregiver.corpus_vocab_cap=5000（解除输入瓶颈）",
+      "construction.enabled=true（在线学句式；对最近一轮作构造式回答）"
+    ]
+  },
+  "controls_planned": {
+    "vocab_only": "同 cap=5000，但 construction.enabled=false —— 分离「多听」与「会重组」",
+    "shuffled_slot": "句式结构保留，槽位填充词跨句式打乱 —— 破坏「槽位类别」关联"
+  },
+  "hypotheses": {
+    "H20a_comprehension": "留出句挖空预测：top-1 >= 2×unigram top-1，且 top-5 >= unigram top-5 + 3pp",
+    "H20b_generation_validity": "生成句 100% 词法纯净（每词都实听过）；novel >= 0.80；topic_overlap >= 0.80",
+    "H20c_slot_answer": "伪问句（留出句的槽位替换为疑问词）回答的同类命中率 >= 0.50",
+    "H20d_live_use": "P20 运行后期，construction 型发声占 retrieval 型发声 >= 0.20；且其话题重叠不低于 P19b full 的 retrieval"
+  },
+  "metrics": {
+    "masked": ["top1", "top5", "frame_prior_top1", "unigram_top1", "unigram_top5"],
+    "generation": ["purity", "novel", "topic_overlap", "frame_valid", "modes"],
+    "pseudo_question": ["exact_any", "exact_first", "category_any", "modes"],
+    "live": ["n_construction / n_retrieval", "construction_mode 分布", "per-day inner_speech 类型"]
+  },
+  "analysis": [
+    "tools/build_constructions.py --eval（留出类型 10%）",
+    "experiments/analyze_P20.py（P20 live 状态 + inner_speech 统计，待写）",
+    "converse.py --model state_p20_run/constructions.json（定性对话样例）"
+  ],
+  "honesty": [
+    "语言输出只作现象记录，不作意识证据",
+    "没有对象/指称世界；问句回答的『事实正确性』不在本实验主张内，主张的是句式理解与槽位重组",
+    "构造语法模型默认从环境侧语料学结构、从自身听觉史学状态绑定；两者在结果中必须分开标注"
+  ]
+}

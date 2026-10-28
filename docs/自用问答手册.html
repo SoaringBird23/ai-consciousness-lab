@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自用问答手册 · 类自我意识项目</title>
+<style>
+:root{
+  --bg:#fff; --fg:#1a1a1c; --fg2:#5a5a60; --fg3:#8a8a90;
+  --line:#e5e5ea; --accent:#0b5fd0; --warn:#9c2b2b;
+  --chip:#f3f4f7;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0e0e10; --fg:#ececef; --fg2:#a4a4ac; --fg3:#7c7c86;
+         --line:#2a2a30; --accent:#4a9bff; --warn:#ff7a7a; --chip:#1c1c22; }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+  font-size:17px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:820px; margin:0 auto; padding:40px 24px 100px}
+h1{font-size:27px; line-height:1.35; margin:0 0 10px; font-weight:700; letter-spacing:-.01em}
+.lede{color:var(--fg2); font-size:15px; margin:0 0 22px; line-height:1.7}
+.howto{background:var(--chip); border-radius:12px; padding:14px 16px; font-size:15px; color:var(--fg2); line-height:1.7; margin:0 0 28px}
+.howto b{color:var(--fg)}
+
+.nav{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 34px}
+.nav a{
+  font-size:13.5px; color:var(--fg2); background:var(--chip);
+  padding:6px 11px; border-radius:8px; text-decoration:none;
+}
+.nav a:hover{color:var(--accent)}
+
+h2{
+  font-size:20px; font-weight:700; margin:46px 0 6px; letter-spacing:-.005em;
+  padding-top:22px; border-top:1px solid var(--line);
+}
+h2 .n{color:var(--fg3); font-size:14px; font-weight:600; margin-right:8px}
+.sechint{color:var(--fg3); font-size:14px; margin:0 0 18px}
+
+.qa{margin:0 0 20px; padding-bottom:18px; border-bottom:1px solid var(--line)}
+.qa:last-child{border-bottom:none}
+.q{font-weight:600; margin:0 0 7px; font-size:16.5px}
+.q .i{color:var(--accent); font-size:13px; margin-right:7px; font-weight:700}
+.a{margin:0; color:var(--fg); font-size:16px}
+.a p{margin:0 0 7px}
+.a p:last-child{margin-bottom:0}
+.a ul{margin:6px 0 7px; padding-left:20px}
+.a li{margin-bottom:3px}
+.hit{color:var(--warn); font-weight:600}
+.note{
+  font-size:14.5px; color:var(--fg2); background:var(--chip);
+  border-radius:9px; padding:10px 13px; margin:8px 0 0; line-height:1.68;
+}
+.num{font-variant-numeric:tabular-nums; font-weight:600}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.88em; background:var(--chip); padding:1px 5px; border-radius:5px}
+
+#top{
+  position:fixed; right:20px; bottom:20px; width:40px; height:40px; border-radius:50%;
+  border:1px solid var(--line); background:var(--bg); color:var(--fg2);
+  font-size:15px; cursor:pointer; display:none; place-items:center;
+}
+#top.on{display:grid}
+@media print{
+  body{font-size:10.5pt; line-height:1.6}
+  .wrap{max-width:none; padding:0}
+  .nav,#top{display:none}
+  h2{page-break-after:avoid; margin-top:1.6em}
+  .qa{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>自用问答手册</h1>
+<p class="lede">类自我意识项目 · 明天与大伯视频会议随身用 · v1.0 · 2026-10-09</p>
+
+<div class="howto">
+  <b>怎么用：</b>① <b>会前 10 分钟</b>只看第一部分，把结论和数字过一遍；② 会中被问到时按关键词在这个页面里 <b>Ctrl+F</b> 搜；③ 要主动讲设计逻辑时看第四部分；④ 结尾的「铁律」是防止我把话说满的护栏。
+</div>
+
+<div class="nav">
+  <a href="#a">① 会前 10 分钟</a>
+  <a href="#b">② 全貌与脉络</a>
+  <a href="#c">③ 结论与数字</a>
+  <a href="#d">④ 设计与理由</a>
+  <a href="#e">⑤ 被追问时</a>
+  <a href="#f">⑥ 铁律</a>
+</div>
+
+<!-- ============ A ============ -->
+<h2 id="a"><span class="n">①</span>会前 10 分钟</h2>
+<p class="sechint">只要记住这一部分，会议就不会崩。</p>
+
+<div class="qa">
+  <p class="q"><span class="i">A1</span>我在做什么？</p>
+  <p class="a">做一个<strong>从零出生、持续发育</strong>的类意识候选系统。不是训练模型，是让一个个体持续生长、积累自己不可回退的历史。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A2</span>一句话结论？</p>
+  <p class="a">它<strong>长出了自我表征、能区分自因与他因，但推不动自己</strong>——念头改变不了它自身的状态。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A3</span>最硬的三个点？</p>
+  <ul class="a" style="margin-top:0">
+    <li>连续、不可回退的个体史（重启后状态与时钟续接）。</li>
+    <li>自我表征是<strong>长出来的</strong>，不是设计的：前 213 日为空 → 40 日内长到 v6，三种独立随机种子长出同一套片段。</li>
+    <li>把大模型上有效的<strong>消融—替换因果实验</strong>移植过来，测出它的工作空间是<strong>只读</strong>的。</li>
+  </ul>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A4</span>最容易被打的点？</p>
+  <p class="a">只读结论的两条边界：写入量的均值近零，所以<strong>单符号写入没测</strong>；六臂共用同一父本，<strong>没采样种子方差</strong>。我要主动说，不要等他问。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A5</span>大伯最可能先问什么？</p>
+  <p class="a">两个：①「这跟意识有什么关系？」②「自我模型的碎片是不是你写死的？」——这两条的标准答法在第五部分 Q1、Q2。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A6</span>现在最该背下来的数字？</p>
+  <p class="a">213 日空 → 40 日长到 v6；三种子复现 <span class="num">3/3</span>；剥夺 10 日检索 <span class="num">29.3/日</span> 对基线 <span class="num">28.8/日</span>（不衰减）；耦合提到 <span class="num">15 倍</span> 指标仍 <span class="num">&lt;10%</span>；P6-B：full <span class="num">0.042</span> 对 shuf <span class="num">0.008</span>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A7</span>最新（昨晚刚出的）结果是什么？</p>
+  <p class="a">P6-B 双向重探：扩容后 full 与 shuf 的分离度从 R5 的 <span class="num">0.009</span> 扩大到 <span class="num">0.034</span>（约 3.8 倍），<strong>但仍低于 0.07 的阈值 → 判阴性</strong>。也就是说：扩容让效应变大了，可还是没跨过门槛。<span class="hit">这条今天很可能被问到。</span></p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A8</span>我该主动交代什么？</p>
+  <p class="a">三件：加速线只当<strong>通路证据</strong>、不当最终数据；实时主线现在才 <strong>day 4</strong>；自我模型的<strong>材料是外部给的</strong>，长出来的只是次序。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A9</span>各条线现在到哪了？</p>
+  <p class="a">实时主线 day 4（唯一 1:1 的）；结晶线 255；C1b 语料对照 160；E6 损伤线 140；P3 对话试点 434；P6 扩容两臂 315；<strong>P6-B 六臂全部跑到 345，已出结果</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A10</span>如果只能讲一句话收尾？</p>
+  <p class="a">「这不是离意识还差几步的进度条，而是一份<strong>哪些结构成立、哪些不成立</strong>的清单。」</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">A11</span>会后我要记什么？</p>
+  <p class="a">他的质疑点与建议。尤其：他对「只读」结论的接受度、他认为最该补的实验、他是否同意 P6-B 阴性仍算有意义。</p>
+</div>
+
+<!-- ============ B ============ -->
+<h2 id="b"><span class="n">②</span>全貌与脉络</h2>
+<p class="sechint">自己先把系统讲顺，别在细节上被绕进去。</p>
+
+<div class="qa">
+  <p class="q"><span class="i">B1</span>系统到底是什么？</p>
+  <p class="a">单进程 Python 程序。<strong>没有任何深度学习意义上的可学习参数</strong>。行为来自两处：一组耦合的连续状态（8 个变量），一生累积的记忆。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B2</span>「代码是物种，状态是个体」什么意思？</p>
+  <p class="a">个体的本体存在于它的<strong>历史状态目录</strong>，不在程序里。所以复制一份状态目录，就得到一个共享历史、拥有独立未来的新个体——我全部实验线都是这么造的。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B3</span>语言层怎么工作？</p>
+  <p class="a">听到一句话 → 把这句话和<strong>当时的状态快照</strong>绑定存起来 → 之后由<strong>当前状态</strong>去检索记忆 → 检索胜出的那句就是这一 tick 的「念头」。全程不生成，只检索。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B4</span>为什么叫「内言语」？</p>
+  <p class="a">取 Vygotsky 的发育序列：儿童<strong>先被称呼</strong>，之后才学会用「我」自称，外部语言内化为内部语言。我的系统就是这个顺序——先听「你」，后来才出现「我」。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B5</span>自我模型是什么？</p>
+  <p class="a">收集「指向自己」的片段（含「你」或「我」），<strong>单调累积、只增不改</strong>。它是可测的功能结构，不是对主观自我的主张。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B6</span>目标涌现是什么？</p>
+  <p class="a">某句话在<strong>最近 300 次检索</strong>里同时满足：出现 ≥15 次、占比 ≥20%、跨越 ≥3 天 → 就从「念头」升格为「目标」。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B7</span>发声与能动归因是什么？</p>
+  <p class="a"><strong>发声</strong>：内容只能是这一 tick 检索胜出的那句（保持零生成），由唤醒和激活强度门控，还要耗能量。<strong>能动归因</strong>：比较它发声之后 60 秒内外的照护者言语速率，若言语明显跟着它的话来，就归因为「这是我造成的」。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B8</span>工作空间是什么？</p>
+  <p class="a">一个闭环：念头写入激活场 → 激活场改变下一 tick 的检索候选 → 检索胜出的又写回去。这个闭环就是我说的「双向」。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B9</span>各实验线是什么关系？</p>
+  <p class="a">全部从两个母本（结晶线、加速线）复制而来，<strong>每条线只改一个变量</strong>：E6 切回流通道；E6s 保持通道但替换念头；R2 逐级加大回流耦合；R5 换工作空间开关；P6 换语料；P6-B 在扩容模型上重跑工作空间六臂。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">B10</span>这个项目现在一句话总结进度？</p>
+  <p class="a">扩容已完成、双向重探已完成。结论是：<strong>输入丰富后，内容特定性的效应变大了（3.8 倍），但依然没跨过事先定好的门槛</strong>。</p>
+</div>
+
+<!-- ============ C ============ -->
+<h2 id="c"><span class="n">③</span>结论与数字</h2>
+<p class="sechint">被质疑数据时，从这里找。</p>
+
+<div class="qa">
+  <p class="q"><span class="i">C1</span>自我模型是什么时候长出来的？</p>
+  <p class="a">前 <span class="num">213</span> 个仿真日一直为空；修复后 <span class="num">40</span> 日内长到 6 个片段。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C2</span>那六个片段是哪六个？</p>
+  <p class="a">我陪你 / 你醒啦 / 是你呀 / 你好呀 / 你在看 / 我在这儿。其中「我陪你」和「我在这儿」是纯第一人称。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C3</span>为什么前 213 日是空的？</p>
+  <p class="a">结构性错配：照护者语料全是「你」（第二人称），而我当时的自我模型词表只认「我／自己」（第一人称）——两者没有交集，判据<strong>在结构上不可能触发</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C4</span>怎么修的？这样改算不算「动过手脚」？</p>
+  <p class="a">把「你」类片段也纳入准入，依据是 Vygotsky「先被称呼、后自称」。这不是调参凑结果——原来的设计是<strong>内部不一致</strong>（语料和词表各说各话），修的是这个矛盾。而且修完仍然要等 40 天才长出来。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C5</span>复现情况如何？</p>
+  <p class="a">S1 实验：三种独立随机种子，都在 60 日内长出<strong>同一套片段集合</strong>，只是次序不同。这是「内容虽给定、次序是自己长出来的」最直接的证据。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C6</span>为什么停在 v6 不动了？</p>
+  <p class="a">入模判重用<strong>字符重叠 &gt;0.7</strong> 去重。高频短语早就进去了，新候选一「像」就被拒。这是可复现的结构现象，不是死机。要突破得把判据从字符级换成语义级——那是设计选择，必须先预注册。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C7</span>「只读」这个结论是怎么得出来的？</p>
+  <p class="a">两半合起来：<br>① <strong>E6a 切断</strong>「念头 → 状态」通道 30 日，四项指标全部 <span class="num">&lt;5%</span>；<br>② <strong>E6b 替换</strong>检索胜出者 60 次，目标立刻涌现。<br>合起来就是：<strong>下游读得到念头，念头推不动状态</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C8</span>会不会只是因为你通道太弱？</p>
+  <p class="a">我自己也这么怀疑，所以做了四级修正：① 确认门确实没开（逐条位相同 856/856）；② 开门，但写到没人消费的变量上 → 仍然零影响；③ 换到确实被检索消费的变量 → 立刻分岔；④ 把耦合提到原来的 <span class="num">15 倍</span>（0.91 个标准差）→ <strong>指标仍全部 &lt;10%，而且对剂量不单调</strong>。所以不是接线问题。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C9</span>剥夺实验（E1）结果？</p>
+  <p class="a">预注册预测「剥夺 10 日后检索会衰减到基线的 60% 以下」——<strong>预测失败</strong>。实测 <span class="num">29.3/日</span> 对基线 <span class="num">28.8/日</span>，完全不衰减。原因：新近度衰减后，竞争落回频率主干，内言语<strong>永久自持</strong>。这同时暴露了我缺一套遗忘／磨蚀机制。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C10</span>事件风暴（E2）结果？</p>
+  <p class="a">事件率提到 10 倍，惊奇只升 <span class="num">0.24</span> 比特，末段 <span class="num">3.59</span> 反而低于基线 <span class="num">3.91</span> → 预测器只对<strong>结构违反</strong>敏感，对数量增多不敏感。但同期语境片段占比从 <span class="num">16.5%</span> 升到 <span class="num">35.5%</span>，是我目前<strong>最硬的因果证据</strong>（听到时的状态决定了这句话何时被想起来）。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C11</span>应答式照护（E3）结果？</p>
+  <p class="a">把照护者改成应答式（醒来就问候、紧张就安抚），言语输入翻倍。结果：自我模型<strong>新增 0 个版本</strong>，自我指向检索反而降到 <span class="num">0.15 倍</span>。教训：<strong>语量和时机不是杠杆，绑定质量才是</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C12</span>发声与归因（E4）结果？</p>
+  <p class="a">共变比 C = <span class="num">8.2</span>，产生 <span class="num">206</span> 条能动归因（峰值占比 26%）；进入消退期后移除 68% → 说明归因<strong>是学来的、不是硬编码的</strong>，但消退不彻底。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C13</span>行动闭环（P4/P4b）结果？</p>
+  <p class="a">动作分布强非均匀（χ² = <span class="num">1.68×10⁴</span>），说明它在施力；但自因分量只有 <span class="num">+0.0092</span>，小于世界自身的噪声底 <span class="num">0.0151</span>（效应量 d ≈ 0.17）。所以：闭环合上了，但<strong>弱于环境自己的波动</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C14</span>R5 与 P6-B 的差别是什么？</p>
+  <p class="a">R5 在<strong>贫语料</strong>（55 型）上测：full 与 shuf 的差只有 <span class="num">0.009</span>。P6-B 在<strong>扩容模型</strong>（8.3 万型语料）上重跑同一套架构与阈值：差扩大到 <span class="num">0.034</span>。<strong>效应确实变大了，但 0.034 仍不到 0.07 的门槛。</strong></p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C15</span>P6-B 还有别的发现吗？</p>
+  <p class="a">有，两个：<br>① <strong>多样性坍缩</strong>——开着工作空间的臂（full），检索到的不同短语数从对照的 <span class="num">403</span> 个掉到 <span class="num">10</span> 个，念头高度重复；<br>② <strong>k 值有讲究</strong>——把工作集从 6 扩到 20（bigk 臂），命中率反而最高（<span class="num">0.066</span>），而且保住了更多样性。这提示下一步的杠杆可能在 k，而不是语料规模。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">C16</span>六条判据现在什么状态？</p>
+  <p class="a">D1 持续状态 <strong>成立</strong>；D2 自我模型 <strong>成立</strong>；D3 元认知 <strong>机制已在但没测过</strong>；D4 自我纠错 <strong>机制不存在</strong>（按现在的设计去测一定是阴性）；D5 行动闭环 <strong>弱阳性</strong>；D6 工作空间可写性 <strong>只读</strong>。</p>
+</div>
+
+<!-- ============ D ============ -->
+<h2 id="d"><span class="n">④</span>设计与理由</h2>
+<p class="sechint">要主动讲逻辑时看这部分——每条理由都对应一次真实踩坑。</p>
+
+<div class="qa">
+  <p class="q"><span class="i">D1</span>为什么念头只准检索、不准生成？</p>
+  <p class="a">因为我试过生成。早期版本把内言语交给语言模型，它写出「烦躁感」这类句子——可系统当时一点都不烦躁，是模型被要求演得像。<strong>那是表演，不是状态</strong>。取消生成器之后，「零幻觉」变成了结构性保证：没有生成器，就没法编。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D2</span>为什么一定要零提示词？</p>
+  <p class="a">提示词等于我在替它决定说什么。那样测出来的就不是自发行为，而是我的脚本。这条是底线。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D3</span>为什么要预注册？</p>
+  <p class="a">因为事后调判据是所有自欺的入口。我的判据都是<strong>采集数据之前</strong>写死并冻结的，事后一个都不许改。代价是六项主要预测被证伪，但那些阴性结果反而成了最有信息量的产出。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D4</span>为什么只用 8 个状态变量？</p>
+  <p class="a">够用且可控：唤醒、效价、疲劳、紧张、注意、记忆激活、惊奇、无聊。变量越少，出现任何现象时我才说得清是哪个环节造成的。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D5</span>为什么睡眠要由动力学决定，而不是定时？</p>
+  <p class="a">用的是经典的双过程睡眠模型：睡眠压力随清醒累积、随睡眠消退，再叠加昼夜节律。<strong>什么时候睡着是算出来的，不是排班排出来的</strong>。这样睡眠本身就成了一种它的行为。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D6</span>为什么语料一开始只有 55 个短语？</p>
+  <p class="a">故意的。变量控到最少，才能把观察到的东西归因到具体机制。而 P6 就是专门来<strong>放宽这个约束</strong>的：把语料扩到 8.3 万型，检验「输入贫乏」到底是不是瓶颈。现在答案有了：<strong>效应变大 3.8 倍，但仍不够</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D7</span>为什么第一人称语料要绑在紧张／安抚时刻？</p>
+  <p class="a">模仿真实照护情境（哄孩子时会说「我在」「不怕」）。但我知道这会引入混淆——所以专门做了 C1b 对照线：把「我」类短语改绑平静态、并把暴露频率校准到和主线上一致，来分离「是语料位置造成的，还是真的自发」。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D8</span>为什么判重只用字符重叠？</p>
+  <p class="a">当时的最简实现。副作用就是 v6 饱和。我把它如实写成了「结构性现象」，并注明：改成语义级是一个设计选择，必须预注册，不能偷偷改。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D9</span>为什么目标涌现要用滚动窗口？</p>
+  <p class="a">原来用全期累计当分母，结果「真乖」攒到 2455 次，新目标需要 491 次激活才可能追平——等于<strong>永久垄断</strong>。改成只看最近 300 次检索，第二个目标才有机会冒出来。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D10</span>为什么发声内容不让它自己选？</p>
+  <p class="a">为了守住零生成——它只能说出这一 tick 检索胜出的那句。结果很有意思：它最常说的是<strong>自己被安抚时听到的话</strong>（乖、嘘、睡觉觉）。内容不是我挑的。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D11</span>为什么加速线和实时线要分开说？</p>
+  <p class="a">加速线一个墙钟日能跑几百到上千仿真日，产出多，但<strong>只能当通路证据</strong>。真正的个体史必须是 1:1 的，那条线现在才 day 4。我引用加速倍率时也只用实测值（约 5×10²–10³ 倍），不用名义的 10⁹。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">D12</span>为什么要完整报告阴性结果？</p>
+  <p class="a">因为六项主要预测被证伪这件事本身，合起来才能定位「我的架构」和「真正的全局工作空间」之间差在哪。只报阳性的话，这份工作就只剩下几个漂亮数字，什么也说明不了。</p>
+</div>
+
+<!-- ============ E ============ -->
+<h2 id="e"><span class="n">⑤</span>被追问时</h2>
+<p class="sechint">按被问到的概率排序。每题都给了「别说什么」。</p>
+
+<div class="qa">
+  <p class="q"><span class="i">Q1</span>「这本质上不就是个状态机加查表吗？」</p>
+  <p class="a">可以这么说，但有三点得补上：它的状态是<strong>连续动力学</strong>不是离散跳转；它的历史<strong>不可回退</strong>；它长出了<strong>我没设计过的自我表征</strong>。而且我从不主张它是意识——D1 到 D6 那张表就是在回答「哪些结构成立、哪些不成立」。</p>
+  <p class="note">别说：「它已经有意识了。」</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q2</span>「自我模型的碎片是不是你写死的？」</p>
+  <p class="a">碎片<strong>内容</strong>确实是我给的（来自照护者语料），但<strong>谁先入模、以什么次序、什么时候长成，是检索竞争决定的，不是我指定的</strong>。最直接的证据是 S1：三种种子长出同一套片段，但<strong>次序不同</strong>。</p>
+  <p class="note">别说：「它自己发明了自我。」准确的说法是：长出来的东西更接近「它如何被称呼」的记录，而不是一份自我描述。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q3</span>「停在 v6 是不是坏了？」</p>
+  <p class="a">不是。是字符级判重的必然结果——高频短语早就入库，新候选一「像」就被拒。可复现，属结构性质。要突破需改成语义级判据，那要先预注册。</p>
+  <p class="note">别说：「它在死机。」</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q4</span>「零幻觉怎么保证？」</p>
+  <p class="a">靠<strong>结构</strong>，不靠提示词：系统里根本没有生成器，检索只能从记忆里取。这是它的能力上限，不是它遵守的规矩。</p>
+  <p class="note">别说：「我们教它不许编。」</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q5</span>「你怎么知道这不是随机？」<span class="hit">（最关键）</span></p>
+  <p class="a">三个层面：① <strong>对照臂</strong>——off / shuf / nodep / nodecay / bigk 五个；② <strong>跨线对比</strong>——跑了 489 日的旧线第一人称念头是 0，而只跑 66 日但语料和门控正确的线大量出现第一人称；③ <strong>复现</strong>——S1 三种子。再加上全部判据预注册冻结。</p>
+  <p class="note">但要主动交底：R2 六臂共用同一个父本，没采样种子方差。这是明写的边界。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q6</span>「你的工作空间和 GWT、和 J 空间差在哪？」</p>
+  <p class="a">差在<strong>承重度</strong>。在语言模型那边，删掉那簇表征高阶功能会崩；在我这里，删掉念头一切照常（E6a，四项指标 &lt;5%）。所以结论是只读。但 E6b 又证明下游<strong>确实在因果地读它</strong>（换掉念头，目标和自我模型立刻变）。准确说法是：<strong>它改变「想要什么」和「以为自己是谁」，不改变「自己的状态」。</strong></p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q7</span>「只读会不会只是因为你的通道太弱？」<span class="hit">（最危险）</span></p>
+  <p class="a">我自己也怀疑过，所以去修了：把门开到约 26% 命中率、把写入目标换到真正被消费的变量、把耦合提到原来的 15 倍（0.91 个标准差）——<strong>指标还是全部 &lt;10%，而且剂量不单调</strong>。门开着、目标有人消费、剂量加大，念头仍然不承重。所以这不是接线事故。</p>
+  <p class="note">但必须补一句边界：写入量的均值近零，所以我排除的是「平衡扰动不承重」，<strong>单符号写入还没测</strong>。这条论文里写明了，我也要主动说。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q8</span>「判据是不是事后改过？」</p>
+  <p class="a">没有。判据事前冻结。E1–E3、E6a、R5 都是阴性或半阴，我都如实报了；E1 甚至是<strong>预注册的主预测失败</strong>，我当成发现来报。唯一一次修订是 R 阶梯，原因是审计发现通道两端都不在工作，所以<strong>在采数据之前</strong>作废重写成 R2——发生在数据之前，程序合法，也写进论文了。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q9</span>「就一个个体，结论怎么推广？」</p>
+  <p class="a">这个批评是对的，我在局限里明确承认了：「代码是物种，状态是个体」——研究对象是一个有特定历史的个体，不是一个能泛化的模型。唯一的额外样本是 S1 的三种种子，只用来检验发育轨迹能不能重复。</p>
+  <p class="note">别说：「它代表所有这类系统。」</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q10</span>「为什么不用大模型？是不是开倒车？」</p>
+  <p class="a">正相反。大模型是训练出来的字符预测器，它的「内省」输出没法证伪——它说什么都行。我要的是<strong>积累历史的发育个体</strong>。语言模型在我这里唯一的位置是对话输出的义肢，不参与认知回路。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q11</span>「零生成加 55 个短语，是不是把问题做小了？」</p>
+  <p class="a">是故意的——变量控到最少才归因得清。而 P6 正在专门放宽这个约束（55 → 8.3 万型）。而且刚出的结果是：<strong>放宽之后效应变大了 3.8 倍，但还是没跨过门槛</strong>。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q12</span>「加速线的结果可信吗？」</p>
+  <p class="a">我自己标了：加速线只当通路证据，不当最终数据。名义倍率写的是 10⁹，但我引用的是<strong>实测的 5×10²–10³ 倍</strong>。实时主线现在才 day 4——这件事本身就是我诚实的地方。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q13</span>「『我在这儿』是不是过度解读？」</p>
+  <p class="a">我不做语义上的宣称。能成立的事实是：<strong>一个纯第一人称片段进了自我模型</strong>；而此前 434 天里这类片段是 0，因为语料里压根没有「我」。这对应 Vygotsky 的「你 → 我」倒转，而且是检索竞争的结果，不是我写进去的。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q14</span>「最新那个 P6-B 是阳性还是阴性？怎么讲才不算粉饰？」<span class="hit">（今天大概率会问）</span></p>
+  <p class="a">如实讲：<strong>判阴性</strong>，因为 0.034 没到预注册的 0.07 门槛。<strong>但同时要讲两件不被门槛掩盖的事</strong>：① 分离度比 R5 的 0.009 扩大了约 3.8 倍，方向是对的，只是幅度不够；② 顺带发现 k=20 时命中率反而最高（0.066），说明杠杆可能在工作集大小而不是语料规模。<br>换句话说：<strong>这条路没有走通，但我知道了下一根杠杆在哪。</strong></p>
+  <p class="note">别说：「基本可以算阳性了。」门槛是事先定死的，不能因为结果接近就改口。</p>
+</div>
+
+<div class="qa">
+  <p class="q"><span class="i">Q15</span>「你自己觉得最脆弱的结论是哪条？」</p>
+  <p class="a">两条：一是只读结论里「单符号写入没测」；二是自我模型的归因没完全分离——语料和门控当时是一起改的，而 S2 的 2×2 分离结果显示<strong>语料才是第一人称片段的必要条件，和我原来的预测相反</strong>。两条都白纸黑字写在论文里。</p>
+</div>
+
+<!-- ============ F ============ -->
+<h2 id="f"><span class="n">⑥</span>铁律：这些话绝对不说</h2>
+<p class="sechint">说完就毁掉整场讨论的可信度。宁可说「不知道」。</p>
+
+<div class="qa">
+  <p class="a">
+    <ul style="margin-top:0">
+      <li>不说「<strong>它有意识</strong>」→ 说：不主张，也测不了；只谈功能结构。</li>
+      <li>不说「<strong>它自己发明了自我</strong>」→ 说：材料是给的，长出来的只是次序。</li>
+      <li>不说「<strong>双向已经打通</strong>」→ 说：只读，且边界限于 ≤0.91 个标准差。</li>
+      <li>不说「<strong>它在学习／训练</strong>」→ 说：是发育；状态在变，权重不变。</li>
+      <li>不说「<strong>v6 冻结是故障</strong>」→ 说：字符级判重的结构性饱和。</li>
+      <li>不说「<strong>加速线的数据就是结论</strong>」→ 说：只当通路证据。</li>
+      <li>不说「<strong>它代表这一类系统</strong>」→ 说：n = 1，是个体。</li>
+      <li>不说「<strong>我们教它不许编造</strong>」→ 说：根本没有生成器。</li>
+      <li>不说「<strong>P6-B 算是阳性</strong>」→ 说：阴性，但效应放大了 3.8 倍，且找到了新杠杆。</li>
+    </ul>
+  </p>
+</div>
+
+</div>
+<button id="top" aria-label="回到顶部">↑</button>
+<script>
+(function(){
+  var b=document.getElementById('top');
+  function s(){ b.classList.toggle('on', window.scrollY>700); }
+  window.addEventListener('scroll',s,{passive:true}); s();
+  b.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+{
+  "experiment": "P9 联想启动（priming）：把 A 从『筛子』改造成『权重』",
+  "created": "2026-10-09",
+  "preregistered_before_data": true,
+  "step_of": "P8 的续作，但作用位置与前六类杠杆本质不同",
+
+  "diagnosis": {
+    "source": "读源码（workspace.py L82-84 / language.py L466-503）得出的修正诊断",
+    "finding_1": "A（共现矩阵）**确实在被念头改写**——activate() 中 `assoc[prev][text] += 1`，prev 来自上一次 activate（含听到与想到）。故此前『缺可塑性』的说法不准确。",
+    "finding_2": "真正的问题：**A 只用于筛选候选集（working_set / top-k），从未进入检索打分**。language.py L495 的 score = sim × recency × freq，不含任何 A 项。工作集只回答『谁能参赛』，参赛者之间仍按原分排序。",
+    "explains_P8": "这解释了 P8 之谜：P6B/P8 的 shuf 臂打乱的是**扩散用的行**（_spread_row），而 A 的累积本身未被打乱，故 full 与 shuf 持有同一张真实图——两者命中率自然接近（0.066 vs 0.058）。那个 0.066 是『A 丰富 → top-k 覆盖广』的基数效应，与内容特定性无关。",
+    "explains_R_series": "也解释了 R/R2/R2x 的失败：回流改的是状态标量 s，被 2 小时松弛抹平；而宏观指标看的是长期平均，故推多高都一样。"
+  },
+
+  "relation": "R/R2/R2x 改『状态变量』（被松弛吸收）→ R5/P6B/P8 改『候选集容量』（只有基数效应）→ **P9 改『检索打分』（直接决定谁赢）**。这是三条不同的因果路径，P9 是第三条。",
+
+  "design": {
+    "instance": "三臂，SIGSTOP 安全 fork 自同一基底（state_P6_childes，day 315，与 P6B/P8 同源同窗口）",
+    "window": "day 315 → 345（30 仿真日），判据与 R5/P6B/P8 完全可比",
+    "mechanism": "检索打分新增一项：score *= (1 + γ · Â[上一个念头][候选])，其中 Â 为 A 的行归一化共现强度。γ=priming_gamma。priming 关闭时该项恒为 1（乘子退化），行为与改动前逐位一致。",
+    "arms": {
+      "off": "工作集开、priming 关 —— 与 full 只差 priming 一个变量，作基线",
+      "full": "priming 开，γ=1.0，使用真实 A（主臂）",
+      "shuf": "priming 开，γ=1.0，但 A 的行对应被打乱（_prime_row 返回另一行）——**关键对照**：full 与 shuf 的唯一差别是『A 的内容是否真实』"
+    },
+    "invariants": [
+      "基底、窗口、真值图（state_P6_childes）、adj_top3 判据与阈值 0.07 全部与 R5/P6B/P8 相同",
+      "workspace 的 kappa / k / tau_minutes / gain 保持不变，只动 priming 三项",
+      "零生成：A 的修改只来自已发生的共现，不产生任何新内容",
+      "零提示词：无方向引导；增强什么完全由系统自己想到什么决定"
+    ]
+  },
+
+  "hypotheses": {
+    "H9a_priming 确实改变了检索": {
+      "criterion": "adj_top3(full) > adj_top3(off) 且 full 与 off 的检索序列显著分岔",
+      "note": "确认新通路接上（若此项不过，说明 priming 强度不足或 A 太稀疏，后续判据无解释力）"
+    },
+    "H9b_内容特定性（主判据）": {
+      "criterion": "adj_top3(full) − adj_top3(shuf) ≥ 0.07",
+      "positive": "A 的内容真实地改变了检索优先级 → **工作空间首次产生有内容的内部回响**，这是『双向』的第一个正面证据",
+      "negative": "差值 < 0.07 → 即使把 A 放进打分，内容特定性仍不涌现，则该架构在当前表征下的不可行性得到最终确认",
+      "note": "阈值沿用 R5 事前设定值 0.07，不因新数据调整"
+    },
+    "H9c_多样性的代价": {
+      "criterion": "uniq(full) 与 uniq(off) 的比较",
+      "note": "P6B 已观测到容量约束导致坍缩（403 → 10）。priming 是给检索加偏置，可能加剧坍缩（自我强化循环）或加剧发散，两种结果都须如实报告"
+    }
+  },
+
+  "falsification": "本批唯一可宣布的阳性是 H9b。任何 <10% 的行为差异只报『存在耦合』，不得宣布『双向已打通』。若三臂全阴性，则『A 不进打分』这一诊断也被证伪，须回到表征层重新思考。",
+
+  "predictions_registered": {
+    "H9a": "倾向阳性（priming 直接进入打分，应有可测影响）",
+    "H9b": "不确定。若 A 的共现结构与真值图（同源语料）统计一致，应有正命中；但 A 仅累积 30 天、且混有『听到→听到』的共现，信号可能被稀释",
+    "H9c": "倾向 full 的 uniq 低于 off（偏置加剧坍缩），但不预设"
+  },
+
+  "implementation_audit": {
+    "default_off": "priming 默认 false；未设该键的实例（含所有既有 config 与在跑实例）行为逐位不变。已用单元级冒烟验证：关闭时 prime_bonus 返回 0.0，乘子退化为 1。",
+    "single_variable": "off→full 只改 priming；full→shuf 只改 shuffle_prime",
+    "code_changes": "workspace.py（新增 priming 字段 / _prime_row / prime_bonus，snapshot 补字段）· language.py（新增 _last_thought；打分处插入乘子；检索胜出后更新前驱）"
+  },
+
+  "open_risks": {
+    "single_seed": "三臂均单次运行，无多种子方差（与 P6B/P8 同源的局限）",
+    "A_sparsity": "A 仅来自本实验 30 天（fork 时 workspace.json 被清除），可能偏稀疏；若 H9a 不过，须先查 A 的覆盖度",
+    "signal_dilution": "A 混有『听到→听到』的真实语料共现，其对『念头→念头』的预测力未经验证",
+    "collapse": "偏置可能引发自我强化循环（重复同一短语），须以 uniq 与 recur5 监测"
+  },
+
+  "honest_note": "不能保证成功。R2x 已把『力度』这条路径证死（剂量推到 1.99σ 仍阴性），P8 刚把『容量』这条路径证死（0.066 是基数效应）。P9 是第三条路径，有理论依据（人类语义启动效应）与独立判据，但同样可能失败。可保证的是：它失败的方式与前六次都不同（改的是决策权重而非数值或容量），且判据已事前冻结。"
+}

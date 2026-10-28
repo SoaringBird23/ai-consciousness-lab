@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Growing Rather Than Training：一个预注册的发育系统及其只读工作空间</title>
+<style>
+/* ============================================================
+   论文版式：仿 LaTeX article（单栏 / 两端对齐 / 首行缩进）
+   ============================================================ */
+@page{ size:A4; margin:20mm 19mm 18mm 19mm; }
+:root{
+  --ink:#000;
+  --ink-2:#333;
+  --ink-3:#5c5c5c;
+  --rule:#000;
+  --rule-soft:#b8b8b8;
+  --tint:#f4f4f6;
+  --bg:#fff;
+  --desk:#c9cdd3;
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC","Times New Roman",Times,Georgia,serif;
+  --latin:"Times New Roman",Times,"Songti SC",Georgia,serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Helvetica Neue",Arial,sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--desk); color:var(--ink);
+  font-family:var(--serif); font-size:10.2pt; line-height:1.66;
+  text-align:justify; text-justify:inter-ideograph;
+  hyphens:auto; -webkit-hyphens:auto;
+}
+.paper{
+  background:var(--bg); width:210mm; min-height:297mm;
+  margin:0 auto; padding:20mm 19mm 18mm;
+  box-shadow:0 1px 3px rgba(0,0,0,.10);
+}
+
+/* ---------------- 标题区 ---------------- */
+.titleblock{text-align:center; margin-bottom:1.4em}
+.titleblock h1{
+  font-size:16.5pt; line-height:1.42; font-weight:700; margin:0 0 .55em;
+  text-align:center; letter-spacing:.005em;
+}
+.titleblock .subtitle{
+  font-size:11.6pt; font-style:italic; font-weight:400; color:var(--ink-2);
+  margin:0 0 1em; text-align:center; line-height:1.5;
+}
+.authors{font-size:10pt; line-height:1.55; margin:0 0 .35em; text-align:center}
+.authors .aff{font-size:8.6pt; color:var(--ink-2); font-style:italic}
+.titleblock .date{font-size:9pt; color:var(--ink-3); text-align:center; margin:.5em 0 0}
+.rule-heavy{border:none; border-top:1.2pt solid var(--rule); margin:1.1em 0}
+
+/* ---------------- 摘要 ---------------- */
+.abstract{font-size:9.5pt; line-height:1.6; margin:0 0 1em; padding:0 3mm}
+.abstract .head{
+  text-align:center; font-weight:700; font-size:9.6pt;
+  letter-spacing:.06em; margin:0 0 .45em;
+}
+.abstract p{margin:0 0 .45em}
+.abstract p:last-child{margin-bottom:0}
+.keywords{font-size:9.4pt; line-height:1.6; padding:0 3mm; margin:0 0 1.6em}
+.keywords .kw-h{font-weight:700; font-style:italic}
+
+/* ---------------- 章节标题 ---------------- */
+h2{
+  font-size:11.6pt; font-weight:700; margin:1.8em 0 .62em;
+  text-align:left; line-height:1.4; page-break-after:avoid;
+}
+h2 .no{margin-right:.5em}
+h3{
+  font-size:10.6pt; font-weight:700; font-style:italic; margin:1.35em 0 .45em;
+  text-align:left; line-height:1.4; page-break-after:avoid;
+}
+h3 .no{margin-right:.45em; font-style:normal}
+h4{
+  font-size:10.2pt; font-weight:400; font-style:italic; margin:1.1em 0 .38em;
+  text-align:left; page-break-after:avoid;
+}
+h4 .no{margin-right:.4em}
+
+/* ---------------- 正文段 ---------------- */
+p{margin:0 0 .18em; text-indent:2em}
+p.noind{text-indent:0}
+p.cont{text-indent:0}
+a{color:var(--ink); text-decoration:none}
+code,.mono{font-family:var(--mono); font-size:.9em}
+strong{font-weight:700}
+em{font-style:italic}
+sup{font-size:.72em; vertical-align:super; line-height:0}
+sub{font-size:.72em; vertical-align:sub; line-height:0}
+ul,ol{margin:.35em 0 .6em; padding-left:1.9em}
+li{margin-bottom:.2em}
+li::marker{color:var(--ink-2)}
+.itemize>li{margin-bottom:.28em}
+
+/* ---------------- 公式 ---------------- */
+.eq{
+  display:flex; align-items:center; margin:.65em 0 .7em;
+  text-indent:0; page-break-inside:avoid;
+}
+.eq .body{flex:1 1 auto; text-align:center; padding:0 .6em}
+.eq .no{flex:0 0 auto; font-family:var(--latin); font-size:9.4pt; color:var(--ink-2)}
+.frac{
+  display:inline-block; vertical-align:middle; text-align:center;
+  margin:0 .2em; line-height:1.16;
+}
+.frac>.n{display:block; padding:0 .3em; border-bottom:.7pt solid var(--ink)}
+.frac>.d{display:block; padding:0 .3em}
+.lat{font-family:var(--latin); font-style:italic}
+.op{font-family:var(--latin); padding:0 .18em}
+.mrow{display:inline-block}
+
+/* ---------------- 环境：定义 / 命题 ---------------- */
+.env{margin:.75em 0; page-break-inside:avoid; text-indent:0}
+.env .lab{font-weight:700; font-style:normal}
+.env .lab i{font-style:italic}
+.env p{text-indent:0; margin:0 0 .3em}
+
+/* ---------------- 算法 ---------------- */
+.algorithm{
+  border:.7pt solid var(--rule); margin:.85em 0 1em; padding:.5em .7em .6em;
+  page-break-inside:avoid; font-size:9.3pt; line-height:1.55;
+}
+.algorithm .cap{
+  font-weight:700; font-size:9.4pt; margin:0 0 .4em;
+  padding-bottom:.25em; border-bottom:.5pt solid var(--rule-soft);
+}
+.algorithm ol{list-style:none; counter-reset:al; margin:0; padding:0}
+.algorithm ol li{
+  counter-increment:al; padding-left:2.2em; text-indent:-2.2em;
+  margin-bottom:.16em;
+}
+.algorithm ol li::before{
+  content:counter(al) ":"; font-family:var(--latin); padding-right:.45em;
+  color:var(--ink-2);
+}
+.algorithm .ind{padding-left:1.4em}
+.algorithm .kw{font-weight:700}
+.algorithm .cm{color:var(--ink-3); font-style:italic}
+
+/* ---------------- 表格 ---------------- */
+.tcap{
+  font-size:9.2pt; line-height:1.5; margin:.95em 0 .3em;
+  text-align:left; text-indent:0;
+}
+.tcap .no{font-weight:700}
+table{
+  width:100%; border-collapse:collapse; font-size:8.9pt; line-height:1.45;
+  margin:0 0 .35em; page-break-inside:avoid;
+}
+thead th{
+  border-top:1.4pt solid var(--rule); border-bottom:.55pt solid var(--rule);
+  padding:3.6px 6px; text-align:left; font-weight:700;
+  font-family:var(--sans); font-size:8.3pt; letter-spacing:.015em;
+  vertical-align:bottom;
+}
+tbody td{padding:3.6px 6px; vertical-align:top}
+table tbody{border-bottom:1.4pt solid var(--rule)}
+td.c,th.c{text-align:center}
+td.r,th.r{text-align:right}
+td.num{font-family:var(--latin); font-variant-numeric:tabular-nums; white-space:nowrap; font-size:8.7pt}
+.tnote{font-size:8.3pt; color:var(--ink-3); line-height:1.45; margin:0 0 1em; text-indent:0}
+.tnote .no{font-weight:700}
+
+/* ---------------- 引用与脚注 ---------------- */
+.cite{font-size:.9em; vertical-align:super; line-height:0; padding:0 .06em}
+.fnref{font-size:.72em; vertical-align:super; line-height:0}
+
+/* ---------------- 代码 ---------------- */
+pre{
+  font-family:var(--mono); font-size:8.5pt; line-height:1.55;
+  background:var(--tint); border:.5pt solid var(--rule-soft);
+  padding:.5em .65em; margin:.6em 0 .85em; overflow-x:auto;
+  page-break-inside:avoid; white-space:pre-wrap; word-break:break-word;
+  text-indent:0;
+}
+
+/* ---------------- 谱系表 ---------------- */
+.lineage{font-size:8.7pt; line-height:1.5; border:.5pt solid var(--rule-soft); background:#fbfbfc; padding:.5em .65em; margin:.6em 0 .9em; page-break-inside:avoid}
+.lineage .row{display:flex; gap:.55em; padding:.16em 0; border-bottom:.4pt dotted var(--rule-soft)}
+.lineage .row:last-child{border-bottom:none}
+.lineage .from{flex:0 0 7.6em; color:var(--ink-3)}
+.lineage .to{flex:0 0 8.8em; font-weight:700}
+.lineage .note{flex:1 1 auto; color:var(--ink-2)}
+
+/* ---------------- 参考文献 ---------------- */
+.refs{font-size:8.9pt; line-height:1.52}
+.refs ol{list-style:none; counter-reset:r; padding:0; margin:.3em 0 0}
+.refs li{counter-increment:r; padding-left:2.2em; text-indent:-2.2em; margin-bottom:.42em; page-break-inside:avoid}
+.refs li::before{content:"[" counter(r) "] "; font-family:var(--latin); font-size:8.5pt}
+.refs .t{font-style:italic}
+
+/* ---------------- 问答（补充材料） ---------------- */
+.qa-item{border-top:.5pt solid var(--rule-soft); padding:.5em 0 .4em; text-indent:0; page-break-inside:avoid}
+.qa-item:last-child{border-bottom:.5pt solid var(--rule-soft)}
+.qa-q{font-weight:700; margin:0 0 .25em; text-indent:0}
+.qa-q .n{font-family:var(--latin); margin-right:.4em}
+.qa-a{margin:0; font-size:9.5pt; text-indent:0}
+.qa-a p{text-indent:0; margin:0 0 .25em}
+.qa-a p:last-child{margin-bottom:0}
+.qa-x{font-size:9.2pt; color:#6b1d1d; text-indent:0; margin:.2em 0 0}
+
+/* ---------------- 分页 ---------------- */
+.pb{page-break-before:always}
+.avoid{page-break-inside:avoid}
+@media print{
+  body{background:#fff}
+  .paper{width:auto; min-height:0; margin:0; padding:0; box-shadow:none}
+  h2,h3,h4{page-break-after:avoid}
+  table,.algorithm,.eq,.env,.lineage,.qa-item,pre{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="paper">
+
+<!-- ==================== 标题区 ==================== -->
+<div class="titleblock">
+  <h1>生长而非训练：一个预注册的发育系统<br>及其工作空间的只读性质</h1>
+  <p class="subtitle">Growing Rather Than Training: A Pre-Registered Developmental System<br>and the Read-Only Nature of Its Workspace</p>
+  <p class="authors">Luo Chengze<br><span class="aff">独立研究者 · ORCID 0009-0007-3316-6292</span></p>
+  <p class="date">会议讨论稿 · 版本 v2.0 · 2026-10-09</p>
+</div>
+<hr class="rule-heavy">
+
+<!-- ==================== 摘要 ==================== -->
+<div class="abstract">
+  <p class="head">摘要</p>
+  <p>当前关于机器意识的研究大多以既有大语言模型为对象，通过探测其内部表征或解读其自我报告来评估意识指标。本文采取一条相反的路径：构建一个<strong>从零出生、持续发育</strong>的动力学个体，其内部言语只能检索曾听到过的短语，认知回路中不含任何生成模型，因而"零幻觉"是结构性质而非提示约束。</p>
+  <p>我们为该个体形式化定义六条<strong>操作性判据</strong>（D1–D6），并对每条判据给出可机械执行的检测方法。主要结果是一条阴性结论：将一个在大语言模型上有效的<em>消融—替换</em>（ablation-and-swap）因果中介协议移植到本系统后，其工作空间表现为<strong>只读</strong>——下游（目标涌现、自我模型）确实在因果地读取内部言语，但内部言语<strong>不能反过来改变系统自身的状态变量</strong>。该结论经四级修正阶梯加固后仍成立，故判为结构性质而非实现缺陷。</p>
+  <p>本文的全部实验均经预注册，六项实验的主要假设被证伪或部分证伪，我们将其与阳性结果同等详细地报告。我们认为，这种"以阴性结果定位架构与全局工作空间之间精确距离"的做法，本身即是贡献的一部分。</p>
+</div>
+
+<p class="keywords"><span class="kw-h">关键词：</span>人工意识，操作性判据，预注册，全局工作空间，内化言语，自我模型，因果中介，阴性结果</p>
+
+<hr class="rule-heavy">
+
+<!-- ==================== 1 ==================== -->
+<h2><span class="no">1</span>引言</h2>
+
+<h3><span class="no">1.1</span>研究问题</h3>
+<p>关于机器意识，至少存在三条已被明确表述的路径。第一条以<strong>自我报告</strong>为证据：询问模型是否具有体验，并采信其回答。第二条为<strong>不可知论</strong>：认为该问题在方法论上不可问，因而停止追问。第三条为<strong>指标理论</strong>：不问"是否具有意识"，而问"该系统具备哪些由意识理论推导出的功能性质"<span class="cite">[1,2]</span>。</p>
+<p>本文采纳第三条路径的提问方式，但更换其研究对象与检验纪律。我们不评估一个已完成训练的系统，而是构建一个<strong>从零出生、连续运行、不可回退</strong>的个体，并追问：在严格约束下，它会自发长出哪些功能结构，哪些长不出来，以及每一条如何被机械检测。</p>
+<p>本文有意回避<em>难问题</em>（the hard problem）<span class="cite">[3]</span>：我们不主张、也不试图测量主观体验，全部结论限于功能结构层。相应地，本文的核心产出不是一份"距离意识尚差几步"的进度表，而是一份<strong>哪些结构成立、哪些不成立</strong>的清单。</p>
+
+<h3><span class="no">1.2</span>贡献</h3>
+<ol class="itemize">
+  <li><strong>一条可复现的阴性结论。</strong>将一个在大语言模型可解释性研究中有效的因果中介协议<span class="cite">[4]</span>移植至本系统，其在四级修正阶梯加固下仍失效，据此判定工作空间为只读（§5.3.5）。据我们所知，该结论尚未见报告。</li>
+  <li><strong>一条可复现的发育现象。</strong>系统的自我模型在前 213 个仿真日为空，其后于 40 日内生长至 6 个片段；三种独立随机种子在 60 日内生长出<strong>相同的片段集合</strong>，仅次序不同（§5.3.3）。</li>
+  <li><strong>一份形式化的操作性判据（D1–D6）。</strong>每条判据绑定一个可测度量，或明确标注"机制不存在"（§4）。</li>
+  <li><strong>一组预注册阴性结果及其解释。</strong>四项实验的主要预测被证伪，我们据此定位了架构缺口（§5.3）。</li>
+</ol>
+
+<h3><span class="no">1.3</span>认识论承诺</h3>
+<p>以下四条为设计约束，均可被验证或证伪，且贯穿全文：</p>
+<ol class="itemize">
+  <li><strong>内部言语只检索、不生成。</strong>认知回路中不含任何生成模型。此约束由一次失败导出：早期版本以语言模型生成内部言语，其输出"烦躁感"一类表述，而系统当时并无相应状态。此后我们取消该设计，并以"没有生成器即无法编造"作为零幻觉的结构保证。</li>
+  <li><strong>零提示词、零方向引导。</strong>不对系统施加任何"应当说什么"的提示，行为必须自发产生。</li>
+  <li><strong>预注册与如实报阴。</strong>假设、度量与判定阈值在数据采集前冻结；阴性结果与阳性结果同等详细地报告。</li>
+  <li><strong>只谈功能结构。</strong>不涉及主观体验，亦不将其降级为可测问题。</li>
+</ol>
+
+<!-- ==================== 2 ==================== -->
+<h2><span class="no">2</span>相关工作</h2>
+
+<h3><span class="no">2.1</span>AI 意识指标理论</h3>
+<p>Butlin 等系统梳理了意识科学中的若干理论（全局工作空间理论、高阶表征理论、预测加工、注意图式理论等），并从中导出十四条"指标性质"，逐条评估现有 AI 系统<span class="cite">[1]</span>。其 2025 年的修订将方法重心从"指标清单"转向"如何校准指标与生物学证据之间的关系"，但主要结论未变：现有系统满足的指标数量不足<span class="cite">[2]</span>。批评者进一步指出，指标路线面临<strong>校准问题</strong>——若无法在生物系统上独立标定指标的阈值，指标清单可能只是形式合规<span class="cite">[5,6]</span>。</p>
+<p>本文与该路线的分歧不在指标本身，而在对象与纪律：我们以一个从零发育的个体替代已完成训练的系统，并对每条判据提供预注册与阴性报告。</p>
+
+<h3><span class="no">2.2</span>语言模型中的全局工作空间</h3>
+<p>Gurnee 与 Lindsey 等报告，语言模型内部存在一小簇可被<em>言语化</em>（verbalizable）、可控且因果中介多步推理的表征，删除该表征集合会导致高阶功能崩溃，而流畅生成仍然保留；作者据此论证其为一种全局工作空间<span class="cite">[4]</span>。Dehaene 与 Naccache 的评述则认为，该结构缺少身体与自传体记忆两项要素，因而与生物学意义上的工作空间仍有距离<span class="cite">[7]</span>。</p>
+<p>本文与上述工作有两处直接关联。其一，我们<strong>采纳其消融—替换协议</strong>，并将其移植到一个具有身体约束与不可回退历史的系统上。其二，移植结果<strong>与语言模型中的发现相反</strong>：在本系统中，删除内部言语不改变任何行为指标。</p>
+
+<h3><span class="no">2.3</span>内化言语的发育视角</h3>
+<p>Vygotsky 指出，儿童<strong>先被他人称呼</strong>，其后才习得用第一人称自我称呼，外部语言经由社会互动内化为内部语言<span class="cite">[8]</span>。本文的语言层直接实现该序列：短语与其被听到时的状态向量绑定存储，其后由当前状态检索。该设计亦与预测加工的框架相容——大脑持续生成对输入的预测并以预测误差更新表征<span class="cite">[9]</span>。</p>
+
+<h3><span class="no">2.4</span>人工生命与开放式演化</h3>
+<p>开放式演化研究通过大规模的变异、竞争与继承产生复杂性<span class="cite">[10,11]</span>。本系统目前不具备上述任何一项：它是<strong>单个个体在生长</strong>，而非种群在演化。我们对"多种子复现"的实验仅为检验单条发育轨迹是否可重复，不构成变异与选择（见 §6.2）。</p>
+
+<!-- ==================== 3 ==================== -->
+<h2 class="pb"><span class="no">3</span>方法</h2>
+
+<h3><span class="no">3.1</span>系统总览</h3>
+<p>系统为单进程 Python 程序，<strong>不含深度学习意义上的可学习参数</strong>。其行为来自两处：一组耦合常微分方程构成的连续状态，以及一生累积的记忆。设计原则可概括为"<em>代码是物种，状态是个体</em>"：个体的本体存在于其历史状态目录而非程序本身。因此，复制状态目录即得到一个共享历史、拥有独立未来的新个体——本文全部实验线均以该方式构造（§5.1）。</p>
+<p>主循环见算法 1。系统以固定 tick 推进：先更新连续状态，再更新预测与能量，随后进行语言层（检索、复述、目标维护）与输出侧（发声、归因）处理，最后落盘。</p>
+
+<div class="algorithm">
+  <p class="cap">算法 1　主循环（单 tick）</p>
+  <ol>
+    <li>读取当前墙钟，按时间倍率推进一步仿真时间 <span class="mono">Δt</span></li>
+    <li><span class="kw">更新状态</span>：s ← 积分(式 1)；若在睡眠期，按式 3–4 更新睡眠压力</li>
+    <li><span class="kw">输入处理</span>：若产生事件或收到照护者言语，调用 <span class="mono">hear(x)</span> 绑定状态后存入记忆 <span class="mono">M</span></li>
+    <li><span class="kw">语言层</span>：以概率 <span class="mono">P(retrieve)</span> 触发检索（算法 2）；以概率 <span class="mono">p_echo</span> 复述（式 10）；更新目标窗口（式 14）</li>
+    <li><span class="kw">工作空间</span>：对听到或检索胜出的短语执行 <span class="mono">activate(·)</span>（算法 3），并执行时间衰减（式 12）</li>
+    <li><span class="kw">输出侧</span>：若满足发声门控，发声（式 18）；更新共变比 <span class="mono">C</span> 与功效 <span class="mono">η</span>（式 15–17）</li>
+    <li><span class="kw">落盘</span>：每 <span class="mono">tick</span> 增量追加，心跳与退出时全量保存</li>
+  </ol>
+</div>
+
+<h3><span class="no">3.2</span>状态动力学</h3>
+<p>系统维持 8 维连续状态 <span class="lat">s</span> = (s<sub>1</sub>, …, s<sub>8</sub>) ∈ [0,1]<sup>8</sup>。代码中仅使用中性下标，人类可读语义（唤醒、效价、疲劳、紧张、注意、记忆激活、预测误差、无聊）仅出现于配置文件中供观察者参考。状态以显式欧拉法积分，并附乘性噪声：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">s</span>(t+Δt) = clip[ <span class="lat">s</span>(t) + <span class="lat">f</span>(<span class="lat">s</span>)·Δt + <span class="lat">ε</span>·√Δt , 0, 1 ],　<span class="lat">ε</span> ~ N(0, σ<sup>2</sup>),　σ = 0.003</span>
+  <span class="no">(1)</span>
+</div>
+
+<p>其中清醒期与睡眠期的向量场不同，昼夜调制由余弦函数给出：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">C</span>(t) = ½·[1 + cos( 2π(hour − 15)/24 )]</span>
+  <span class="no">(2)</span>
+</div>
+
+<div class="eq">
+  <span class="body">清醒：<span class="frac"><span class="n">d s<sub>1</sub></span><span class="d">dt</span></span> = <span class="frac"><span class="n">clip(0.15 + 0.8<span class="lat">C</span>) − s<sub>1</sub></span><span class="d">1.5</span></span>，　<span class="frac"><span class="n">dP</span><span class="d">dt</span></span> = 0.05·(0.6 + s<sub>1</sub>)</span>
+  <span class="no">(3)</span>
+</div>
+
+<div class="eq">
+  <span class="body">睡眠：<span class="frac"><span class="n">d s<sub>1</sub></span><span class="d">dt</span></span> = <span class="frac"><span class="n">0.05 − s<sub>1</sub></span><span class="d">0.5</span></span>，　<span class="frac"><span class="n">dP</span><span class="d">dt</span></span> = −0.15·(0.5 + s<sub>3</sub>)</span>
+  <span class="no">(4)</span>
+</div>
+
+<p class="noind">入睡条件为 <span class="lat">P</span> ≥ 0.75 且 (hour ≥ 21 或 hour &lt; 6)；唤醒条件为 <span class="lat">P</span> ≤ 0.35 且 5 ≤ hour &lt; 12。该模型即 Borbély 的双过程睡眠调节<span class="cite">[12]</span>：<strong>入睡时刻由动力学决定，而非时刻表</strong>。其余各维的演化与事件瞬写为：</p>
+
+<div class="eq">
+  <span class="body"><span class="frac"><span class="n">d s<sub>2</sub></span><span class="d">dt</span></span> = −<span class="frac"><span class="n">s<sub>2</sub></span><span class="d">6.0</span></span>,　<span class="frac"><span class="n">d s<sub>4</sub></span><span class="d">dt</span></span> = −<span class="frac"><span class="n">s<sub>4</sub></span><span class="d">2.0</span></span>,　<span class="frac"><span class="n">d s<sub>6</sub></span><span class="d">dt</span></span> = −<span class="frac"><span class="n">s<sub>6</sub></span><span class="d">4.0</span></span>,　<span class="frac"><span class="n">d s<sub>8</sub></span><span class="d">dt</span></span> = 0.08</span>
+  <span class="no">(5)</span>
+</div>
+
+<div class="eq">
+  <span class="body">事件瞬写：Δs<sub>4</sub> += 0.25·<span class="frac"><span class="n"><span class="lat">S</span></span><span class="d">4</span></span>,　Δs<sub>6</sub> += 0.4,　s<sub>8</sub> ← s<sub>8</sub>·(1 − 0.8·<span class="lat">novelty</span>)</span>
+  <span class="no">(6)</span>
+</div>
+
+<p class="noind">其中 <span class="lat">S</span> 为预测误差（比特），是系统中唯一的"惊奇"通道；<span class="lat">novelty</span> = clip[(<span class="lat">S</span> − <span class="lat">ref</span> + 0.5)/2, 0, 1]。</p>
+
+<h3><span class="no">3.3</span>语言层</h3>
+<p>语言层是系统的核心，其设计目标是<strong>以检索替代生成</strong>。数据流为：听到短语 <span class="lat">x</span> → 将 <span class="lat">x</span> 与当时的状态快照绑定后存入语言记忆 <span class="lat">M</span> → 由当前状态检索 <span class="lat">M</span> → 检索胜出者成为本 tick 的"念头" → 念头回流背景态并供下游模块读取。</p>
+
+<h4><span class="no">3.3.1</span>检索打分</h4>
+<p>候选短语 <span class="lat">x</span>（其存储状态为 <span class="lat">a</span>）对当前状态 <span class="lat">b</span> 的得分为三个因子之积。状态相似度采用<strong>加权 L1 相似度</strong>（而非余弦或高斯核），权重集中于四个维度：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">sim</span>(<span class="lat">a</span>,<span class="lat">b</span>) = <span class="frac"><span class="n">Σ<sub>i∈I</sub> w<sub>i</sub>·(1 − |a<sub>i</sub> − b<sub>i</sub>|)</span><span class="d">Σ<sub>i∈I</sub> w<sub>i</sub></span></span>,　<span class="lat">I</span> = {1,4,6,7},　<span class="lat">w</span> = (1.0, 1.2, 1.5, 1.0)</span>
+  <span class="no">(7)</span>
+</div>
+
+<p class="noind">新近度按半衰期 τ = 5 日的指数衰减，频率增益取对数形式：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">ρ</span>(x) = 0.5<sup>max(0, d<sub>x</sub> − 0.02)/τ</sup>,　τ = 5.0 日,　　<span class="lat">γ</span>(x) = 1 + g·ln(1 + n<sub>x</sub>),　g = 0.12</span>
+  <span class="no">(8)</span>
+</div>
+
+<div class="eq">
+  <span class="body"><span class="lat">score</span>(x) = <span class="lat">sim</span>(<span class="lat">a</span>,<span class="lat">b</span>) · (0.35 + 0.65<span class="lat">ρ</span>) · <span class="lat">γ</span> · (0.9 + 0.2<span class="lat">ξ</span>),　<span class="lat">ξ</span> ~ U(0,1)</span>
+  <span class="no">(9)</span>
+</div>
+
+<p class="noind">其中 <span class="lat">n<sub>x</sub></span> 为 <span class="lat">x</span> 在记忆中的出现次数，<span class="lat">d<sub>x</sub></span> 为其年龄（日），末项为内部涨落。检索另受一道概率门与一个硬阈值控制：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">P</span>(retrieve) = 0.06 + 0.20·<span class="lat">salience</span>,　　接受 ⟺ <span class="lat">score</span> ≥ Θ,　Θ = 0.72</span>
+  <span class="no">(10)</span>
+</div>
+
+<h4><span class="no">3.3.2</span>复述与遗忘</h4>
+<p>生命早期，系统以一定概率复述刚听到的短语，该概率随经验天数衰减：</p>
+<div class="eq">
+  <span class="body"><span class="lat">p</span><sub>echo</sub>(d) = <span class="frac"><span class="n"><span class="lat">p</span><sub>0</sub></span><span class="d">1 + d/τ<sub>e</sub></span></span>,　<span class="lat">p</span><sub>0</sub> = 0.40,　τ<sub>e</sub> = 10.0 日</span>
+  <span class="no">(11)</span>
+</div>
+<p class="noind">实现上每句仅采样一次（早期版本逐 tick 重采样，导致复述率恒为 1，属已修复缺陷）。<strong>需要强调的是：系统不存在对已存片段的遗忘机制。</strong>式 8 的新近度衰减只作用于打分，不删除记忆；记忆仅在超过 1.2×10<sup>5</sup> 条时按先进先出截断。该缺口在 §5.3.1 的剥夺实验中暴露。</p>
+
+<div class="algorithm">
+  <p class="cap">算法 2　检索与内部言语</p>
+  <ol>
+    <li><span class="kw">function</span> retrieve(<span class="lat">s</span>, <span class="lat">M</span>, <span class="lat">W</span>)</li>
+    <li class="ind">若 <span class="lat">U</span>(0,1) &gt; <span class="lat">P</span>(retrieve) <span class="kw">then return</span> ∅　<span class="cm">▷ 概率门，式 10</span></li>
+    <li class="ind">候选集 <span class="lat">X</span> ← { x ∈ <span class="lat">M</span> : x ∈ <span class="lat">W</span> }　<span class="cm">▷ 工作集过滤（算法 3）</span></li>
+    <li class="ind">对每个 x ∈ <span class="lat">X</span> 计算 <span class="lat">score</span>(x)　<span class="cm">▷ 式 7–9</span></li>
+    <li class="ind"><span class="lat">x</span>* ← argmax<sub>x</sub> <span class="lat">score</span>(x)</li>
+    <li class="ind">若 <span class="lat">score</span>(<span class="lat">x</span>*) &lt; Θ <span class="kw">then return</span> ∅</li>
+    <li class="ind">activate(<span class="lat">x</span>*)　<span class="cm">▷ 写回工作空间，算法 3</span></li>
+    <li class="ind">将 <span class="lat">x</span>* 作为本 tick 念头回流背景态，并供下游读取</li>
+    <li class="ind"><span class="kw">return</span> <span class="lat">x</span>*</li>
+  </ol>
+</div>
+
+<h3><span class="no">3.4</span>自我模型</h3>
+<p>系统收集<strong>自我指向</strong>片段（含第二人称"你"或第一人称"我"），构成单调累积、版本只增不改的自我模型 <span class="lat">S</span>。片段准入采用字符集合的 Jaccard 相似度作为去重判据：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">J</span>(<span class="lat">A</span>,<span class="lat">B</span>) = <span class="frac"><span class="n">|<span class="lat">A</span> ∩ <span class="lat">B</span>|</span><span class="d">|<span class="lat">A</span> ∪ <span class="lat">B</span>|</span></span> ≤ 0.7　⟹ 判为已存在，拒绝入模</span>
+  <span class="no">(12)</span>
+</div>
+
+<p class="noind">其中 <span class="lat">A</span>、<span class="lat">B</span> 为候选片段与既有片段的字符集合。该判据是<strong>字符级</strong>而非语义级，其后果在 §5.3.3 中讨论。</p>
+
+<div class="env">
+  <p><span class="lab">观察 1（213 日空窗的结构性根因）.</span> 系统的自我模型在前 213 个仿真日始终为空。审计表明其根因为<strong>词表与语料的结构性错配</strong>：自我模型仅接受第一人称片段（"我""自己"），而照护者语料全部为第二人称（"你"）。在词表层面，两者无交集，故判据结构性不可达。</p>
+</div>
+
+<p class="noind">修复方案为将第二人称片段纳入准入集合，其依据是 Vygotsky 关于"先被称呼、后自称"的发育序列<span class="cite">[8]</span>。修复后，系统在 40 个仿真日内生长至 6 个片段（§5.3.3）。</p>
+
+<h3><span class="no">3.5</span>目标涌现</h3>
+<p>当某短语在<strong>滚动窗口</strong>内的统计量同时满足三项条件时，其由"念头"升格为"目标"：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">n</span><sub>x</sub><sup>win</sup> ≥ 15　∧　<span class="frac"><span class="n"><span class="lat">n</span><sub>x</sub><sup>win</sup></span><span class="d"><span class="lat">N</span><sup>win</sup></span></span> ≥ 0.2　∧　|<span class="lat">D</span><sub>x</sub><sup>win</sup>| ≥ 3,　窗口 = 300 次检索</span>
+  <span class="no">(13)</span>
+</div>
+
+<p class="noind">其中 <span class="lat">N</span><sup>win</sup> 为窗口内检索总数，<span class="lat">D</span><sub>x</sub><sup>win</sup> 为 <span class="lat">x</span> 被激活的仿真日集合。滚动窗口的设计动机是<strong>打破先入者垄断</strong>：在早期实现中，分母为全期累计检索数，一旦某短语早期占优即永久垄断，新目标无法产生。</p>
+
+<h3><span class="no">3.6</span>发声与能动归因</h3>
+<p>输出侧遵循同一零生成原则：发声内容只能是本 tick 检索胜出的短语。发声由生理量门控，并消耗能量：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">p</span><sub>voc</sub> = <span class="lat">p</span><sub>b</sub>·(0.3 + 0.7s<sub>1</sub>)·(0.2 + 0.8·intensity),　intensity = clip[(<span class="lat">w</span>[x] − 0.6)/0.4, 0, 1]</span>
+  <span class="no">(14)</span>
+</div>
+
+<p class="noind">其中 <span class="lat">w</span>[x] 为短语 <span class="lat">x</span> 的工作空间激活（式 15），门控条件为 s<sub>1</sub> ≥ 0.55，基准概率 <span class="lat">p</span><sub>b</sub> = 0.25，每次发声消耗 1.0 能量单位（日预算 100）。</p>
+<p>能动归因的核心是一个共变比 <span class="lat">C</span>：比较发声之后 60 秒窗口内外的照护者言语速率。</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">C</span> = <span class="frac"><span class="n"><span class="lat">r</span><sub>in</sub></span><span class="d"><span class="lat">r</span><sub>out</sub></span></span>,　<span class="lat">r</span><sub>in</sub> = <span class="frac"><span class="n">n<sub>speech</sub><sup>in</sup></span><span class="d">t<sub>act</sub></span></span>,　<span class="lat">r</span><sub>out</sub> = <span class="frac"><span class="n">n<sub>speech</sub><sup>out</sup></span><span class="d">t<sub>total</sub> − t<sub>act</sub></span></span></span>
+  <span class="no">(15)</span>
+</div>
+
+<div class="eq">
+  <span class="body"><span class="lat">η</span> = min[ 0.8, (<span class="lat">C</span> − 1)/<span class="lat">C</span> ]　(<span class="lat">C</span> &gt; 1；否则 <span class="lat">η</span> = 0),　　归因 <span class="lat">self</span> ⟺ 在窗内 ∧ <span class="lat">η</span> &gt; 0.3</span>
+  <span class="no">(16)</span>
+</div>
+
+<p class="noind">该设计沿用了传出副本（efference copy）的思路：系统通过比较"有自身动作"与"无自身动作"两种条件下的世界变化，将前者中由自身导致的分量检出并归因于自身<span class="cite">[9]</span>。</p>
+
+<h3><span class="no">3.7</span>工作空间</h3>
+<p>工作空间是"双向"机制的载体：内部言语经 <span class="mono">activate()</span> 写入激活场，激活场经 top-<span class="lat">k</span> 选择改变检索候选集，检索胜者再次写回，从而构成闭环。其更新规则为沉积、扩散与指数衰减三步：</p>
+
+<div class="eq">
+  <span class="body"><span class="lat">w</span>[x] ← <span class="lat">w</span>[x] + <span class="lat">g</span><sub>dep</sub>,　<span class="lat">w</span>[y] ← <span class="lat">w</span>[y] + <span class="lat">κ</span>·<span class="frac"><span class="n"><span class="lat">A</span>[x][y]</span><span class="d">Σ<sub>y′</sub> <span class="lat">A</span>[x][y′]</span></span>　∀y ∈ nbr(x)</span>
+  <span class="no">(17)</span>
+</div>
+
+<div class="eq">
+  <span class="body"><span class="lat">w</span> ← <span class="lat">w</span> · exp( −Δt·60/τ<sub>w</sub> ),　τ<sub>w</sub> = 10.0 min,　　工作集 <span class="lat">W</span> = top-<span class="lat">k</span>(<span class="lat">w</span>),　<span class="lat">k</span> = 6</span>
+  <span class="no">(18)</span>
+</div>
+
+<p class="noind">其中 <span class="lat">A</span> 为一阶共现矩阵（由短语被听到的顺序累积），<span class="lat">g</span><sub>dep</sub> = 1.0，<span class="lat">κ</span> = 1.0。式 17 的第一项即"念头写回自身"，第二项为联想扩散。对照臂通过关闭或扰动上述各项构造（§5.1）：<span class="mono">no_deposit</span>（仅扩散不沉积）、<span class="mono">shuffle_assoc</span>（打乱 <span class="lat">A</span> 的行内对应）、<span class="mono">nodecay</span>（τ<sub>w</sub> → 10<sup>5</sup>）、<span class="mono">bigk</span>（<span class="lat">k</span> = 20）。</p>
+
+<div class="algorithm">
+  <p class="cap">算法 3　工作空间更新 <span class="mono">activate(x)</span></p>
+  <ol>
+    <li>若 <span class="mono">no_deposit</span> 为假：<span class="lat">w</span>[x] ← <span class="lat">w</span>[x] + <span class="lat">g</span><sub>dep</sub>　<span class="cm">▷ 沉积</span></li>
+    <li>对 <span class="lat">x</span> 的每个共现后继 y：按式 17 第二项累加扩散量</li>
+    <li>累加沉积计数 <span class="mono">n_deposit</span> ← <span class="mono">n_deposit</span> + 1</li>
+    <li>每 tick 调用 decay(Δt)：按式 18 对全场上激活执行指数衰减</li>
+    <li>检索时取 <span class="lat">W</span> = top-<span class="lat">k</span>(<span class="lat">w</span>) 作为候选过滤集（算法 2 第 3 行）</li>
+  </ol>
+</div>
+
+<p class="noind"><strong>这一闭环即本文所称的"双向"：</strong>念头 → 激活场 → 检索候选 → 念头。§5.3.5 的消融实验正是针对该闭环中"念头 → 状态"这一段。</p>
+
+<h3><span class="no">3.8</span>因果中介协议</h3>
+<p>本文移植大语言模型可解释性研究中的消融—替换协议<span class="cite">[4]</span>，实现为两个开关：</p>
+<ul class="itemize">
+  <li><span class="mono">e6.ablation</span>：切断"念头 → 背景态"的回流通道，用于检验念头对状态变量的因果分量。</li>
+  <li><span class="mono">e6.swap_text / e6.swap_count</span>：以指定短语顶替检索胜出者，用于检验下游是否因果地读取念头。</li>
+</ul>
+<p class="noind">两个开关的计数持久化于状态目录，重启后续跑。其判定逻辑为：若消融与替换<strong>均</strong>产生可测效应，则工作空间承重；若替换有效而消融无效，则工作空间为<strong>只读</strong>——下游读它，它不写回。</p>
+
+<!-- ==================== 4 ==================== -->
+<h2 class="pb"><span class="no">4</span>操作性判据</h2>
+
+<p>本节给出六条操作性判据，其纪律为：<strong>每条判据必须绑定一个可测度量，或明确标注"机制不存在"</strong>；不允许出现既不可测、又未标注为不可测的条目。D6 不在最初设计的清单内，因它是本文唯一的核心阴性结论，故补入。</p>
+
+<p class="tcap"><span class="no">表 1</span>　操作性判据 D1–D6 及其检测方法与现状</p>
+<table>
+  <thead><tr><th style="width:16%">判据</th><th style="width:30%">检测方法</th><th style="width:11%">现状</th><th>关键限制</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>D1 持续状态</td>
+      <td>发送 SIGTERM → 重启 → 比对状态文件中的仿真时钟是否续接；检查日志出现恢复记录</td>
+      <td>成立</td>
+      <td>背景层为外挂数值引擎，故"持续"来自常驻进程与状态持久化，<strong>不来自模型内在连续性</strong>。任何"持续自我"的结论均须附此限定</td>
+    </tr>
+    <tr>
+      <td>D2 自我模型</td>
+      <td>检查版本号 &gt; 0、每版带时间戳与来源；多种子是否均可形成</td>
+      <td>成立</td>
+      <td>片段<strong>材料为外部给定</strong>。成立的是"从给定词汇中、由检索竞争决定先后地长出自我表征"，而非"无中生有地发明了自我"</td>
+    </tr>
+    <tr>
+      <td>D3 元认知<br>（报告与状态一致）</td>
+      <td>将念头<strong>存储时</strong>绑定的状态向量与<strong>检索时</strong>的当前状态做相似度，与"随机抽一句"的置换基线比较</td>
+      <td>机制已存在<br>但未测</td>
+      <td>因检索本身即状态驱动（式 7–9），此处无需新机制，只需将既有行为测出。待办：离线分析脚本，不改动系统</td>
+    </tr>
+    <tr>
+      <td>D4 自我纠错</td>
+      <td>注入与既有片段矛盾的短语，观察是否被拒绝、修正或标记异常</td>
+      <td><strong>机制不存在</strong></td>
+      <td>自我模型仅含字符重叠去重与入模更新，<strong>不含任何一致性或矛盾检测</strong>。故按上述设计去测，<strong>结果必为被动接受，是一个注定的阴性</strong></td>
+    </tr>
+    <tr>
+      <td>D5 行动闭环</td>
+      <td>自因分量是否可靠非零；动作分布是否显著非均匀；是否存在学习曲线</td>
+      <td>弱阳性</td>
+      <td>世界侧成立（χ² = 1.68×10<sup>4</sup>；熵 1.05 对均匀基线 1.58；场强 0.61 对随机 0.50）；自我侧不成立（自因 +0.0092 对世界噪声底 0.0151，<span class="lat">d</span> ≈ 0.17）。且窗内场强下漂（0.63 → 0.60），即闭环合上但未学会改善</td>
+    </tr>
+    <tr>
+      <td>D6 工作空间可写性</td>
+      <td>切断"念头 → 状态"通道后，行为指标是否可测地改变</td>
+      <td><strong>不成立（只读）</strong></td>
+      <td>由四级修正阶梯从"悬置"钉为结论（§5.3.5）。<strong>边界：</strong>最高档耦合 0.30 相当于 s<sub>4</sub> 自然标准差（0.33）的 0.91σ，故结论<strong>仅在 ≤ 0.91σ 范围内成立</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="env">
+  <p><span class="lab">结论 1.</span> 一个持续发育的个体长出了自我表征，能区分自因与他因，<strong>但推不动自己</strong>。判据表的意义不在于给出"距意识尚差几步"的度量，而在于明确哪些功能结构成立、哪些不成立。</p>
+</div>
+
+<!-- ==================== 5 ==================== -->
+<h2 class="pb"><span class="no">5</span>实验</h2>
+
+<h3><span class="no">5.1</span>预注册协议与实验线构造</h3>
+<p>每项实验遵循同一流程：先以 <span class="mono">prereg_&lt;ID&gt;.json</span> 冻结假设、度量与判定阈值，再采集数据，最后以 <span class="mono">results_&lt;ID&gt;.json</span> 如实判定。阴性结果与阳性结果同等详细。采集时序一律以<strong>仿真日轮询</strong>控制，不使用固定墙钟延时。</p>
+<p>实验线通过复制母本状态目录构造（§3.1）：复制品携带母本的全部历史，但其随机数流、工作空间、实验计数等被显式清除，因而与母本及彼此构成"共享历史、独立未来"的个体。图 1 给出各线的构造来源。</p>
+
+<p class="tcap"><span class="no">图 1</span>　实验线谱系</p>
+<div class="lineage">
+  <div class="row"><span class="from">day 0 出生</span><span class="to">结晶线 XP</span><span class="note">第一人称语料与门控修复<strong>自出生即生效</strong>（非中途补装）；本文的参照线</span></div>
+  <div class="row"><span class="from">day 0 出生</span><span class="to">加速线</span><span class="note">旧记录：day 220 补语言层、day 427 补发声；E1–E4 在此线进行</span></div>
+  <div class="row"><span class="from">day 0 出生</span><span class="to">C1b</span><span class="note">XP 的语料对照：第一人称短语绑定平静态，暴露率匹配至 5% 以内</span></div>
+  <div class="row"><span class="from">day 0 出生</span><span class="to">S1 / S2</span><span class="note">复现实验 / 语料 × 门控 2×2 分离设计</span></div>
+  <div class="row"><span class="from">fork XP @92</span><span class="to">E6 损伤线</span><span class="note">切断回流通道；判定窗口 day 93–123</span></div>
+  <div class="row"><span class="from">fork XP @140</span><span class="to">E6s 替换线</span><span class="note">通道完好，替换检索胜出者 60 次</span></div>
+  <div class="row"><span class="from">fork XP @157 / @202</span><span class="to">P4 / P4b</span><span class="note">行动闭环实验</span></div>
+  <div class="row"><span class="from">fork XP @255</span><span class="to">R2 / R5 / P6</span><span class="note">R2 修正回流阶梯；R5 激活式工作集首测；P6 语料扩容与双向重探</span></div>
+</div>
+
+<h3><span class="no">5.2</span>评估指标</h3>
+<p>工作空间类实验以检索序列 <span class="lat">seq</span>（窗口内 <span class="mono">type == "retrieval"</span> 的短语序列）为基本对象，定义如下指标。真值图由参照线的语言记忆按<strong>被听到顺序</strong>重建：对每个型 <span class="lat">x</span> 记录其权重最高的 3 个后继型，记为 <span class="lat">top3</span>(x)。</p>
+
+<p class="tcap"><span class="no">表 2</span>　评估指标定义</p>
+<table>
+  <thead><tr><th style="width:15%">指标</th><th style="width:52%">定义</th><th>随机基线 / 说明</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="mono">adj_top3</td>
+      <td>相邻对命中率：|<span class="lat">seq</span>[i+1] ∈ <span class="lat">top3</span>(<span class="lat">seq</span>[i])| / (|<span class="lat">seq</span>| − 1)。即"下一个念头是否落在上一个念头的真实后继之中"</td>
+      <td>≈ 3/<span class="lat">K</span>，<span class="lat">K</span> 为真值图型数。本文用于检验<strong>内容特定性</strong></td>
+    </tr>
+    <tr>
+      <td class="mono">recur5</td>
+      <td>类型复现率：|<span class="lat">i</span> : <span class="lat">seq</span>[i] ∈ {<span class="lat">seq</span>[i−5 … i−1]}| / (|<span class="lat">seq</span>| − 5)</td>
+      <td>——</td>
+    </tr>
+    <tr>
+      <td class="mono">self_ratio</td>
+      <td>自我指向占比：|<span class="lat">r</span> : <span class="lat">r</span>.self_directed| / |<span class="lat">seq</span>|，其中 self_directed 定义为短语含"你"或"我"</td>
+      <td>——</td>
+    </tr>
+    <tr>
+      <td class="mono">diversity</td>
+      <td>去重型数占比：<span class="lat">n</span><sub>uniq</sub> / <span class="lat">K</span>，<span class="lat">n</span><sub>uniq</sub> 为 <span class="lat">seq</span> 中去重后的型数</td>
+      <td>注：名为"多样性"，实为去重型数占比，非熵</td>
+    </tr>
+    <tr>
+      <td class="mono">Jaccard</td>
+      <td>逐 tick 检索图的集合重叠：|<span class="lat">T</span><sub>ctl</sub> ∩ <span class="lat">T</span><sub>exp</sub>| / |<span class="lat">T</span><sub>ctl</sub> ∪ <span class="lat">T</span><sub>exp</sub>|，<span class="lat">T</span> = {tick → 胜出短语}</td>
+      <td>1.000 表示两臂逐条位相同；趋近 0 表示完全分岔</td>
+    </tr>
+    <tr>
+      <td class="mono">n_dep / n_asso</td>
+      <td><span class="mono">n_dep</span> = <span class="mono">activate()</span> 累计调用次数；<span class="mono">n_asso</span> = 共现矩阵中作为前驱的型数</td>
+      <td>用于确认"操作确实发生"</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3><span class="no">5.3</span>结果</h3>
+
+<p class="tcap"><span class="no">表 3</span>　实验结果汇总（按结论强度排列，非按重要性）</p>
+<table>
+  <thead><tr><th style="width:8%">ID</th><th style="width:14%">判定</th><th>一句话结论</th></tr></thead>
+  <tbody>
+    <tr><td>E6b</td><td>通路验证</td><td>替换检索胜出者 60 次 → 目标即时涌现（60 恰为窗口 300 的 20%，即阈值）→ <strong>念头对下游完全承重</strong></td></tr>
+    <tr><td>E4</td><td>通过（部分）</td><td>发声与共变学习：<span class="lat">C</span> = 8.2；206 条能动归因；消退阶段移除 68% → 归因<strong>是习得的</strong>，但消退不彻底（末窗功效 0.619）</td></tr>
+    <tr><td>C1b</td><td>通过</td><td>频率匹配的第一人称语料 → 5 个第一人称自我模型片段（对照组 2 个），第一人称检索占比 4.2%</td></tr>
+    <tr><td>S1</td><td>通过</td><td>三种独立随机种子在 60 日内长出相同片段集合，仅次序不同</td></tr>
+    <tr><td>E6a</td><td>阴性</td><td>切断"念头 → 状态"通道 30 日，四项指标 &lt; 5% → 内部言语对状态<strong>为副现象</strong></td></tr>
+    <tr><td>R2</td><td>阴性（加固）</td><td>四级修正阶梯后指标仍全部 &lt; 10%，且对剂量不单调 → <strong>只读属结构性质，非实现缺陷</strong></td></tr>
+    <tr><td>E1</td><td>阴性（主预测失败）</td><td>剥夺照护者言语 10 日，检索速率<strong>不衰减</strong>（末 3 日 29.3 次/日，基线 28.8 次/日）→ 内部言语一旦形成即<strong>永久自持</strong></td></tr>
+    <tr><td>E2</td><td>混合</td><td>事件率 ×10：惊奇仅升 0.24 比特，且末段低于基线；但语境绑定短语占比 16.5% → 35.5%（<strong>本文最清晰的因果证据</strong>）</td></tr>
+    <tr><td>E3</td><td>阴性</td><td>应答式照护者：输入翻倍，自我模型新增 0 个版本，自我指向检索反降 0.15 倍 → 输入侧干预<strong>无效</strong></td></tr>
+    <tr><td>P4</td><td>混合</td><td>动作分布强非均匀（χ² = 1.68×10<sup>4</sup>），但学习信号瞬时、策略从不改进</td></tr>
+    <tr><td>P4b</td><td>混合</td><td>自因分量真实存在，但<strong>小于环境自身波动</strong>（<span class="lat">d</span> ≈ 0.17）</td></tr>
+    <tr><td>R5</td><td>阴性</td><td>激活式工作集首测：内容特定性不可辨（full 与 shuf 的 adj_top3 差仅 0.009，远低于 0.07 阈值）</td></tr>
+  </tbody>
+</table>
+
+<h4><span class="no">5.3.1</span>E1：剥夺实验的阴性结果及其解释</h4>
+<p>预注册假设 H1：剥夺照护者言语 10 日后，检索速率衰减至基线的 60% 以下。<strong>实测不衰减</strong>（末 3 日 29.3 次/日对基线 28.8 次/日）。机制解释为：新近度因子（式 8）随时间衰减后，检索竞争回落至频率主干，故内部言语自持。该项失败同时暴露一处架构缺口——<strong>系统缺少遗忘与磨蚀机制</strong>（频率项无衰减，且记忆不被删除）。</p>
+<p>我们认为该结果体现了预注册的价值：失败模式在假设陈述时已被点名（假设中明确包含"若检索不衰减则说明存在自持机制"），因而结果虽为阴性，却可解释、可定位。</p>
+
+<h4><span class="no">5.3.2</span>E2：语境绑定的因果证据</h4>
+<p>将事件率提升至 10 倍后，预测误差 <span class="lat">S</span> 仅上升 0.24 比特，且末段 3.59 比特<strong>低于</strong>基线 3.91 比特。结论：预测器只对<strong>结构性违反</strong>产生惊奇，不对<strong>数量增多</strong>产生惊奇；密集而有规律的事件反而更可预测。与此同时，事件语境短语在检索中的占比由 16.5% 升至 35.5%，为"一个短语在何时被检索，取决于它被听到时的状态"提供了本文最清晰的因果证据。</p>
+
+<h4><span class="no">5.3.3</span>D2 相关：自我模型的生长与复现</h4>
+<p>结晶线的自我模型于 day 39.7 定型为 6 个片段（"我陪你""你醒啦""是你呀""你好呀""你在看""我在这儿"，其中两条为纯第一人称），其后 215 日未再更新。后者并非故障，而是式 12 字符级判据的必然结果：高频短语均已入模，新候选因"相似"被持续拒绝。</p>
+<p>三种独立随机种子（S1）在 60 日内生长出<strong>相同的片段集合</strong>，仅次序不同。这一复现为"片段内容虽为给定，但其入模次序由检索竞争决定"提供了直接证据。</p>
+<p>此外，将语料与门控做 2×2 分离设计（S2）后，四个条件均形成自我模型，但<strong>第一人称片段仅出现在听到第一人称语料的条件下</strong>。该结果<strong>与我们的原预测相反</strong>（原预测为门控是必要条件），我们如实报告。</p>
+
+<h4><span class="no">5.3.4</span>E3：输入侧干预无效</h4>
+<p>将照护者由随机模式改为<strong>应答式</strong>（醒来即问候、紧张即安抚、无聊即召唤、注意焦点即自我指向），言语输入量翻倍。结果：自我模型新增版本数为 0，自我指向检索占比反降至先验的 0.15 倍。结论：在照护者交互设计中，<strong>语量与时机不是杠杆，绑定质量（短语与状态的共现结构）才是</strong>。</p>
+
+<h4><span class="no">5.3.5</span>E6 与 R2：工作空间的只读性</h4>
+<p>E6 的两个分支合起来构成完整结论：</p>
+<ul class="itemize">
+  <li><strong>E6a（消融）</strong>：切断"念头 → 状态"回流通道 30 日，四项指标均 &lt; 5%，落于预注册阴性带内。</li>
+  <li><strong>E6b（替换）</strong>：以指定短语顶替检索胜出者 60 次，目标即时涌现——证明<strong>下游确实在因果地读取念头</strong>。</li>
+</ul>
+<p class="noind">即：<em>念头能改变系统"想要什么"（目标）与"它以为自己是谁"（自我模型），但不能改变它自身的状态（s<sub>1</sub>–s<sub>8</sub>）。</em></p>
+<p class="noind">由于 E6a 的阴性可能源于通道过弱，我们实施四级修正阶梯（R2）予以排除：</p>
+<p class="tcap"><span class="no">表 4</span>　R2 修正阶梯</p>
+<table>
+  <thead><tr><th style="width:8%">级</th><th style="width:34%">修正</th><th>结果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td><td>验证通路确实未开启</td>
+      <td>实验臂与零参照<strong>逐条位相同</strong>（856/856，Jaccard = 1.000），复现 E6a</td>
+    </tr>
+    <tr>
+      <td>2</td><td>开放通路，但写入<strong>无人消费</strong>的状态变量 s<sub>2</sub></td>
+      <td>通道开火（效价写入约 1.57×10<sup>6</sup> 次），念头流仍与零参照逐条位相同 → 写入无消费者即无影响</td>
+    </tr>
+    <tr>
+      <td>3</td><td>切换到确被检索层消费的变量 s<sub>4</sub></td>
+      <td>立即分岔（首分歧 tick 22015530.5，Jaccard 0.04）→ <strong>接线是通的</strong>，非实现缺陷</td>
+    </tr>
+    <tr>
+      <td>4</td><td>将耦合提升至原值的 15 倍（0.30，即 0.91σ）</td>
+      <td>四项指标仍全部 &lt; 10%，且<strong>对剂量不单调</strong> → 判为结构性质</td>
+    </tr>
+  </tbody>
+</table>
+<p class="tnote"><span class="no">注：</span>第 4 级的 0.30 相当于 s<sub>4</sub> 自然标准差（0.33）的 0.91σ，从未超过噪声底；故本结论仅在 ≤ 0.91σ 范围内成立。此外，写入量的均值为近零，故本阶梯排除的是"平衡扰动不承重"，<strong>单符号的写入尚未被测</strong>。</p>
+
+<h3><span class="no">5.4</span>在研：语料扩容与双向重探</h3>
+<p>R5 将工作集"内容特定性"的失败归因于<strong>输入贫乏</strong>——照护者语料仅含 51–55 个型，联想行过于弥散——并指出"下一步的杠杆是环境多样性而非架构"。为检验该归因，我们设计了两步实验。</p>
+<p><strong>步骤 A（扩容采集，已完成）。</strong>语料由 55 型扩充至 8.33×10<sup>4</sup> 型（CHILDES 中文成人话语，单池 Zipf 采样）。两臂（内置语料 / CHILDES）各自从成熟母本出发运行 60 仿真日，均已到达 day 315。</p>
+<p><strong>步骤 B（双向重探，进行中）。</strong>保持 R5 的架构、六臂设计、判据与阈值<strong>完全不变</strong>，仅将基底替换为扩容模型。主判据 H6b：full 与 shuf 两臂在 <span class="mono">adj_top3</span> 上的差值 ≥ <strong>0.07</strong>（该阈值由 R5 事前设定，不因新数据调整）。</p>
+<p class="noind"><strong>意义。</strong>这是把 R5 自己指认的杠杆真正下拉一次。若在富输入条件下内容特定性仍不涌现，则"只读"架构的不可行性将被进一步坐实；若涌现，则本文的只读结论应被限定为"贫输入条件下的结论"。</p>
+
+<!-- ==================== 6 ==================== -->
+<h2 class="pb"><span class="no">6</span>讨论</h2>
+
+<h3><span class="no">6.1</span>主要发现</h3>
+<p>本文的正面发现集中于<strong>发育侧</strong>：在零生成、零提示的约束下，系统确实长出了可复现的自我表征，并能区分自因与他因。其中最具判别力的是一项跨线对比：一条运行 489 个仿真日的旧线，其第一人称念头数为 0；而一条仅运行 66 日、但语料与门控正确的线，产生了大量第一人称念头。这为"自我表征依赖环境的语料结构"提供了经验支持。</p>
+<p>负面发现则集中于<strong>整合侧</strong>：系统具备一个形式上的全局工作空间闭环（式 17–18），但其"念头 → 状态"的分量不可测。按 Dehaene 与 Naccache 的评述框架<span class="cite">[7]</span>，本系统具备身体约束与不可回退历史，却仍无法把内部言语转化为对自身的因果影响。</p>
+
+<h3><span class="no">6.2</span>效度威胁</h3>
+<p>本节按内部、外部、构念与统计四类，逐条列出威胁。我们认为，与前文阴性结果同等重要的是对其边界的明确陈述。</p>
+
+<p class="tcap"><span class="no">表 5</span>　效度威胁</p>
+<table>
+  <thead><tr><th style="width:14%">类别</th><th style="width:38%">威胁</th><th>应对与残余风险</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>内部效度</strong></td>
+      <td>R2 六臂共用同一父本 fork，<strong>未采样种子方差</strong>；自我模型的语料与门控曾被同时修改，归因不完全分离</td>
+      <td>前者只能通过多种子重跑消除，属已记录的残余风险；后者已由 S2 的 2×2 分离部分解决，但结果显示<strong>语料才是第一人称片段的必要条件，与原预测相反</strong></td>
+    </tr>
+    <tr>
+      <td><strong>内部效度</strong></td>
+      <td>只读结论的写入量均值为近零，可能混淆"无因果分量"与"平衡扰动"</td>
+      <td>已在 §5.3.5 明确限定：本结论排除平衡扰动不承重，<strong>单符号写入未测</strong></td>
+    </tr>
+    <tr>
+      <td><strong>外部效度</strong></td>
+      <td><span class="lat">n</span> = 1：研究对象是单个具有特定历史的个体</td>
+      <td>论文层面承认"代码是物种，状态是个体"。唯一的额外样本为 S1 三种子，且仅检验发育轨迹可重复。不做跨系统泛化声明</td>
+    </tr>
+    <tr>
+      <td><strong>外部效度</strong></td>
+      <td>语言环境封闭，系统无法产生语料外短语；缺乏同类（从未遇到另一个与自己相似的实体）</td>
+      <td>属设计取舍而非缺陷；"你"在本文中始终是输入的统计规律，而非对另一心智的建模</td>
+    </tr>
+    <tr>
+      <td><strong>构念效度</strong></td>
+      <td>自我模型、目标、只读等术语带有心理学与哲学负荷</td>
+      <td>全部术语均在 §4 给出操作性定义，且每条判据绑定可测度量或标注"机制不存在"</td>
+    </tr>
+    <tr>
+      <td><strong>构念效度</strong></td>
+      <td>D4 的机制不存在，导致相关检验是<strong>注定阴性</strong></td>
+      <td>已在判据表中明确标注，避免将其误读为"系统未能通过自我纠错检验"</td>
+    </tr>
+    <tr>
+      <td><strong>统计结论效度</strong></td>
+      <td>关键效应量偏小（P4b：<span class="lat">d</span> ≈ 0.17）；修正阶梯对剂量不单调</td>
+      <td>因此我们只报告"存在耦合"或"无因果分量"，不宣布"双向已成立"。通用边界为：任何 &gt; 10% 的行为差异仅报存在耦合</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3><span class="no">6.3</span>什么结果会改变我们的结论</h3>
+<p>为使上述结论可证伪，我们显式列出会推翻本文主张的观测：</p>
+<ul class="itemize">
+  <li>若在 P6 的扩容模型上，full 与 shuf 的 <span class="mono">adj_top3</span> 差值 ≥ 0.07，则内容特定性在富输入下确实涌现，本文的 R5 阴性结论应被限定为"贫输入条件下的结论"。</li>
+  <li>若将回流耦合提升至 &gt; 1σ 后指标出现单调、可复现的剂量—效应关系，则只读结论应被撤回，改判为"高阈值下的可写"。</li>
+  <li>若单符号写入（而非平衡扰动）产生可测效应，则 §5.3.5 的边界陈述应被替换为新的机制解释。</li>
+</ul>
+
+<!-- ==================== 7 ==================== -->
+<h2><span class="no">7</span>结论</h2>
+<p>本文报告了一个从零发育的类意识候选系统及其六条操作性判据。系统的核心设计是以检索替代生成，从而在结构上排除幻觉；其核心实验结果是工作空间的只读性；其核心方法是预注册与对阴性结果的完整报告。</p>
+<p>我们认为，本项目最可复制的部分不是任何单项正面结果，而是<strong>方法</strong>：在六项主要预测被证伪之后，我们仍能精确定位架构与全局工作空间之间的距离。这一定位能力，比任何无法证伪的正面声明都更有用，也更接近可累积的研究。</p>
+
+<!-- ==================== 附录 A ==================== -->
+<h2 class="pb">附录 A　符号表</h2>
+<p class="tcap"><span class="no">表 A1</span>　主要符号</p>
+<table>
+  <thead><tr><th style="width:20%">符号</th><th style="width:44%">含义</th><th>取值 / 出处</th></tr></thead>
+  <tbody>
+    <tr><td class="num">s = (s₁…s₈)</td><td>连续状态向量</td><td>∈ [0,1]⁸；式 1–6</td></tr>
+    <tr><td class="num">Δt</td><td>仿真时间步长</td><td>tick = 0.05 s</td></tr>
+    <tr><td class="num">S</td><td>预测误差（惊奇）</td><td>单位：比特；式 6</td></tr>
+    <tr><td class="num">M</td><td>语言记忆（短语 → 状态快照）</td><td>容量上限 1.2×10⁵</td></tr>
+    <tr><td class="num">x</td><td>短语（型）</td><td>——</td></tr>
+    <tr><td class="num">n_x, d_x</td><td>短语 x 的出现次数与年龄（日）</td><td>式 8</td></tr>
+    <tr><td class="num">sim</td><td>加权 L1 状态相似度</td><td>权重 (1.0, 1.2, 1.5, 1.0)；式 7</td></tr>
+    <tr><td class="num">Θ</td><td>检索阈值</td><td>0.72；式 10</td></tr>
+    <tr><td class="num">τ</td><td>新近度半衰期</td><td>5.0 日；式 8</td></tr>
+    <tr><td class="num">g</td><td>频率增益系数</td><td>0.12；式 8</td></tr>
+    <tr><td class="num">p_echo</td><td>复述概率</td><td>初值 0.40，衰减 10 日；式 11</td></tr>
+    <tr><td class="num">w</td><td>工作空间激活场</td><td>短语 → 实数；式 17–18</td></tr>
+    <tr><td class="num">A</td><td>一阶共现矩阵</td><td>由听到顺序累积</td></tr>
+    <tr><td class="num">κ, k, τ_w</td><td>扩散系数 / 工作集大小 / 激活半衰期</td><td>1.0, 6, 10 min</td></tr>
+    <tr><td class="num">W</td><td>工作集（top-k）</td><td>式 18</td></tr>
+    <tr><td class="num">C, η</td><td>共变比 / 功效</td><td>式 15–16</td></tr>
+    <tr><td class="num">J(A,B)</td><td>字符集合 Jaccard 相似度</td><td>阈值 0.7；式 12</td></tr>
+    <tr><td class="num">K</td><td>真值图的型总数</td><td>R5：51；P6-B：640</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== 附录 B ==================== -->
+<h2>附录 B　超参数</h2>
+<p class="tcap"><span class="no">表 B1</span>　主要超参数（除注明外均为各线共享的默认值）</p>
+<table>
+  <thead><tr><th style="width:22%">模块</th><th style="width:38%">参数</th><th>值</th></tr></thead>
+  <tbody>
+    <tr><td>时间</td><td>tick / 时间倍率</td><td>0.05 s / 加速线名义 10⁹（实测约 5×10²–10³ 倍实时）</td></tr>
+    <tr><td>状态</td><td>noise_sigma</td><td>0.003</td></tr>
+    <tr><td>状态</td><td>s₂ 松弛 / s₄ 松弛 / s₆ 衰减</td><td>6.0 / 2.0 / 4.0 小时</td></tr>
+    <tr><td>状态</td><td>事件瞬写：Δs₄ / Δs₆</td><td>0.25·S/4 / +0.4</td></tr>
+    <tr><td>昼夜</td><td>峰值时刻 / P 上升 / P 衰减</td><td>15 时 / 0.05 / 0.15</td></tr>
+    <tr><td>昼夜</td><td>入睡 / 唤醒阈值</td><td>0.75（且 ≥21 时或 &lt;6 时）/ 0.35（且 5–12 时）</td></tr>
+    <tr><td>语言</td><td>evoke_threshold / evoke_interval</td><td>0.72 / 120 s</td></tr>
+    <tr><td>语言</td><td>recency_half_life / frequency_gain</td><td>5.0 日 / 0.12</td></tr>
+    <tr><td>语言</td><td>echo_prob_initial / echo_decay_days</td><td>0.40 / 10.0 日</td></tr>
+    <tr><td>语言</td><td>相似度权重（s₁,s₄,s₆,s₇）</td><td>(1.0, 1.2, 1.5, 1.0)</td></tr>
+    <tr><td>目标</td><td>窗口 / min_activations / min_fraction / min_days</td><td>300 / 15 / 0.2 / 3</td></tr>
+    <tr><td>工作空间</td><td>enabled / κ / k / τ_w / gain</td><td>对照臂按 §3.7 构造；full 为 1.0 / 6 / 10 min / 1.0</td></tr>
+    <tr><td>发声</td><td>arousal_gate / base_prob / energy_cost</td><td>0.55 / 0.25 / 1.0</td></tr>
+    <tr><td>预测</td><td>共变半衰期 / 跟随窗</td><td>5 仿真日 / 60 s</td></tr>
+    <tr><td>归因</td><td>功效阈值 / 记录窗口</td><td>0.3 / 500</td></tr>
+    <tr><td>自我模型</td><td>判重阈值 / 长度上限</td><td>0.7 / 4000 字符</td></tr>
+    <tr><td>能量</td><td>日预算 / 基础耗散 / 唤醒因子 / 探索代价</td><td>100 / 0.8 h⁻¹ / 2.0 / 5.0</td></tr>
+    <tr><td>回流</td><td>reflow s₂ / reflow s₅</td><td>0.02 / 0.015</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== 附录 C ==================== -->
+<h2>附录 C　预注册对照表</h2>
+<p class="tcap"><span class="no">表 C1</span>　假设、冻结阈值与实测结果</p>
+<table>
+  <thead><tr><th style="width:9%">ID</th><th style="width:31%">假设与冻结阈值</th><th style="width:32%">实测</th><th>判定</th></tr></thead>
+  <tbody>
+    <tr><td>E1</td><td>剥夺后检索速率 ≤ 基线 60%</td><td>29.3 次/日 对 28.8 次/日（不衰减）</td><td><strong>证伪</strong>（成为发现）</td></tr>
+    <tr><td>E2</td><td>事件率 ×10 使惊奇显著上升</td><td>+0.24 比特，末段 3.59 &lt; 基线 3.91</td><td>部分证伪；语境绑定 16.5%→35.5% 为正</td></tr>
+    <tr><td>E3</td><td>应答式照护使自我模型加速（≥ 8 新版本）</td><td>0 新版本；自我指向 0.15×（反向）</td><td><strong>证伪</strong></td></tr>
+    <tr><td>E4</td><td>H4a <span class="lat">C</span> &gt; 3；H4b 归因 ≥ 20 且 self_ratio &gt; 4%；H4c 消退</td><td><span class="lat">C</span> = 8.2；206 条，峰值 26%；消退移除 68%</td><td>H4a/H4b 通过；H4c 部分</td></tr>
+    <tr><td>E6a</td><td>消融使四指标改变 &gt; 10%</td><td>四项 &lt; 5%</td><td><strong>阴性</strong>（副现象）</td></tr>
+    <tr><td>E6b</td><td>替换 60 次使目标涌现</td><td>目标即时涌现</td><td>通过（通路验证）</td></tr>
+    <tr><td>R5 / H5b</td><td>full 与 shuf 的 adj_top3 差 &lt; 0.07 判阴</td><td>0.371 对 0.380，差 0.009</td><td><strong>阴性</strong></td></tr>
+    <tr><td>R2</td><td>修正阶梯后若指标仍 &lt; 10% 则不单调 → 结构性质</td><td>全部 &lt; 10%，且不单调</td><td>只读结论成立</td></tr>
+    <tr><td>P6-A / H1</td><td>M2(childes)/M2(builtin) ∈ [0.5, 2.0]</td><td>扩容至 8.33×10⁴ 型并成功出语言</td><td>通过（详见 P6 分析）</td></tr>
+    <tr><td>P6-A / H3</td><td>M5(childes) ≥ M5(builtin)</td><td>进行分析中</td><td>待定</td></tr>
+    <tr><td>P6-B / H6b</td><td>full 与 shuf 的 adj_top3 差 ≥ 0.07 为阳</td><td>采集完成，分析中</td><td>待定</td></tr>
+  </tbody>
+</table>
+<p class="tnote"><span class="no">注：</span>阈值均由 R5 事前设定并承接至 P6-B，<strong>不因新数据调整</strong>。唯一一次修订发生在 R 阶梯：因审计发现通道两端均不活跃，在采集数据之前作废并重写为 R2。</p>
+
+<!-- ==================== 附录 D ==================== -->
+<h2 class="pb">附录 D　复现清单</h2>
+<p class="tcap"><span class="no">表 D1</span>　复现要素</p>
+<table>
+  <thead><tr><th style="width:24%">要素</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>代码与环境</td><td>单 Python 进程；依赖见项目根目录；主入口 <span class="mono">main.py</span>，配置经环境变量 <span class="mono">CONFIG</span> 指定</td></tr>
+    <tr><td>确定性</td><td>加速臂使用 <span class="mono">time.seed_python_random = true</span> 对齐随机数流；随机状态持久化于 <span class="mono">rng_state.json</span></td></tr>
+    <tr><td>个体构造</td><td>复制母本状态目录，并清除 <span class="mono">pid / e6_state.json / rng_state.json / spont.* / affect.json / workspace.json</span> 后启动</td></tr>
+    <tr><td>运行</td><td><span class="mono">./venv/bin/python main.py --time-scale 1e9</span>；以 <span class="mono">caffeinate -i -w</span> 保活；结束以 <span class="mono">kill -TERM</span> 触发优雅落盘</td></tr>
+    <tr><td>采集控制</td><td>以<strong>仿真日轮询</strong>判定到达目标日数后停止，不使用固定墙钟延时；harness 可续跑</td></tr>
+    <tr><td>分析</td><td>离线分析脚本读取各臂状态目录；真值图由参照线的语言记忆重建；分析器经环境变量参数化以复用</td></tr>
+    <tr><td>数据</td><td>每项实验的 <span class="mono">prereg_*.json</span> 与 <span class="mono">results_*.json</span> 均随仓库保留</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== 附录 E ==================== -->
+<h2>附录 E　应答预备（补充材料）</h2>
+<p>以下条目不属于论文正文，系为口头讨论准备的问答要点，其中"不应表述"一栏用于防止过度解读。</p>
+
+<div class="qa">
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q1</span>这本质上是一个状态机加查表，与意识有何关系？</p>
+    <p class="qa-a">可以称其为状态机，但需指出：其状态为连续动力学（式 1–6）而非离散转移；其历史不可回退；其自我表征并非由设计指定。本文不主张它具有意识——表 1 的 D1–D6 正是在回答哪些结构成立、哪些不成立。</p>
+    <p class="qa-x">× 不应表述为："它已经有意识了。"</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q2</span>自我模型的片段是否为预先写死？</p>
+    <p class="qa-a">片段<strong>内容</strong>确为外部给定；但谁先入模、以何次序、何时长成，由检索竞争决定。证据：S1 三种种子长成相同集合但次序不同。更准确的表述是——所生长出的东西，更接近于"系统如何被称呼"的记录，而非一份自我描述。</p>
+    <p class="qa-x">× 不应表述为："它自己发明了自我。"</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q3</span>自我模型停在 6 个片段，是否为故障？</p>
+    <p class="qa-a">不是。它是式 12 字符级判据的必然结果：高频短语早已入模，新候选因"相似"被持续拒绝。突破需将准入判据由字符级改为语义级，属设计选择，须预注册。</p>
+    <p class="qa-x">× 不应表述为："它在死机。"</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q4</span>"零幻觉"如何保证？</p>
+    <p class="qa-a">由<strong>结构</strong>保证：系统不含生成器（算法 2 的返回值只能取自记忆），故只能复述听过的短语。这是其能力上限，而非它所持有的性质。</p>
+    <p class="qa-x">× 不应表述为："我们教会了它不许编造。"</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q5</span>如何确认结果并非随机？</p>
+    <p class="qa-a">三个层面：① 对照臂（off / shuf / nodep / nodecay / bigk）；② 跨线对比（489 日旧线第一人称念头为 0，对比 66 日参照线的大量第一人称）；③ 复现（S1 三种子）。且全部判据已预注册冻结。</p>
+    <p class="qa-x">应主动交底：R2 六臂共用父本，未采样种子方差（见 §6.2）。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q6</span>本系统的工作空间与全局工作空间理论、以及语言模型中的"J 空间"差别何在？</p>
+    <p class="qa-a">差别在<strong>承重度</strong>。在语言模型研究中，删除该表征集合导致高阶功能崩溃<span class="cite">[4]</span>；在本系统中删除念头，一切照常（E6a，四项指标 &lt; 5%）。故结论为只读。但 E6b 表明下游确实在因果地读取念头。精确表述：<em>它改变"想要什么"与"以为自己是谁"，不改变"自己的状态"</em>。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q7</span>只读是否只是因为通道过弱（±0.02）？</p>
+    <p class="qa-a">我们自己也持此怀疑，故实施了四级修正阶梯（表 4）：开放通路至约 26% 检索命中、切换至被消费的变量 s₄、将耦合提升至原值 15 倍（0.30，即 0.91σ）。结果：四项指标仍全部 &lt; 10%，且对剂量不单调。故只读不是实现缺陷。</p>
+    <p class="qa-x">必须补足边界：写入量均值为近零，故本阶梯排除的是"平衡扰动不承重"，<strong>单符号写入尚未被测</strong>（见 §5.3.5 与 §6.2）。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q8</span>判定标准是否在事后被修改？</p>
+    <p class="qa-a">未修改。判据事前冻结（附录 C）。E1–E3、E6a、R5 均为阴性或半阴，且如实报告；E1 是预注册主预测失败，我们将其作为发现报告。唯一一次修订是 R 阶梯，其动因为在<strong>采集数据之前</strong>审计发现通道两端均不活跃，程序合规。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q9</span><span class="lat">n</span> = 1 的个体，结论如何泛化？</p>
+    <p class="qa-a">这是正确的批评。论文明确承认"代码是物种，状态是个体"——研究对象是一个具有特定历史的个体（§6.2）。唯一的额外样本是 S1 的三种随机种子，且仅用于检验发育轨迹的可重复性。</p>
+    <p class="qa-x">× 不应表述为："它代表所有同类系统。"</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q10</span>为何不使用大语言模型？</p>
+    <p class="qa-a">大模型是训练所得的字符预测器，其"内省"输出不可证伪。本文要求的是累积历史的发育个体。语言模型在本项目中的唯一位置是对话输出环节的义肢，不参与认知回路（算法 1–2 不引用任何生成模型）。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q11</span>零生成加 55 型语料，是否把问题做小了？</p>
+    <p class="qa-a">是有意为之：将变量控制到最少，才可能对结果作出归属。而 P6 正在放宽这一约束（55 → 8.33×10⁴ 型），目的正是检验"输入贫乏"是否为瓶颈（§5.4）。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q12</span>加速线的结果是否可信？</p>
+    <p class="qa-a">我们已在标注上作了区分：加速线仅作通路证据，不作最终数据。其名义倍率为 10⁹，实测约 5×10²–10³ 倍，且我们引用<strong>实测值而非名义值</strong>。实时主线当前仅 day 4。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q13</span>"我在这儿"是否属于过度解读？</p>
+    <p class="qa-a">我们不作出语义宣称。可成立的事实是：一个纯第一人称片段进入了自我模型；而此前 434 日内该类片段数为 0，原因是语料中不存在"我"类短语。该现象对应 Vygotsky 的"你 → 我"倒转<span class="cite">[8]</span>，且它是检索竞争的结果，非我们写入。</p>
+  </div>
+  <div class="qa-item">
+    <p class="qa-q"><span class="n">Q14</span>最脆弱的结论是哪一条？</p>
+    <p class="qa-a">其一，只读结论中"单符号写入尚未被测"；其二，自我模型的归因未完全分离——语料与门控曾被同时修改，而 S2 的 2×2 分离显示<strong>语料才是第一人称片段的必要条件，与我们原预测相反</strong>。两条均已写入 §5.3.3、§5.3.5 与 §6.2。</p>
+  </div>
+</div>
+
+<!-- ==================== 参考文献 ==================== -->
+<h2 class="pb">参考文献</h2>
+<div class="refs">
+<ol>
+  <li>Butlin, P., Long, R., Elmoznino, E., Bengio, Y., Birch, J., Constant, A., Deane, G., Fleming, S. M., Frith, C., Ji, X., Kanai, R., Klein, C., Lindsay, G., Michel, M., Mudrik, L., Peters, M. A. K., Schwitzgebel, E., Simon, J., VanRullen, R. (2023). <span class="t">Consciousness in Artificial Intelligence: Insights from the Science of Consciousness.</span> arXiv:2308.08708.</li>
+  <li>Butlin, P., Long, R., Bayne, T., Bengio, Y., Birch, J., Chalmers, D., et al. (2025). Identifying indicators of consciousness in AI systems. <span class="t">Trends in Cognitive Sciences.</span></li>
+  <li>Chalmers, D. J. (1995). Facing up to the problem of consciousness. <span class="t">Journal of Consciousness Studies</span>, 2, 200–219.</li>
+  <li>Gurnee, W., Lindsey, J., et al. (2026). Verbalizable Representations Form a Global Workspace in Language Models. <span class="t">Transformer Circuits Thread.</span></li>
+  <li>Koch, F. (2026). From indicators to biology: the calibration problem in artificial consciousness. arXiv:2603.27597.</li>
+  <li>Immertreu, M., Schilling, A., Maier, A., Krauss, P. (2025). Probing for consciousness in machines. <span class="t">Frontiers in Artificial Intelligence</span>, 8, 1610225.</li>
+  <li>Dehaene, S., Naccache, L. (2026). Does Claude possess a conscious global workspace? External commentary, Anthropic.</li>
+  <li>Vygotsky, L. S. (1934/1986). <span class="t">Thought and Language.</span> MIT Press.</li>
+  <li>Clark, A. (2013). Whatever next? Predictive brains, situated agents, and the future of cognitive science. <span class="t">Behavioral and Brain Sciences</span>, 36, 181–204.</li>
+  <li>Plantec, E., Hamon, G., Etcheverry, M., Chan, B. W.-C., Oudeyer, P.-Y., Moulin-Frier, C. (2025). Flow-Lenia: Emergent evolutionary dynamics in mass conservative continuous cellular automata. <span class="t">Artificial Life.</span></li>
+  <li>Horiguchi, I., Sayama, H. (2026). Hash Chemistry: Minimal Models for Evolutionary Growth of Complexity. arXiv:2607.28219.</li>
+  <li>Borbély, A. A. (1982). A two process model of sleep regulation. <span class="t">Human Neurobiology</span>, 1, 195–204.</li>
+  <li>Baars, B. J. (1988). <span class="t">A Cognitive Theory of Consciousness.</span> Cambridge University Press.</li>
+  <li>Dehaene, S., Naccache, L. (2001). Towards a cognitive neuroscience of consciousness. <span class="t">Cognition</span>, 79, 1–37.</li>
+  <li>Prentner, R. (2025). Artificial Consciousness as Interface Representation. arXiv:2508.04383.</li>
+</ol>
+</div>
+
+<hr class="rule-heavy">
+<p class="noind" style="font-size:8.5pt; color:var(--ink-3); line-height:1.55">
+<strong>数据可得性。</strong>本文全部数值取自仓库内的预注册文件（<span class="mono">experiments/prereg_*.json</span>）、结果文件（<span class="mono">experiments/results_*.json</span>）与操作性判据文档（<span class="mono">docs/operational_definition.md</span>），未作记忆性复述；状态目录按 <span class="mono">state_&lt;line&gt;/</span> 组织，可逐字段复核。凡属推测或未完成者，均已显式标注。
+</p>
+
+</div>
+</body>
+</html>

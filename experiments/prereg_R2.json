@@ -88,5 +88,29 @@
     "单母本": "6 条臂同 fork 自 state_exp，共享同一段历史；结论的可复现性依赖后续多种子复现（如 S1 之于 XP）。"
   },
 
+  "amendments": [
+    {
+      "id": "A1-rng-alignment",
+      "when": "2026-10-06 晚（首轮采集后、重跑前）",
+      "found": "首轮六臂虽 fork 自同一 state_exp（继承段逐字节一致），但 language.py 用未播种的 Python 全局 random（OS 熵种子，不随 fork 复制、不落盘），臂间念头流互不对齐：逐条相同率 ctl vs dead_gate = 2.7%、ctl vs open_s4_hi = 3.5%；共同 tick 上命中率 0–5.9%，贴在置换基线（3.4–4.1%）。连几乎未扰动的 dead_gate 也一样，说明差异来自 RNG 而非操纵。",
+      "consequence": "首轮『四指标 <10%』混入了逐次运行的随机差异，不是配对意义上的『仅差一个被操纵变量』。首轮结果不得据此读作『无影响』，仅可读作『效应小于逐次运行涨落』。此结论同样适用于 E6a（同构造）。",
+      "action": "main.py 增加 opt-in 开关 time.seed_python_random：显式播种 + RNG 状态落盘/恢复。默认关闭 → 主线/P3/p5 逐位不变。",
+      "validation": "两条完全同参臂（config_smoke_rng_a/b）冒烟：逐条 100% 相同（修复前 2.7%）。",
+      "status": "已完成（state_R2_*）；首轮数据保留于 state_R2pre_* 作『未对齐』对照"
+    },
+    {
+      "id": "A2-result",
+      "when": "2026-10-07 晨（六臂全部跑满 day 285 后）",
+      "alignment_validated": "三条『不触及被消费路径』的臂逐条位相同：ctl_none = dead_gate = open_dead_target（共同 tick 856/856，phrase 100%，jaccard 1.000，无分歧）。**open_dead_target 通道开火 valence≈157 万次，念头流仍与零参照逐条位相同** → 审计第二层（写进无人消费的 s2 = 零影响）被直接坐实，比 E6a 强得多。",
+      "mc0": "open_* 各臂 valence/question 开火均 >0（open_dead_target 约 314 万、open_s4_hi 约 87 万）；dead_gate valence=0（这正是要复现的失效）。无臂因 MC0 作废。",
+      "m5_asymmetry": "s4 均值/标准差：ctl_none 0.5503/0.3323，open_s4_hi 0.5491/0.3249 → 目标维度分布未移。",
+      "overlap": "open_s4_* 首分歧 tick=22015530.5（窗口早期），共同 tick 命中率 15.5 / 20.0 / 17.2%（置换基线 3.1–4.1%），jaccard 0.038–0.042 → **s4 确被检索相似度消费，接线是通的**。",
+      "verdict": "**H2 阴性**：open_s4 lo/mid/hi 四指标全 <10%（M1 +3.9 / +5.5 / +4.2%，M2 +6.7 / +2.2 / +6.7%，M3/M4 增量 0），且**剂量不单调** → 无阈值结构。",
+      "reading": "『只读』不是接线事故：门开着、目标被消费、剂量拉到 0.91σ，四指标仍 <10%。s4 通道属『**通而轻**』——真实改写检索流，但不承重于行为粗指标。",
+      "limits": "hi 档耦合 0.30 = s4 自然 sd(0.33) 的 **0.91σ**，从未超过噪声底；故本判定只在『≤0.91σ』范围内成立。**>1σ 是否仍阴性未测** → 见 prereg_R2x.json。"
+    }
+  ],
+  "followups": "prereg_R2x.json（边界探针，>1σ）、prereg_R2c.json（最小消费者实验）",
+
   "note": "四条指标含两个二值量（M3/M4），报告中必须分开呈现，不得混成『百分比』。任何阴性结果照实写，并明确它排除的是哪一层。"
 }

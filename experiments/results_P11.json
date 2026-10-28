@@ -1,0 +1,77 @@
+{
+ "n_inherit": 9336,
+ "K": 4055,
+ "arms": {
+  "hardcap": {
+   "seq": {
+    "n_retr": 891,
+    "n_uniq": 39,
+    "diversity": 0.009617755856966708,
+    "adj_top3_hit": 0.0449438202247191,
+    "recur5": 0.7494356659142212,
+    "self_ratio": 0.058361391694725026
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3361,
+    "n_types_act": 1090,
+    "n_assoc": 2065,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": null
+  },
+  "soft": {
+   "seq": {
+    "n_retr": 854,
+    "n_uniq": 55,
+    "diversity": 0.013563501849568433,
+    "adj_top3_hit": 0.0,
+    "recur5": 0.9081272084805654,
+    "self_ratio": 0.01639344262295082
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3310,
+    "n_types_act": 1058,
+    "n_assoc": 2088,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 59,
+    "phrase_agreement": 0.03389830508474576,
+    "jaccard": 0.03499406880189798
+   }
+  },
+  "soft_shuf": {
+   "seq": {
+    "n_retr": 855,
+    "n_uniq": 51,
+    "diversity": 0.012577065351418002,
+    "adj_top3_hit": 0.0,
+    "recur5": 0.9141176470588235,
+    "self_ratio": 0.0152046783625731
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3311,
+    "n_types_act": 627,
+    "n_assoc": 2087,
+    "k": 6,
+    "kappa": 1.0,
+    "shuffle_assoc": true,
+    "no_deposit": false
+   },
+   "overlap": {
+    "n_common": 59,
+    "phrase_agreement": 0.03389830508474576,
+    "jaccard": 0.034973325429756966
+   }
+  }
+ }
+}

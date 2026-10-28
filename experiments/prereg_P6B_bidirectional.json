@@ -1,0 +1,70 @@
+{
+  "experiment": "P6-B 双向重探：在扩容模型上重跑激活式工作集（R5 六臂 × 富语料基底）",
+  "created": "2026-10-09",
+  "preregistered_before_data": true,
+  "step_of": "P6 的第二步。第一步（P6-A 语料扩容采集）见 prereg_P6_corpus.json 与 run_P6.sh。",
+
+  "relation": {
+    "prereg_R5": "R5 阴性：full 的『真实 top3 联想』命中 0.371 ≈ shuf 0.380（差 0.009，远低于 0.07 判阴阈值）→ 工作集的『内容特定性』与打乱联想不可区分。R5 自诊断根因：照护者语料仅 51 型，联想行弥散（top3 仅占该行权重 17.3%），表征整体『糊』。",
+    "prereg_P6_corpus": "P6 把语料扩到 83,302 型（CHILDES 真实成人短语）。R5 的 open_risks 末条已指明：『真正的天花板可能是输入贫乏——下一步杠杆是环境多样性而非架构』。本实验即该杠杆。",
+    "route": "用户选定路线『我要自发形成』→ 把『只读』打通成双向（让念头反过来改变它自己）。R5 已把该架构搭好但判阴；P6-B 检验它在富输入下是否成立。"
+  },
+
+  "motivation": "R5 把工作集内容特定性的失败归因于输入贫乏。本实验保持 R5 的**架构、六臂设计、判据与阈值完全不动**，只把基底换成已扩过容的模型（state_P6_childes，60 仿真日 × 83,302 型）。唯一要回答的问题：内容特定性是随输入多样性涌现，还是该架构在本表征下根本不可行。",
+
+  "design": {
+    "instance": "六臂，SIGSTOP 安全 fork 自 state_P6_childes（P6-A 扩容终态；该臂全程 workspace 关闭，故 workspace.json 为空、无污染），同窗口 30 仿真日。",
+    "changes_vs_R5": {
+      "base": "state_exp → state_P6_childes（扩容模型）。",
+      "corpus": "caregiver.corpus_file=corpus/caregiver_corpus.json + caregiver.corpus_zipf_exponent=1.0。",
+      "note": "相对 R5 同时改了两个量（基底 + 语料），二者合为『扩容模型』。此改动不影响本实验效力——因主判据 H6b 是**臂内** full vs shuf 对照，自洽成立。若需把『仅语料』单独分离，可另加一套 base=state_exp + childes 语料的廉价对照臂（本文件不预设）。"
+    },
+    "arms": {
+      "off": "{enabled:false}——回归基线（须逐位与改动前一致）",
+      "full": "{enabled, κ=1.0, k=6, tau_minutes=10.0, gain=1.0}——主臂",
+      "shuf": "同 full + shuffle_assoc——内容特定性阴性对照",
+      "nodep": "同 full + no_deposit（检索不 activate）——检验『写』是否必要",
+      "nodecay": "同 full + tau_minutes=1e5（近似不衰减）——检验衰减是否必要",
+      "bigk": "同 full + k=20——工作集容量对照"
+    },
+    "loop_being_tested": "听/想到 f → ws.activate(f)（沉积增益 + 沿共现行 A 扩散，A=一阶后继频次行归一化）→ 下一 tick 工作集改变 → 检索仅在激活最高的 k 个『型』内取胜者（不再随机抽 200/44k）→ 胜者再 activate（写回复述）= 双向闭环。实现见 workspace.py 与 language.py evoke_inner_speech:479-503。",
+    "real_graph": "『真实联想图』从 state_P6_childes/linguistic_memory.json 的听到顺序重建（与 R5 用 state_exp/linguistic_memory.json 同法），所有臂共用同一张图。因 childes 语料文件是频次池而非序列，故只能从『被听到的顺序』取真值——这正是该文件所记录的内容。",
+    "harness": "仿 run_R5.sh 写 run_P6B.sh：六臂 fan-out，cp -R state_P6_childes 后 rm -f pid/workspace.json 等，STATE_DIR/LOG_DIR/CONFIG/INBOX_DIR 隔离，time.seed_python_random=true，--time-scale 1e9，day_of() 轮询至 fork+30 停。"
+  },
+
+  "hypotheses": {
+    "H6a_承重": "沉积片段 f 后，f 在下一 tick 进入工作集/被检索的概率显著高于『打乱沉积』对照。",
+    "H6b_内容特定回响（主判据）": "相邻念头的『真实联想』命中率 full 显著高于 shuf，差异 ≥ 0.07（R5 同阈值）。R5 在 51 型下该差异为 0.009。",
+    "H6c_持续性": "工作集使念头流出现内容特定的复现/自相关（对照 nodep / nodecay）。",
+    "H6d_自指": "自我指向片段（含你/我）因复述回写更易再入工作集，推动 self_model 生长；与 P6-A 中 childes 已生到 v7 呼应。"
+  },
+
+  "falsification": {
+    "H6b_阴性": "full 与 shuf 的联想命中率差异仍 < 0.07 → 输入多样性不是充分杠杆：内容特定性不能仅靠扩语料涌现，架构需另改（该结论与阳性同等重要，如实记录）。",
+    "边界": "任何 >10% 的行为差异只报『存在耦合』，不得宣布『类自我意识』或『双向已成立』。与 R5 一致。"
+  },
+
+  "metrics": "复用 experiments/analyze_R5.py 的度量——MC_开口（工作集非空占比/平均大小/检索来源）· M_承重（沉积后下一 tick 命中率）· M_回响（相邻念头真实联想命中率）· M_持续（类型复现率/自相关）· M_行为（vs off 的 phrase_agreement / jaccard / first_divergence）· M_自指（self_model 版本数、self_directed 检索占比）。分析器需参数化为读 state_P6B_* 且真值图取自 state_P6_childes。",
+
+  "predictions_registered": {
+    "H6b": "弱阳性预期。理由：childes 型数多 → 共现行理论上更锐（不像 51 型的 17.3% 弥散）；但 Zipf 采样下高频句主导，行仍可能弥散——此与 R5 直觉相反，必须实测。",
+    "H6a": "不确定。",
+    "H6c_d": "不确定。"
+  },
+
+  "audits": {
+    "zero_impact_on_running": "纯离线新臂，fork 自 P6 终态，不改 main.py / language.py / workspace.py；workspace 默认关语义不变，不影响在跑实验。",
+    "prereg_before_data": "本文件在 P6-B 采集前冻结。判据与阈值（含 0.07）承接 R5，不因 P6-A 结果调整。",
+    "fork_hygiene": "同 run_R5.sh：cp -R 后清除 pid/workspace.json/rng_state.json 等；环境变量隔离。",
+    "unit_check_planned": "启动前验：off 臂与基底逐位一致（workspace 关时行为不变）；childes 基底载入 83,302 型；full 臂 workspace.json 的 n_deposit>0 且 act 非空。"
+  },
+
+  "open_risks": [
+    "工作集的 assoc 从空起步，只在 Step B 新增听到的『型』上建构——有效型数 ≈ 30 天听到量（数千级），而非全 83,302。仍远超 55，但不等于『全语料工作集』；如实标注。",
+    "k=6 的窄工作集可能把念头流锁死在少数型（多样性塌缩）——以 bigk 作容量对照。",
+    "childes 高频句主导可能使联想行依旧弥散 → H6b 仍可能阴性。",
+    "时序：须在 P6-A 两臂停采后再跑（避免 CPU/热载竞争）；run_P6.sh 的 TGT=315 完成后启动。"
+  ],
+
+  "note": "阴性如实记录。判据事前冻结，事后不得修改。本实验是对 R5『输入贫乏』诊断的直接、可证伪检验——把 R5 自己指认的下一步杠杆真正拉一遍。"
+}

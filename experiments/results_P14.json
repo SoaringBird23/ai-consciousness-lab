@@ -1,0 +1,80 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "window_days": 60,
+  "arms": {
+    "off": {
+      "arm": "off",
+      "M5_vocal_n": 255,
+      "M5_vocal_n_post30": 121,
+      "M1_overlap_post30": 1.0,
+      "M2_C_post30": 8.341592914594042,
+      "M2_C_pre30": 8.315886131516653,
+      "M2_r_in": 0.016391184573002756,
+      "M2_r_out": 0.0019649945449058707,
+      "M2_n_speech_in": 119,
+      "M2_n_speech_out": 5079,
+      "M4_E_dispersion_post30": 0.0,
+      "M3_pred_err_pre15": null,
+      "M3_pred_err_post15": null,
+      "n_rm_updates": 0,
+      "n_speech_total": 54960
+    },
+    "full": {
+      "arm": "full",
+      "M5_vocal_n": 255,
+      "M5_vocal_n_post30": 121,
+      "M1_overlap_post30": 0.21487603305785125,
+      "M2_C_post30": 8.333389145008486,
+      "M2_C_pre30": 8.315886131516653,
+      "M2_r_in": 0.016391184573002756,
+      "M2_r_out": 0.0019669289754482076,
+      "M2_n_speech_in": 119,
+      "M2_n_speech_out": 5084,
+      "M4_E_dispersion_post30": 0.8416,
+      "M3_pred_err_pre15": 5.6996276923076925,
+      "M3_pred_err_post15": 4.814043396226415,
+      "n_rm_updates": 240,
+      "n_speech_total": 54965
+    },
+    "shuf": {
+      "arm": "shuf",
+      "M5_vocal_n": 255,
+      "M5_vocal_n_post30": 121,
+      "M1_overlap_post30": 0.23140495867768596,
+      "M2_C_post30": 8.29910879788896,
+      "M2_C_pre30": 8.315886131516653,
+      "M2_r_in": 0.016391184573002756,
+      "M2_r_out": 0.001975053583726023,
+      "M2_n_speech_in": 119,
+      "M2_n_speech_out": 5105,
+      "M4_E_dispersion_post30": 0.4166,
+      "M3_pred_err_pre15": 6.984883076923077,
+      "M3_pred_err_post15": 5.716245283018868,
+      "n_rm_updates": 240,
+      "n_speech_total": 54986
+    }
+  },
+  "power_ok": true,
+  "verdicts": {
+    "H14a_选择标准改变(重合<0.80)": {
+      "pass": true,
+      "detail": "full 后30日重合=0.21487603305785125"
+    },
+    "H14b_有组织性(C>=1.5x off)": {
+      "pass": false,
+      "detail": "full C=8.333389145008486 vs off C=8.341592914594042 → 比=0.999"
+    },
+    "H14c_在学习(后15<0.7x前15)": {
+      "pass": false,
+      "detail": "前15=5.6996276923076925 后15=4.814043396226415"
+    },
+    "H14d_内容特定性(shuf<1.2x off 且 full>shuf)": {
+      "pass": true,
+      "detail": "off=8.341592914594042 full=8.333389145008486 shuf=8.29910879788896"
+    },
+    "H14e_反事实(自因>0 且>0.0151)": {
+      "pass": false,
+      "detail": "自因分量(r_in-r_out)=0.0144243"
+    }
+  }
+}

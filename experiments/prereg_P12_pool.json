@@ -1,0 +1,89 @@
+{
+  "experiment": "P12 真·全长池：修掉 P11 的候选池短路，在零缺陷代码上做双向工作空间的最终测试",
+  "created": "2026-10-10",
+  "preregistered_before_data": true,
+  "step_of": "P11 阴性结果的根因修复；本批同时清零了同类实现缺陷（见 audit）",
+
+  "diagnosis": {
+    "p11_result": "P11 三臂：hardcap adj=0.045/uniq=39/recur5=0.749；soft 0.000/55/0.908；soft_shuf 0.000/51/0.914。H11a 阳性（decay bug 诊断成立），H11b 阴性（0.000−0.000=0）。",
+    "p11_h11b_root_cause": "soft 臂的候选池实现短路。language.py 在 soft_prior 下走 wset=None 分支，落到 `random.sample(self.memory, 200)`，而 memory=51721 条 → 候选被缩到 0.4%，正是 workspace.py 自述『绕开』的 R3/R4 采样瓶颈又回来了。旁证：soft 与 soft_shuf 三项读数几乎全同（打乱联想行零效果），说明先验加权作用在近乎随机的样本上被淹没。故 H11b 阴性**不构成对『软先验』机制的证伪**。",
+    "audit_findings": {
+      "vocal_tick_retry": "caregiver_speaks 的 E4 应答（language.py:302-311）只在『应答成功』时置位 _vocal_responded，窗口内每 tick 重掷 → 60s 窗口 1200 次，P(应答)=1-(1-0.7)^1200≈1.0，vocal_response_prob 被架空为死参数。实测：修复前应答率 300/300=100.0%，修复后 219/300=73.0%（≈设定 0.7），且决策只发生在窗口首个 tick。与 echo 旧 bug 完全同构。影响所有 caregiver.mode=contingent 的历史实验线（E4、E6 部分、C1b、s2_* 等）——其『应答率』一律是 100%，相关行为学解读须重新限定。",
+      "persistence_gaps": "workspace._acc_h（衰减累积器）与 language._last_thought/_last_evoke_t 未进入 snapshot/load。前者使重启最多丢失 tau*1% 的衰减窗口（tau=720min→7.2min；tau=1e5→16.7 仿真小时），令 act 系统性偏高；后者使 fork/重启后首个检索丢 priming 前驱、节流归零。各臂对称故不影响臂间可比性，但破坏『fork 点 = 自然续跑点』的等价性。",
+      "verified_sound": "经实测确认无恙：echo 单次掷骰（0.0241 vs 理论 0.0240）、evoke_threshold=0.72 可达（全量最优分 min=1.130）、goals 滚动窗口分母恒≥1、decay 修复语义与连续解误差<1%、fork 删 workspace.json 后确实空集起步。"
+    }
+  },
+
+  "fixes_applied": [
+    "language.py：soft_prior 分支改为 sample = self.memory（真全长池，不裁候选、不随机抽样）",
+    "language.py：vocal 应答改为窗口首次调用即决策（无论应答与否），恢复 vocal_response_prob 语义",
+    "language.py：snapshot/load 补 last_thought / last_evoke_t",
+    "workspace.py：snapshot/load 补 acc_h"
+  ],
+
+  "design": {
+    "instance": "三臂，SIGSTOP 安全 fork 自同一基底（state_P6_childes，day 315），与 P6B/P8/P9/P10/P11 同源同窗口",
+    "window": "day 315 → 345（30 仿真日）",
+    "arms": {
+      "pool": "soft_prior=true, soft_gamma=0.0 → **全池候选，零加权**。与 P6B off 的区别仅在候选池（全池 vs 200 抽样）；与 P11 hardcap 的区别仅在候选池（全池 vs 硬帽 k6）。分解出『候选池构成』本身的效应 —— 主臂之一",
+      "soft": "soft_prior=true, soft_gamma=1.0 → 全池 + act 软加权（act 只经打分乘子 1+γ·Âct 作用）。**主臂**",
+      "soft_shuf": "同 soft + shuffle_assoc → 内容对照（扩散行被打乱，Âct 的构成不含真实共现信息）"
+    },
+    "layer_decomposition": "pool 相对 P6B-off(0.0035) = 纯粹把候选池从 0.4% 扩到 100%；soft 相对 pool = 纯粹加入先验加权；soft_shuf 相对 soft = 纯粹检验先验内容是否真实。三层单变量互不混杂。",
+    "invariants": [
+      "基底、窗口、真值图、adj_top3 判据、阈值 0.07 与 R5/P6B/P8/P9/P10/P11 完全一致",
+      "非 workspace 配置键与 config_P11_soft.json 逐位一致（已校验）",
+      "全池扫描实测 0.032 秒/次检索 → 30 日额外开销约 1.1 分钟，不构成时间尺度混淆"
+    ],
+    "cross_batch_reference": {
+      "P6B_off": "adj 0.0035 / uniq 403 / recur5 0.023（ws 全关 + 200 抽样）",
+      "P11_hardcap": "adj 0.045 / uniq 39 / recur5 0.749（k6 硬帽 + 真衰减，同基底同窗口同批代码路径）"
+    }
+  },
+
+  "hypotheses": {
+    "H12a_候选池构成是否承重": {
+      "criterion": "adj_top3(pool) > adj_top3(P11 hardcap)=0.045",
+      "positive": "候选池从『硬帽 6 型』扩到『全池 4055 型』本身提升命中率 → 『候选集构成』这条在 P8 被判封闭的路径需重新打开",
+      "negative": "全池与硬帽无差别或更差 → P8 的封闭结论在衰减修复后仍成立，该族确认封闭"
+    },
+    "H12b_内容特定性（主判据）": {
+      "criterion": "adj_top3(soft) − adj_top3(soft_shuf) ≥ 0.07",
+      "positive": "工作空间首次在不掐死候选多样性的前提下产生有内容的内部回响 —— 『双向』的第一个正面证据",
+      "negative": "三条通路（力度 / 容量 / 优先级）在零缺陷代码上全部封闭，且候选池族（P12）亦不承重 → 问题在 A 的构造：把『听到→听到』的语料共现与『想到→想到』的念头共现混在同一张表里",
+      "note": "阈值 0.07 由 R5 事前设定并沿用，不因新数据调整"
+    },
+    "H12c_伴随读数": {
+      "criterion": "uniq(soft)、recur5(soft) 与 pool / P11 hardcap 比较",
+      "note": "全池扫描下 uniq 的语义与硬帽不同（候选基数不同），故 uniq 仅作结构伴随读数，不作判据。两种结果都如实报告。"
+    }
+  },
+
+  "falsification": "本批唯一可宣布的阳性是 H12b。若 H12b 为阴，则『把 A 接进打分』（P9/P10）与『把 A 用于加权而非裁剪』（P11/P12）俱否定，候选池族（P8/P12）亦不承重，容量族（P8）先封 —— 本项目所有已试的语言层杠杆全部封闭，结论须为：**当前 A 的构造（听—听共现）不能承载念头—念头的工作空间**，下一步不能继续调杠杆，只能重做 A。",
+
+  "predictions_registered": {
+    "H12a": "不确定。全池恢复了候选多样性（uniq 或回到数百量级），但『命中真值图 top3』依赖的可能是频率主导的同一批枢纽短语。",
+    "H12b": "不确定。这是本机制第一次被真正检验（P11 那次被候选池短路）。",
+    "H12c": "倾向 uniq(soft) 与 uniq(pool) 同量级且显著高于 hardcap 的 39（候选基数恢复）。"
+  },
+
+  "implementation_audit": {
+    "smoke_tested": {
+      "vocal": "300 个独立 60s 窗口：修复后应答率 73.0%（≈0.7），修复前 100.0%；修复后所有应答发生在窗口首个 tick",
+      "pool": "soft_bonus 归一化 a=1.000/b=0.250/c=0.000；候选 = self.memory（51721 条）",
+      "persistence": "language snapshot 含 last_thought/last_evoke_t；workspace snapshot 含 acc_h",
+      "perf": "全池打分 0.032 s/次",
+      "zero_regression": "soft_prior=False → 原 hardcap 路径；enabled=False → working_set()=None → 原 else 分支"
+    },
+    "default_off": "全部新键默认 false/0.0，未设键的实例行为逐位不变；主线 config.json workspace=null，decay 立即返回，不受影响。",
+    "runnable_before": "P11 已跑完，机器上无实验进程（仅主线 1:1），无并发/热载冲突。"
+  },
+
+  "open_risks": {
+    "tau_gamma_free_params": "tau=720min、γ=1.0 均为依语率匹配的人为选择。若 H12b 阴而池内读数显示先验项贡献极小（可从落盘 act 量级判定），则 tau/γ 扫描是下一步 —— 但本批定位为『零缺陷代码上的最终测试』，不再追加调参。",
+    "single_seed": "单次运行，无多种子方差（与前几批同源局限）。",
+    "truth_graph_self_loop": "真值图的 top3 在构造时排除自环（a≠b），而语料共现的最强项恰是照护者重复（听—听自环）。即使机制完全正确，若『听—听』结构与『想—想』结构本质不同，adj_top3 也不应升高 —— 这一点本身就是本批要回答的问题，而非可绕开的噪声。"
+  },
+
+  "honest_note": "本批是 P11 的直接修复加审计清零后的重测。与既往批次的关键区别：这批代码里已知的『守卫恒真 / 阈值不可达 / 候选池短路 / 死参数』四类缺陷已全部清零并逐项冒烟验证。若仍为阴，则不再是实现问题，而是对 A 的构造方式的判决 —— 届时结论应写成『听—听共现不构成念头—念头的工作空间』，并转入 A 的重做（P13），而不是继续调杠杆。"
+}

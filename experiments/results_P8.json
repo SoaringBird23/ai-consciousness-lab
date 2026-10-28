@@ -1,0 +1,69 @@
+{
+ "n_inherit": 9336,
+ "K": 4055,
+ "arms": {
+  "k20_shuf": {
+   "seq": {
+    "n_retr": 863,
+    "n_uniq": 24,
+    "diversity": 0.00591861898890259,
+    "adj_top3_hit": 0.058004640371229696,
+    "recur5": 0.6375291375291375,
+    "self_ratio": 0.04866743916570104
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3385,
+    "n_types_act": 2114,
+    "n_assoc": 2113,
+    "k": 20,
+    "kappa": 1.0,
+    "shuffle_assoc": true,
+    "no_deposit": false
+   },
+   "overlap": null
+  },
+  "k40_full": {
+   "seq": {
+    "n_retr": 863,
+    "n_uniq": 28,
+    "diversity": 0.0069050554870530205,
+    "adj_top3_hit": 0.04640371229698376,
+    "recur5": 0.6107226107226107,
+    "self_ratio": 0.07995365005793743
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3329,
+    "n_types_act": 2081,
+    "n_assoc": 2081,
+    "k": 40,
+    "kappa": 1.0,
+    "shuffle_assoc": false,
+    "no_deposit": false
+   },
+   "overlap": null
+  },
+  "k40_shuf": {
+   "seq": {
+    "n_retr": 886,
+    "n_uniq": 30,
+    "diversity": 0.007398273736128237,
+    "adj_top3_hit": 0.05310734463276836,
+    "recur5": 0.6549375709421112,
+    "self_ratio": 0.05981941309255079
+   },
+   "ws": {
+    "enabled": true,
+    "n_deposit": 3362,
+    "n_types_act": 2087,
+    "n_assoc": 2087,
+    "k": 40,
+    "kappa": 1.0,
+    "shuffle_assoc": true,
+    "no_deposit": false
+   },
+   "overlap": null
+  }
+ }
+}

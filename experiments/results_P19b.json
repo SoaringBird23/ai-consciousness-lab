@@ -1,0 +1,123 @@
+{
+  "fork_sim_time": 22002086.380798087,
+  "arms": {
+    "off": {
+      "arm": "off",
+      "n_turns": 14745,
+      "n_self": 419,
+      "n_partner": 14326,
+      "distinct_rate": 0.1026,
+      "top_share": 0.2076,
+      "exact_echo_rate": 0.1408,
+      "linked_non_echo": 0.1361,
+      "linked_all": 0.2578,
+      "top5": [
+        [
+          "对不对",
+          87
+        ],
+        [
+          "好不好",
+          51
+        ],
+        [
+          "好啦",
+          42
+        ],
+        [
+          "是不是",
+          41
+        ],
+        [
+          "这是什么",
+          35
+        ]
+      ]
+    },
+    "full": {
+      "arm": "full",
+      "n_turns": 14695,
+      "n_self": 436,
+      "n_partner": 14259,
+      "distinct_rate": 0.1307,
+      "top_share": 0.2408,
+      "exact_echo_rate": 0.1216,
+      "linked_non_echo": 0.1097,
+      "linked_all": 0.2179,
+      "top5": [
+        [
+          "对不对",
+          105
+        ],
+        [
+          "好啦",
+          50
+        ],
+        [
+          "好不好",
+          47
+        ],
+        [
+          "晚啦",
+          28
+        ],
+        [
+          "是不是",
+          28
+        ]
+      ]
+    },
+    "shuf": {
+      "arm": "shuf",
+      "n_turns": 14052,
+      "n_self": 400,
+      "n_partner": 13652,
+      "distinct_rate": 0.1275,
+      "top_share": 0.1075,
+      "exact_echo_rate": 0.1378,
+      "linked_non_echo": 0.1221,
+      "linked_all": 0.2431,
+      "top5": [
+        [
+          "好不好",
+          43
+        ],
+        [
+          "好啦好啦",
+          39
+        ],
+        [
+          "你看",
+          27
+        ],
+        [
+          "是不是",
+          26
+        ],
+        [
+          "安静哦",
+          25
+        ]
+      ]
+    }
+  },
+  "verdicts": {
+    "H19b1_多样性(full distinct >= off+0.10)": {
+      "pass": false,
+      "detail": "full=0.1307 off=0.1026"
+    },
+    "H19b2_去回声(full echo <= off-0.05)": {
+      "pass": false,
+      "detail": "full=0.1216 off=0.1408"
+    },
+    "H19b3_承接保持(非回声轮 full >= off-0.05)": {
+      "pass": true,
+      "detail": "full=0.1097 off=0.1361"
+    },
+    "H19b4_对照分层(full distinct > shuf)": {
+      "pass": true,
+      "detail": "full=0.1307 shuf=0.1275"
+    }
+  },
+  "note": "承接按词重叠（共现层代理）；H19b3 只看**非回声**轮，用于确认多样性不是靠破坏承接换来的。"
+}

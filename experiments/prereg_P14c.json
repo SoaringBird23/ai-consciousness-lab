@@ -1,0 +1,53 @@
+{
+  "experiment": "P14c 补强：把 P14b 的『内容敏感听者』对比加强（HIGH 词短爆回应 + r_HIGH=0.95/r_LOW=0.05）并延长窗口至 120 日，检验『为效果而说』能否越过原门槛",
+  "created": "2026-10-11",
+  "preregistered_before_data": true,
+  "is_amendment_of": "P14b（prereg_P14b_content_sensitive_caregiver.json；结果 results_P14b.json）",
+  "amendment_reason": "P14b 的机制显著有效但聚合判据擦边：选择把发声的 HIGH 占比从 0.561 提到 0.925（机制工作良好），『纯内容通道』期望应答比 = 1.53（已越过 1.5），但观测聚合 C 仅 1.23——差值来自背景照护者言语稀释（窗口内 ~137 条 vs 窗口外 ~5178 条）。故本补强只加码『世界』（更强听者）与功效（更长窗口），判据一概不动。",
+
+  "design": {
+    "instance": "同 P14b：从 state_exp（XP 线 55 型旧语料、day 255）fork，三臂 off/full/shuf，仅差 response_model.enabled/shuffle，time.seed_python_random=true。",
+    "window_days": 120,
+    "TGT": 375,
+    "listener_strength": {
+      "改变1_更强对比": "r(HIGH)=0.95、r(LOW)=0.05（P14b 为 0.9/0.1）",
+      "改变2_短爆": "对 HIGH 词，一次发声窗口内回 k=3 句（burst_high_k=3）；LOW 词至多 1 句",
+      "机制影响": "短爆提高窗口内『内容通道』的绝对条数占比 → 降低背景稀释 → 观测 C 比趋近内容通道比"
+    },
+    "mechanism_change_required": "响应模型由『有无言语(boolean)』改为『言语条数(n_speech)』统计，以便短爆被正确计入速率；该改动对 off/单句情形与 P14b 等价。",
+    "judgments_unchanged": true
+  },
+
+  "hypotheses": {
+    "H14a_选择标准改变": {"criterion": "full 后30日重合 < 0.80"},
+    "H14b_有组织性": {"criterion": "full 后30日 C ≥ 1.5 × off 同期", "note": "门槛不变（不因补强而放宽）"},
+    "H14c_在学习": {"criterion": "预测误差 EMA 后15日均值 < 前15日均值 × 0.70"},
+    "H14d_内容特定性": {"criterion": "shuf < 1.2×off 且 full ≥ 1.2×shuf"},
+    "H14e_反事实": {"criterion": "自因分量(r_in − r_out) > 0 且 > 0.0151"},
+    "H14f_学到听者规则": {"criterion": "full 的 E↔r Spearman ≥ 0.5"}
+  },
+
+  "predictions_registered": {
+    "H14b": "预期转正：短爆把内容通道占比抬高、压低稀释，观测 C 比应向内容通道比(≈1.65)靠拢 → 有望 ≥1.5×。",
+    "H14c": "预期转正：窗口 120 日、更新数约翻倍，EMA 后期误差应更低。",
+    "其余": "预期维持 P14b 的阳/阴性。"
+  },
+
+  "falsification": {
+    "若 H14b 仍不过": "即使把听者对比与幅度加强到 0.95/0.05 + 短爆，聚合 C 比仍 <1.5× → 结论应为『机制真实但受背景言语稀释所限，聚合口径下达不到 1.5×』，并如实说明这是口径与稀释问题、非机制失败。",
+    "功效/空间门槛同 P14b": "M5<80 或 M7 越界 → 判不可判定。"
+  },
+
+  "open_risks": {
+    "1_听者为实验者构造": "同 P14b：学到的是该模拟器的内容规则，非语义。",
+    "2_短爆改变听者统计性质": "短爆使内容通道更『响』，可能同时抬高 off 的基线（若 off 恰好常发 HIGH 词）——故必看 full 相对 off 的净提升，而非绝对 C。",
+    "3_与 P14b 不可直接比较": "P14c 改了听者与窗口，结论独立成立，不回溯修改 P14b。"
+  },
+
+  "audits": {
+    "unit_test_required": "覆盖：① burst_high_k=1 时与 P14b 逐位一致（不短爆）；② burst_high_k=3 时 HIGH 词一次窗口产出 3 条回应、LOW 词 ≤1 条；③ advance_clock 按条数计入（n=3 与 n=1 速率相差 3 倍）。",
+    "variable_separation": "P14c 相对 P14b 仅两处：content_response.map_file+r 与 burst_high_k；三臂仅差 response_model。"
+  },
+
+  "note": "补强只加码世界与功效，不改判据；阴性如实记录，不得回溯修改 P14b。"
+}

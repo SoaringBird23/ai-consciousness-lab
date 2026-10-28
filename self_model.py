@@ -35,6 +35,12 @@ class SelfModel:
         self.version = 0
         self.updated_at = None
         self.history = []
+        # P15：反事实自我表征汇总（结构化，非语言）
+        self.counterfactual = None
+
+    def set_counterfactual(self, stats):
+        """P15：写入反事实汇总 {count, mean_delta, last_delta, mean_regret}。"""
+        self.counterfactual = stats
 
     def _is_empty(self, text):
         """判断是否是空话模板。"""
@@ -113,6 +119,7 @@ class SelfModel:
             "updated_at": self.updated_at,
             "history_count": len(self.history),
             "history": self.history,   # 修复：历史随主文件持久化（此前重启即丢失）
+            "counterfactual": self.counterfactual,   # P15
         }
 
     def load(self):
@@ -124,6 +131,7 @@ class SelfModel:
         self.version = d.get("version", 0)
         self.updated_at = d.get("updated_at")
         self.history = d.get("history", [])
+        self.counterfactual = d.get("counterfactual")
         return True
 
     def save(self):

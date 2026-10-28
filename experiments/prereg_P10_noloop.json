@@ -1,0 +1,70 @@
+{
+  "experiment": "P10 联想启动 + 屏蔽自环：验证 P9 的坍缩是否由 A 的自环主导所致",
+  "created": "2026-10-09",
+  "preregistered_before_data": true,
+  "step_of": "P9 的直接修复（单变量：prime_no_self_loop 由 false 改为 true）",
+
+  "diagnosis": {
+    "p9_result": "P9 三臂中 off=0.042、full=0.000（priming 开启后 adj_top3 归零）、recur5 由 0.823 升至 0.917。即 priming 使系统陷入自我重复循环，内容特定性反而归零。",
+    "mechanism": "priming 的权重项 Â[prev][cand] 取自共现矩阵 A，而 A 中最强的联结是**自我重复（prev→prev 的自环）**。冒烟验证：在 A={a:{a:100,b:3,c:1}} 下，Â[a][a]=0.9615——即 96% 的权重都投给自己。",
+    "prior_evidence": "该风险在 P7 的可行性探查中已被记录，原文：「共现最强的对几乎全是自我重复（对不对→对不对 1654 次，lift≈19）。照护者重复本身是真实特征，但不是『话题』。」",
+    "why_it_zeroes_adj_top3": "真值图的 top3 在构造时排除了自环（a≠b），故当念头序列退化为 A→A→A 时，相邻对 (A,A) 永不命中 → adj_top3 = 0。"
+  },
+
+  "relation": "P9 证明『把 A 接进检索打分』确实产生因果作用（off 与 full 的检索序列 jaccard=0.042，adj_top3 0.042→0.000）——这是本项目第一次让念头内容真正进入决策回路。P10 只修一处：让上一个念头**不给自己投票**，其余全部不动。",
+
+  "design": {
+    "instance": "三臂，SIGSTOP 安全 fork 自同一基底（state_P6_childes，day 315），与 P6B/P8/P9 同源同窗口",
+    "window": "day 315 → 345（30 仿真日）",
+    "mechanism_change": "prime_bonus 中：① 若 prev == cand 直接返回 0；② 分母 Σ 同时排除 A[prev][prev]。即归一化只落在**真实后继**上。",
+    "arms": {
+      "noloop_full": "priming 开（γ=1.0）+ 屏蔽自环 —— **主臂**",
+      "noloop_shuf": "priming 开（γ=1.0）+ 屏蔽自环 + 打乱 A 的行对应 —— **关键对照**",
+      "off": "priming 关 —— 一致性检查（P9 同配置 off 为 0.042，本臂应复现，用于确认跨批可比）"
+    },
+    "invariants": [
+      "基底、窗口、真值图、adj_top3 判据、阈值 0.07 与 R5/P6B/P8/P9 完全一致",
+      "相对 P9，唯一变量是 prime_no_self_loop（false → true）"
+    ]
+  },
+
+  "hypotheses": {
+    "H10a_坍缩是否被修复": {
+      "criterion": "adj_top3(noloop_full) > 0.042（即高于 off 基线），且 recur5(noloop_full) < 0.823",
+      "positive": "屏蔽自环后系统不再自我重复，说明 P9 的失败确由自环主导所致，诊断成立",
+      "negative": "若仍 ≈0 或仍高重复，说明 A 的问题不止自环（可能有更深的结构缺陷），须转向 A 的构造方式"
+    },
+    "H10b_内容特定性（主判据）": {
+      "criterion": "adj_top3(noloop_full) − adj_top3(noloop_shuf) ≥ 0.07",
+      "positive": "**工作空间首次产生有内容的内部回响**——这是『双向』的第一个正面证据",
+      "negative": "即使排除自环，A 的内容仍不产生内容特定性 → 三条通路（力度 / 容量 / 优先级）全部封闭",
+      "note": "阈值 0.07 由 R5 事前设定并沿用，不因新数据调整"
+    },
+    "H10c_多样性": {
+      "criterion": "uniq(noloop_full) 与 uniq(off)、uniq(P9 full) 的比较",
+      "note": "P9 full 的 uniq=11、off=10。若屏蔽自环后 uniq 回升，说明偏置不再导致坍缩；两种结果都如实报告"
+    }
+  },
+
+  "falsification": "本批唯一可宣布的阳性是 H10b。若 H10a 与 H10b 均为阴，则『把 A 接进打分』这条路径也被证伪，本项目将没有任何已试杠杆能产生内容特定性。",
+
+  "predictions_registered": {
+    "H10a": "倾向阳性（自环权重 0.96 是压倒性的，屏蔽后行为应有明显变化）",
+    "H10b": "不确定。即使排除自环，A 仍混有『听到→听到』的语料共现，其对『念头→念头』的预测力未经验证",
+    "H10c": "倾向 uniq 回升"
+  },
+
+  "implementation_audit": {
+    "single_variable": "相对 P9 full，唯一改动 = prime_no_self_loop: true",
+    "default_off": "该键默认 false；未设该键的实例（含 P9 全部在跑实例与既有 config）行为逐位不变",
+    "smoke_tested": "已验证：屏蔽时 Â[a][a]=0.0、Â[a][b]=0.75（分母排除自环）；不屏蔽时 Â[a][a]=0.9615（复现 P9 行为）"
+  },
+
+  "open_risks": {
+    "single_seed": "单次运行，无多种子方差（与前几批同源局限）",
+    "A_construction": "若屏蔽自环后仍不产生内容特定性，则问题可能在 A 的构造本身（把『听到的共现』与『想到的共现』混在同一张表里），须设计 P11 分离二者",
+    "cross_batch_off": "off 臂与前几批同配置，本批仍重跑一次以排除批次差异；若其值与 P9 off 的 0.042 明显不符，须先解释该差异再解读主判据"
+  },
+
+  "honest_note": "P9 的失败给出的是一个**具体可修的缺陷**（自环），而非『架构不可行』的结论——这是它与前六批失败的本质区别。但即便如此，本实验仍可能失败：屏蔽自环只解决『最强信号是假的』，不保证『剩下的信号是真的』。"
+}

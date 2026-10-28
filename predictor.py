@@ -21,6 +21,9 @@ class EventPredictor:
         self.counts = [1.0] * self.n_bins  # 拉普拉斯先验
         self.total = float(self.n_bins)
         self.surprises = []  # 最近 window 条惊奇值
+        # 优化：增量维护最近 window / 2*window 之和，避免每 tick 对切片求和 O(window)
+        self._wsum = 0.0     # Σ surprises[-window:]
+        self._w2sum = 0.0    # Σ surprises[-2*window:]
         # ---- E4：动作-结果共变学习（传出副本/比较器的功能实现）----
         # 学习"我的动作之后是否更常出现照护者言语"——能动感的统计学基础
         self.act_window_s = 60.0      # 动作后计为"跟随"的窗口
@@ -38,8 +41,16 @@ class EventPredictor:
         self.counts[h] += 1.0
         self.total += 1.0
         self.surprises.append(surprise)
-        if len(self.surprises) > self.window * 2:
-            self.surprises = self.surprises[-self.window * 2:]
+        s = self.surprises
+        L = len(s)
+        # 增量维护两个窗口和（在截断前更新，截断只移除 2w 之外的元素，不影响这两窗口）
+        self._wsum += surprise
+        if L > self.window:
+            self._wsum -= s[L - self.window - 1]
+        self._w2sum += surprise
+        if L > self.window * 2:
+            self._w2sum -= s[0]
+            self.surprises = s[-self.window * 2:]
         return surprise
 
     # ============ E4：动作-结果共变（比较器） ============
@@ -97,14 +108,17 @@ class EventPredictor:
         n = n or self.window
         if len(self.surprises) < n:
             return None
+        if n == self.window:                 # 优化：增量窗口和 O(1)
+            return self._wsum / self.window
         return sum(self.surprises[-n:]) / n
 
     def converged(self):
         """出口判据：最近窗口均值与前一段均值之差 < eps，且绝对值低于阈值。"""
         if len(self.surprises) < self.window * 2:
             return False
-        recent = self.running_mean(self.window)
-        prev = sum(self.surprises[-2 * self.window:-self.window]) / self.window
+        w = self.window
+        recent = self._wsum / w               # 优化：增量窗口和 O(1)
+        prev = (self._w2sum - self._wsum) / w
         return abs(recent - prev) < self.eps and recent < self.max_surprise
 
     def snapshot(self):
@@ -133,6 +147,8 @@ class EventPredictor:
         self.counts = [float(c) for c in d.get("counts", self.counts)]
         self.total = sum(self.counts)
         self.surprises = [float(s) for s in d.get("surprises_tail", [])]
+        self._wsum = sum(self.surprises[-self.window:])   # 优化：恢复增量窗口和
+        self._w2sum = sum(self.surprises)
         # E4 共变计数（旧格式缺省为 0）
         self.t_act = float(d.get("t_act", 0.0))
         self.t_total = float(d.get("t_total", 0.0))

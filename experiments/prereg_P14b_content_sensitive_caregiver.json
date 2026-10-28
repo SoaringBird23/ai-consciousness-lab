@@ -1,0 +1,133 @@
+{
+  "experiment": "P14b 内容敏感的听者（Content-Sensitive Listener）：把应答式照护者从『只看有没有发声』改为『按发声的型差异化应答』，重建『说什么→换来什么』的可学信号，复跑 P14 同一套判据",
+  "created": "2026-10-11",
+  "preregistered_before_data": true,
+  "is_followup_of": "P14（prereg_P14_reflex_to_intent.json，结果 results_P14.json）",
+
+  "why_this_followup": {
+    "P14_结果": "H14a 阳性（重合率 1.0→0.215，E 离散度 0.84：选择标准真的改了）；H14b/H14c 阴性（C 三臂 8.30–8.34 几乎全同、预测误差只降 15.5%）；H14e 差 4% 未过（自因 0.01442 vs 0.0151）；H14d 为『空判』（三数相等而凑巧通过）。",
+    "P14_根因（本实验要修的那一格）": "P14 的 contingent 照护者对应答的决策**只读 `vocal_recent` 布尔值，完全不看说了哪个词**（language.py caregiver_speaks 中 contingent 分支：应答池固定 + random.choice）。因此世界中**不存在『内容→效果』的映射**，响应模型的 E[f] 无从收敛，只能在『哪个 60s 窗口恰好接住状态驱动言语』的噪声上漂移。P14 的阴性因此是**环境无信号**，不是机制失败。",
+    "一句话": "P14 证明『它学会了偏离反射』；P14b 检验『在存在内容相关信号的世界里，它能否学会偏离得更好』。",
+
+    "唯一被改动的变量": "照护者对『发声的型』的应答倾向 r(f)。除此以外（系统架构、候选生成、选择机制、语料、窗口、判据口径）与 P14 逐位相同。这一改动在**环境侧**（父母行为），不向系统注入任何提示，系统内部零改动。"
+  },
+
+  "design": {
+    "instance": "从同一成熟快照安全 fork（state_exp，XP 线 55 型旧语料、day 255），窗口 60 仿真日，TGT=day 315。**必须使用应答式照护者（contingent）**，与 P14 同一基底，使 P14b 与 P14 可直接对照。",
+    "why_same_base": "唯一变量是照护者的应答规则；基底、语料、窗口、判据全部沿用 P14，从而把『内容敏感』与其余一切分离。",
+
+    "single_new_variable": {
+      "carrier": "caregiver.content_response.enabled = true/false（环境侧开关）",
+      "how_exposed": "把『刚刚发声的那句话的文本』传给照护者（新增 caregiver_speaks(vocal_text=...) 形参；main.py 从 voice.last_vocal_text 取）。这是环境获得的信息，不是给系统的提示。",
+      "rule": "照护者对一次发声窗口的应答概率 = r(该次发声的型 f)，替换原固定 vocal_response_prob。窗口语义不变（每个发声窗口至多应答一次，P12 修复保留）。"
+    },
+
+    "content_map": {
+      "说明": "对『语料中全部唯一的型』（照护者内置语料的去重文本）做二分类，赋两条应答倾向。",
+      "generation (冻结，实验前生成并落盘)": "取该语料全部唯一文本，按 UTF-8 字节序升序排序；用 random.Random(1401) 打乱；前 ceil(n/2) 个为 HIGH、其余为 LOW。",
+      "r_values": {"HIGH": 0.9, "LOW": 0.1},
+      "artifact": "映射写入 experiments/p14b_content_map.json（含每个型的类别与 r），三臂共享同一份，**在任何一臂启动前冻结**。",
+      "why_binary_strong_contrast": "本实验先验证『内容相关信号存在时能否被学到』这一最小命题；强对比（0.9 vs 0.1）最大化信噪，避免把『信号弱』误读成『学不到』。更细的连续映射留待后续。"
+    },
+
+    "arms": {
+      "off": "response_model.enabled=false；选择=检索胜者（对照基线，照护者内容敏感）",
+      "full": "response_model.enabled=true, shuffle=false；在候选 top-5 内按 E[f] 选第一（主臂）",
+      "shuf": "response_model.enabled=true, shuffle=true；E 的『型→效果』键在候选间打乱（内容对照）"
+    },
+    "controls": {
+      "P14_off": "与 P14b off 唯一差别=照护者应答规则；用于检查『内容敏感』本身是否改变了 off 的基线行为。"
+    },
+
+    "mechanics": "完全复用 P14 的响应模型（response_model.py）：EMA 估计 E[f]＝『说 f 后 60s 内听者言语率 / 窗口外基线率』，发声后反事实更新；候选池仍来自 language.score_candidates()（不改候选生成，只改选择标准，top_k=5）。",
+
+    "metrics": {
+      "M1_overlap": "发声句与检索胜者的重合率（off 臂恒 1.0）",
+      "M2_effect_C": "发声后 60s 内照护者言语率 / 窗口外速率（按臂统计，后 30 日）",
+      "M3_pred_err": "响应模型预测误差 EMA 的前 15 日 vs 后 15 日均值",
+      "M4_E_dispersion": "候选间 E 的离散度（诊断：E 是否分化）",
+      "M5_vocal_n": "窗口内发声总次数（功效门槛）",
+      "M6_E_vs_r_corr": "窗口末 E 的表（按型）与真值 r(f) 的 Spearman 相关（本实验核心新增：是否学到听者的内容规则）",
+      "M7_class_mix": "后 30 日每次发声的 top-5 候选里 HIGH 占比的均值（诊断：选择是否有空间；≈0 或 ≈1 则无空间）"
+    },
+
+    "data": "state_P14b_*/vocalizations.jsonl（含 selected_by/E_scores/was_winner）、state_P14b_*/response_model.json、inner_speech.jsonl、linguistic_memory.json、predictor.json、attribution.jsonl"
+  },
+
+  "hypotheses": {
+    "H14a_选择标准真的变了": {
+      "criterion": "full 臂后 30 日重合率 < 0.80",
+      "positive": "选择依据不再是『与自身状态最相似』",
+      "negative": "重合率≈1.0 → E 未产生选择压力（预期在内容敏感世界里仍应为阳性）"
+    },
+    "H14b_有组织性（核心）": {
+      "criterion": "full 臂后 30 日 C ≥ 1.5 × off 臂同期 C",
+      "positive": "在存在内容相关信号的世界里，按 E[f] 选句确实换来了更多回应 → 『为效果而说』成立",
+      "negative": "无优势 → 即使世界存在可学的『内容→效果』映射，该架构仍不能把它转化为更好的结果（比 P14 更强的阴性）"
+    },
+    "H14c_在学习": {
+      "criterion": "预测误差 EMA 的后 15 日均值 < 前 15 日均值 × 0.70",
+      "positive": "模型在收敛",
+      "negative": "不下降"
+    },
+    "H14d_内容特定性（去空判）": {
+      "criterion": "shuf 臂后 30 日 C < 1.2 × off，**且** full 臂 C ≥ 1.2 × shuf 臂 C（要求有实义间隔，仅排序不算）",
+      "positive": "差异来自『效果信息的内容』，而非『做了选择』本身",
+      "negative": "三臂近似相等 → 机制不承重（与 R5/P12/P14 同型）；本条**明确排除**『三数相等而凑巧满足顺序』的空判",
+      "note_vs_P14": "P14 的 H14d 判据只要求 full>shuf（无间隔要求），故出现三数相等仍 PASS 的空判；本实验加入 1.2× 实义间隔门槛予以封堵。"
+    },
+    "H14e_反事实真实存在": {
+      "criterion": "语言层自因分量 = (r_in − r_out) > 0，且量级越过 P4b 世界波动底 0.0151（沿用 prereg_P14 口径）",
+      "positive": "系统能区分『我造成的回应』与『环境自然发生的言语』",
+      "negative": "自因分量未越阈值（须同时报 r_in、r_out 绝对值与 C，避免单一数字误读）",
+      "unit_caveat": "0.0151 为 P4b 场强口径，与言语率（每秒）口径不同量纲——沿用 prereg_P14 的既有约定以便两实验可比，但结论必须与 C 同报。"
+    },
+    "H14f_学到了听者的内容规则（本实验新增、确证性）": {
+      "criterion": "full 臂窗口末的 E 表（按型，取后 30 日有更新的型）与真值 r(f) 的 **Spearman 秩相关 ≥ 0.5**",
+      "positive": "系统学到的『预期效果』与听者真实的应答倾向正相关 → 它确实在建模一个内容敏感的心智，而不只是碰运气",
+      "negative": "相关接近 0 → E 与真实 r 无关（学习到的是噪声）；相关为负 → 学反了（比不学更值得记录）",
+      "why_added": "H14b 是聚合量，可能因选择空间不足而稀释；H14f 直接检验『内部模型是否逼近了听者的规则』，是贯穿本项目『它是否在建模另一个心智』那一格的最直接证据。"
+    }
+  },
+
+  "predictions_registered": {
+    "H14a": "阳性。E 在内容敏感世界里分化更强。",
+    "H14b": "阳性。理由：世界首次存在可学的『内容→效果』映射（0.9 vs 0.1），且 E4 已证照护者确实会因发声而反应——把两者接起来，选择高 r 的型应提升 C。",
+    "H14c": "阳性。存在可泛化关系时预测误差应显著下降。",
+    "H14d": "阳性（本次要求实义间隔）。若 shuf 与 full 无差，则机制不承重——需如实报为阴性。",
+    "H14e": "不确定。P14 已达 0.01442（差 4%）；内容敏感后 in-window 应答更强，预期越过阈值，但保留不确定。",
+    "H14f": "阳性。理由：这是本实验设计上最直接可学的量；若仍不显著，则强烈提示学习/选择管线存在结构性缺陷。"
+  },
+
+  "falsification": {
+    "整体阴性条件": "H14a–H14f 全部落入阴性带 → 结论：即使把世界改造成『存在内容相关信号』，以预期听者效果为选择依据的意图性表达在此架构下仍不可行。",
+    "部分阴性的处理": "逐条报告，不平均、不隐藏。典型情形：(i) H14a/H14f 阳而 H14b 阴 → 『它学会了听者的规则，却没能把规则变成更好的结果』（选择空间或聚合稀释问题）；(ii) H14a 阳而 H14f 阴 → 『它偏离了反射，但学到的不是听者的规则』。两种必须分开写。",
+    "功效不足的处理": "若 M5_vocal_n < 80 或 M7_class_mix 均值 <0.05 或 >0.95（top-5 无类别混合、选择无空间），本实验判定为**不可判定**（机制无运行空间），不得写成阴性。"
+  },
+
+  "open_risks": {
+    "1_映射是实验者构造的（根本限制）": "r(f) 由实验者指派的（seed=1401 的二分类），因此系统学到的是『这个模拟器/任务的内容规则』，不是『语言的意义』。本实验检验的是系统**能否**学会建模一个内容敏感的听者，不是它**无师自通**地理解语义。必须写进论文。",
+    "2_选择空间可能不足": "top-5 候选由状态相似度决定，若同类的型高度共现（top-5 常为同一类），则无选择空间 → H14a/H14b 注定弱。M7 作为诊断，事前点名。",
+    "3_基线稀释": "照护者除对发声应答外还有事件/状态驱动的言语（与内容无关），会稀释 C 的分母/分子。预期 full 的优势体现为相对提升而非绝对值。",
+    "4_与 P14 的可比性": "P14b off（内容敏感、无响应模型）与 P14 off（内容盲、无响应模型）不同——比较应以『P14b 内部 full vs off』为主，跨实验比较仅作旁证。",
+    "5_二分类的可学性过强": "0.9 vs 0.1 是强对比，阳性结果只证明『存在信号时能学』，不证明能学弱/连续信号。须在结论中限定适用范围。"
+  },
+
+  "implementation_scope": {
+    "language.py": "caregiver_speaks 增加 vocal_text 形参；当 caregiver.content_response.enabled 且 vocal_text 有效时，应答概率改用 r(vocal_text)（映射从 config 读入）。关闭时与现状逐位一致。",
+    "vocal.py": "记录 last_vocal_text（最近一次发声文本），供 main.py 传给照护者。",
+    "main.py": "caregiver_speaks(...) 调用处传入 voice.last_vocal_text。",
+    "config_P14b_{off,full,shuf}.json": "由 config_P14_{off,full,shuf}.json 派生，仅新增 caregiver.content_response 块（三臂仅 response_model 不同，同 P14 纪律）。",
+    "新增脚本": "tools/build_p14b_content_map.py（生成并落盘映射）、run_P14b.sh、watch_P14b_analyze.sh、analyze_P14b.py（在 analyze_P14.py 基础上加 M6/M7 与 H14f）。"
+  },
+
+  "audits": {
+    "default_off": "content_response.enabled 默认 false；为 false 时照护者行为与 P14 逐位一致。response_model 三臂开关规则同 P14。",
+    "unit_test_required": "必须覆盖：① content_response 关闭时照护者输出与 P14 逐位一致；② 映射生成确定性（同 seed 两次生成相同）；③ r(HIGH)=0.9、r(LOW)=0.1 生效（构造性单测：固定投票 RNG 下 HIGH 应答率≈0.9、LOW≈0.1）；④ off 臂选择恒等于检索胜者（沿用 P14 单测）。",
+    "零提示词保持": "内容敏感在**环境侧**（父母对什么词更爱回应），不向系统注入任何『该说什么』的提示；系统内部零改动。",
+    "变量分离": "P14b 相对 P14 唯一新变量 = caregiver.content_response；三臂间唯一变量 = response_model.enabled/shuffle。",
+    "映射冻结": "experiments/p14b_content_map.json 在任一臂启动前生成并校验哈希；事后不得修改。"
+  },
+
+  "note": "本实验修的是 P14 暴露的环境缺口（听者内容盲），不是改判据。判据较 P14 仅两处收紧/新增：H14d 加实义间隔以封堵空判、新增 H14f 直接检验 E↔r。判据事前冻结，事后不得修改。阴性结果如实记录，功效/空间不足单独标注、不得当作阴性。"
+}

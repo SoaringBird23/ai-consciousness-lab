@@ -1,0 +1,80 @@
+{
+  "experiment": "P13 重做 A：把共现矩阵从「听—听」改为「念头—念头」，并同步改用念—念真值图判据",
+  "created": "2026-10-10",
+  "preregistered_before_data": true,
+  "step_of": "P12 双判据皆阴后的第一步；本批同时修正 P12 暴露的两处结构性缺陷（判据错配、自锁）",
+
+  "diagnosis": {
+    "p12_result": "P12 三臂（day 315→345）：pool adj=0.0140/uniq=28/recur5=0.743；soft 0.000/5/0.986；soft_shuf 0.000/6/0.987。H12a 阴性（0.0140<0.045 hardcap）、H12b 阴性（0.000−0.000=0）。",
+    "judge_mismatch": "判据 adj_top3 的真值图由 analyze_R5.build_real_graph 从 <真值态>/linguistic_memory.json 的**听到顺序**重建（听—听）。若把 A 改成「念头—念头」而判据仍用听—听真值，命中率会**按构造**塌向随机基线（两者结构不同），阴性不可解读——这正是本项目反复踩过的「测法与被测机制错配」。故本批**判据必须同步换**为念—念真值图。",
+    "self_lock": "P12 soft 臂坍缩到 uniq=5、recur5=0.986，且 soft 与 soft_shuf 的序列 jaccard≈0.98（打乱 A 的行零效果）。成因：A/激活在「边用边学」里正反馈——被选中的念头沉积 act → 归一化后 soft_bonus=1.0（×2）→ 下次几乎必再胜出；同时念头流又写回 A。故本批引入**学习/使用分离**切断自锁。",
+    "feasibility": "念头流全史（state_P6_childes, 8105 条 retrieval、712 型、2317 个非自环有向对、跨 300 天）足以撑起一张念—念图；但 30 天窗口内念头型仅 5–28 个，是本批信号强度的上限风险（见 open_risks）。"
+  },
+
+  "design": {
+    "instance": "三臂，SIGSTOP 安全 fork 自同一基底（state_P6_childes，day 315），与 P6B/P8/P9/P10/P11/P12 同源同窗口",
+    "window": "day 315 → 345（30 仿真日）",
+    "mechanism_change": [
+      "A 只学「念头→念头」：workspace.thought_only=true —— activate() 不写 A（听到事件不写、念头事件的沉积也不写）；念头—念头共现改由 workspace.record_assoc() 按**念头流顺序**显式记录（由 language.evoke 每次检索胜出时调用 prev_thought→winner）。用念头流顺序而非原始激活序列的字面相邻：一天听到事件约 170 次、念头约 7 次，两者交错会使字面相邻的念头对几乎不存在（实测 1 日仅 3 行 A），A 会被架空；而判据真值图正是按 retrieval 序列构造，二者须同源。",
+      "学习/使用分离：workspace.phase_split_day=330 —— day<330 为学习期（priming 关，只学 A）；day>=330 为使用期（priming 开、A 冻结只读），切断『用 A → 改 A』自锁。",
+      "判据同步换：analyze_R5.py 新增 WSP_TRUTH_SOURCE=thought —— 真值图从 <真值态>/inner_speech.jsonl 的 retrieval 顺序重建（念—念，K≈712），而非 linguistic_memory 的听到顺序。"
+    ],
+    "arms": {
+      "tt": "thought_only + 相位分离 + priming 开(γ=1, 屏蔽自环) —— **主臂**",
+      "tt_shuf": "同 tt + shuffle_prime（A 的行对应被打乱）—— **关键内容对照**",
+      "tt_off": "同 tt 但 priming 关 —— 无注入基线（隔离「注入 A」本身的效应）"
+    },
+    "injection_note": "候选池沿用 P12 pool 的设定（soft_prior=true, soft_gamma=0.0 → 全池、零加权），使唯一注入项是 priming，不与候选池构成混杂。",
+    "invariants": [
+      "基底、窗口与 P6B/P8/P9/P10/P11/P12 完全一致；非 workspace 配置键与 config_P12_soft.json 逐位一致（已校验）",
+      "阈值 0.07 由 R5 事前设定并沿用，不因新数据调整"
+    ],
+    "judge": "adj_top3 = 窗口内相邻念头对 (a,b) 中 b ∈ top3_念(a) 的比例；top3_念 由继承史（pre-fork，8105 条念头）的念—念共现确定。随机基线≈3/712=0.004。"
+  },
+
+  "hypotheses": {
+    "H13a_机制承重": {
+      "criterion": "adj_top3(tt) > adj_top3(tt_off)",
+      "positive": "注入念—念 A 使念头流更贴近自身历史结构 → 工作空间确有因果作用",
+      "negative": "注入与不注入无差别 → A 不进入决策回路"
+    },
+    "H13b_内容特定性（主判据）": {
+      "criterion": "adj_top3(tt) − adj_top3(tt_shuf) ≥ 0.07",
+      "positive": "**首次在『机制与判据同源』的条件下得到双向工作空间的正面证据**——念头的内容结构反过来组织了后续念头",
+      "negative": "打乱 A 的内容无差别 → 「念头—念头共现」亦不是有效的工作空间基质",
+      "note": "阈值 0.07 沿用 R5 事前设定"
+    },
+    "H13c_伴随读数": {
+      "criterion": "uniq / recur5 / n_assoc 三臂比较",
+      "note": "重点看相位分离是否修复了 P12 soft 的自锁（uniq 不再塌到个位数、recur5 不再≈0.99）。两种结果都如实报告。"
+    }
+  },
+
+  "falsification": "本批唯一可宣布的阳性是 H13b。若 H13b 为阴，则继「把 A 接进打分」（P9/P10）、「把 A 用于加权」（P11/P12）、「候选池构成」（P8/P12）之后，**「A 的构造」这条最后的语言层杠杆亦告封闭**；结论须为：在当前语言层架构下，检索式念头流不存在可被内容验证的『念头—念头』工作空间，后续不得再以调 A/调注入的方式重试，须转方向（如改变念头流的生成/采样层，或重估 adj 判据本身作为「双向」度量的合法性）。",
+
+  "predictions_registered": {
+    "H13a": "不确定。P9 曾证明 priming 确实改变念头流（off 与 full 的 jaccard=0.042），但那次的改变是朝自环塌缩；本次 A 换了构造，方向未知。",
+    "H13b": "不确定。这是「念头—念头共现」第一次被作为基质正式检验。",
+    "H13c": "倾向相位分离能缓解自锁（uniq 不低于 pool 的 28 量级、recur5 明显低于 0.98），因 A 在使用期冻结、act 的 soft 权重为零。"
+  },
+
+  "implementation_audit": {
+    "smoke_tested": {
+      "thought_only": "听到事件不写 A（assoc 保持空）；heard→thought 不写；thought→thought 写入 {t1:{t2:1}}；零回归：thought_only 关时 a→b 正常写 {a:{b:1}}",
+      "frozen": "write_assoc=False 时使用期不写 A（assoc 保持空）",
+      "analyzer": "WSP_TRUTH_SOURCE=thought 时 K=712（念—念图），pool 臂 adj=0.009、随机基线 0.004；memory 默认路径零回归"
+    },
+    "default_off": "thought_only 默认 false、phase_split_day 默认 -1、WSP_TRUTH_SOURCE 默认 memory —— 未设键的实例（含主线与所有在跑 config）行为逐位不变。",
+    "legacy_priming": "phase_split_day<0 时 _ws_priming_on 恒真、_ws_assoc_frozen 恒假 → P9/P10 行为逐位保持。",
+    "runnable_before": "P12 已跑完，机器上无实验进程（仅主线 1:1），无并发/热载冲突。"
+  },
+
+  "open_risks": {
+    "window_repertoire": "念—念真值图建于 300 天史（712 型），但检验只在 30 天窗口内做；窗口内念头型若仅个位到数十，adj 的分子分母都小，信号弱。这是本批最大的不确定来源，非可通过调参绕开。",
+    "phase_split_point": "330 为依「30 天窗口取半」的人为选择，未做敏感性分析。若 H13b 临阈，须补 phase_split 扫描。",
+    "single_seed": "单次运行，无多种子方差（与前几批同源局限）。",
+    "judge_validity": "adj_top3 作为「双向」度量本身的合法性：念—念真值图描述的是『状态驱动检索的统计结构』，用它检验『A 是否让流更符合该结构』存在自我实现的风险（A 学的正是这个结构）。real vs shuf 的对照可部分缓解，但不能完全排除。"
+  },
+
+  "honest_note": "本批与既往的关键区别：判据与机制**首次同源**（都基于念头流），且用相位分离切断了此前所有批次共有的正反馈自锁。若仍为阴，则不再是实现问题，而是对『用共现矩阵承载双向工作空间』这一整条路线的判决——届时应停止在 A 上调参，转向更换念头流的生成/采样层或重估度量本身。"
+}

@@ -1,0 +1,67 @@
+{
+  "experiment": "P15 反事实自我报告：在已能『按预期效果选话』的基础上，加入显式的反事实表征（我选了 X；本可以说 Y；预计效果差 ΔE），并检验该表征是否被校准、是否进入自我模型、是否调制后续选择",
+  "created": "2026-10-11",
+  "preregistered_before_data": true,
+  "is_continuation_of": "P14c（results_P14c.json，6/6 PASS）——P14c 证明选择依据＝预期听者效果（隐式反事实更新）；P15 检验该反事实能否被显式表征与校准",
+
+  "scope_disclaimer": "本实验只检验『结构化反事实表征』，不主张语言层面的反事实表达。零生成纪律不变：反事实以结构化记录呈现，不做任何自由文本生成；语言层的反事实『说出』留待 P16（需照护者提供称谓框架）。",
+
+  "design": {
+    "instance": "从 state_exp（XP 线 55 型旧语料、day 255）fork，三臂 off/full/shuf，各 60 日，TGT=315；仅差 response_model 与其反事实开关；time.seed_python_random=true。",
+    "window": "判据限末 30 日（t0+30d .. t0+60d）；学习对照为首 15 日 vs 末 15 日。",
+    "caregiver": "沿用 P14c 的内容敏感听者（r_HIGH=0.95/r_LOW=0.05 + HIGH 短爆 k=3），保证 E 可学、反事实有真实效果差。",
+    "mechanism_新增": {
+      "反事实配对": "每次选择时，chosen=argmax E，alt=候选池内除 chosen 外 E 最大者（runner-up）；记录 {chosen, alt, E_chosen, E_alt, delta=E_chosen−E_alt}。",
+      "无泄漏约束": "delta 必须用『本次发声更新之前』的 E 计算（决策时点值），不得包含事后更新——审计项。",
+      "自我模型折叠": "将反事实汇总（count、mean_regret、last_regret）写入 self_model.json 的 counterfactual 块。",
+      "后悔信号": "本次实现效果 = 发声后 60s 内实现言语率；regret = 预测 − 实现。"
+    }
+  },
+
+  "hypotheses": {
+    "H15a_形式与无泄漏": {"criterion": "full 末30日：反事实台账良构；runner-up 逐条等于『决策时点 E 的第 2 名』（审计一致率 ≥ 0.99）；self_model 出现非零 counterfactual 块；off 臂 ledger 为空、self_model 无该块。"},
+    "H15b_校准(承重)": {"criterion": "full 末30日：按预测效果分箱，箱内『实现效果』随预测单调上升，Spearman(predicted, realized) ≥ 0.5；对照 shuf 臂同统计 < 0.5（若 shuf 也 ≥0.5 则判据作废）。"},
+    "H15c_后悔—回避(表征驱动行为)": {"criterion": "full：按片段型聚合『平均后悔 = 预测 − 实现』与该型后续被选率，Spearman < 0（后悔越高→后续越少被选）；off 臂无效应（无 E、无后悔）。"},
+    "H15d_负意外调制": {"criterion": "负意外(实现<预测)之后的一次选择，偏离『状态胜者』的概率 ≥ 1.2 × 非负意外之后；off 臂无此效应。"}
+  },
+
+  "predictions_registered": {
+    "H15a": "预期阳：机制确定性成立。",
+    "H15b": "预期阳：E 已在 P14c 被证明贴近听者规则(ρ≈0.84)，故其对『实现效果』的预测应有校准。",
+    "H15c": "不确定（探索性）：后悔—回避要求后悔不仅用于当前选择、还回流影响未来选择；可能阴性。",
+    "H15d": "不确定（探索性）：负意外是否调制选择是新问题，可能阴性——若阴，如实记为『反事实被表征但未驱动行为』。"
+  },
+
+  "falsification": {
+    "若 H15b 阴": "说明系统能『选得好』却不能『预测得准』——即选择与自我预测脱钩（可能因为 E 只够排序、不够定量）。结论应写成『反事实可排序但不可校准』。",
+    "若 shuf 的 H15b 也阳": "则校准来自候选池本身的统计性质而非自因建模——H15b 判据作废，需重新设计对照。",
+    "若 H15c/H15d 阴": "表征存在但不调制行为，属『表征—行为脱节』，如实记录，不夸大。"
+  },
+
+  "open_risks": {
+    "1_听者为构造": "同 P14b/P14c：学的是任务内容规则，非语义。",
+    "2_delta 的尺度": "E 是比率（窗口内/外），delta 的绝对尺度可能不直观；H15b 用秩相关而非线性，规避尺度问题。",
+    "3_后悔定义依赖实现噪声": "单次实现是伯努利型噪声，regret 需在小窗口内平滑；H15d 用 60s 窗口实现率而非单次事件。",
+    "4_与 P16 的边界": "P15 不涉及语言表达；不得把结构化记录包装成『它会说反事实』。"
+  },
+
+  "audits": {
+    "unit_test_required": [
+      "① off 臂：counterfactual.jsonl 不生成、self_model 无 counterfactual 块。",
+      "② runner-up：构造已知 E 的候选池，验证 alt 确为第 2 名。",
+      "③ 无泄漏：delta 使用决策时点 E（在 _commit 更新之前取值）。",
+      "④ shuffle：shuf 臂的预测用打乱后的 E，但 ledger 仍逐条记录。"
+    ],
+    "variable_separation": "P15 相对 P14c 仅新增『反事实记录与自我模型折叠』，不改候选生成、不改选择规则、不改听者。三臂仅差 response_model.enabled/shuffle。"
+  },
+
+  "implementation_scope": {
+    "response_model.py": "新增 counterfactual(): 在 _commit 之前返回 (chosen, alt, E_chosen, E_alt)。",
+    "vocal.py": "发声时把 cf 写入 vocalizations.jsonl（扩展字段）并追加 counterfactual.jsonl。",
+    "main.py": "选择后落 ledger；把反事实汇总折入 self_model。",
+    "analyzers": "experiments/analyze_P15.py：实现 H15a–H15d + 分箱校准曲线。",
+    "scripts": "config_P15_{off,full,shuf}.json、run_P15.sh（TGT=315, MAX=3）、watch_P15_{analyze,thermal}.sh。"
+  },
+
+  "note": "P15 只加『显式反事实表征』，不改前序判据；阴性如实记录，不得回溯修改 P14b/P14c。语言层面的反事实表达不在本实验范围。"
+}

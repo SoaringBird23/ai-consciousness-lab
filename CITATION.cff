@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use this system, its data, or its pre-registration protocol, please cite the paper and/or this repository."
+title: "ai-consciousness-lab: a pre-registered developmental system with a read-only workspace"
+type: software
+version: 0.2.0
+date-released: "2026-10-21"
+authors:
+  - family-names: Luo
+    given-names: Chengze
+    orcid: "https://orcid.org/0009-0007-3316-6292"
+    affiliation: "Independent Researcher"
+# TODO: 建仓后把下面两处占位符替换为真实地址
+repository-code: "https://github.com/PLACEHOLDER/ai-consciousness-lab"
+url: "https://github.com/PLACEHOLDER/ai-consciousness-lab"
+license: MIT
+keywords:
+  - machine consciousness
+  - developmental systems
+  - global workspace
+  - inner speech
+  - pre-registration
+  - negative results
+abstract: >
+  A non-LLM, zero-generation developmental system that accumulates a
+  continuous individual history. Its inner speech is retrieval over what it
+  has heard, so no utterance can be fabricated. Forty-one pre-registered
+  experiments and their follow-ups report every outcome, including failures.
+  The central finding is negative: the system's workspace is read-only --- its
+  thoughts change what it wants and how it represents itself, but cannot
+  change its own state. The negative survived six independent escalations,
+  including opening the gate and verifying it fired, writing to a consumed
+  variable, and raising the coupling to 1.99 sigma. Positive results further
+  along the developmental order are reported with their own limits: referential
+  grounding, an adaptive vocabulary spurt, word-level composition, and a
+  dialogue-state vector. Code is MIT-licensed; the caregiver corpus is derived
+  from CHILDES/TalkBank and is not redistributed. Authorship and priority
+  evidence are recorded in PROVENANCE.md.
+preferred-citation:
+  type: article
+  title: "Growing Rather Than Training: A Pre-Registered Developmental System, and the Read-Only Nature of Its Workspace"
+  authors:
+    - family-names: Luo
+      given-names: Chengze
+      orcid: "https://orcid.org/0009-0007-3316-6292"
+  year: 2026
+  # TODO: 预印本发布后替换为 arXiv 链接
+  url: "https://arxiv.org/abs/PLACEHOLDER"

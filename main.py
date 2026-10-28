@@ -17,6 +17,7 @@ STOP 文件存在即退出。
 import json
 import logging
 import os
+import random
 import sys
 import time
 from collections import deque
@@ -36,7 +37,10 @@ import motor as motor_mod
 import narrative as narrative_mod
 import predictor as predictor_mod
 import probes as probes_mod
+import response_model as response_model_mod
 import self_model as self_model_mod
+import semantics as semantics_mod
+import spont as spont_mod
 import stages as stages_mod
 import vocal as vocal_mod
 import world as world_mod
@@ -102,6 +106,15 @@ def main():
     with open(cfg_path) as f:
         config = json.load(f)
     rng = np.random.RandomState(config["time"]["seed"])
+    # 语言层（language.py）用的是 Python 全局 random：它是 OS 熵种子，既不随
+    # fork 复制、也不落盘，于是"同一父本 fork 出的各臂"在念头流上互不对齐
+    # （R2/E6a 的臂间对比因此混入逐次运行的随机差异，而不是只差一个变量）。
+    # 开 seed_python_random 后：显式播种 + 落盘/恢复 RNG 状态，臂间才能对齐。
+    # 默认关闭 → 既有线（主线/P3/p5）行为逐位不变。
+    rng_state_path = os.path.join(ROOT, _STATE_DIR, "rng_state.json")
+    rng_aligned = bool(config["time"].get("seed_python_random", False))
+    if rng_aligned:
+        random.seed(config["time"]["seed"])
     # 命令行可覆盖 time_scale（加速测试用）：main.py --time-scale 1e9
     time_scale = config["time"]["time_scale"]
     for i, a in enumerate(sys.argv):
@@ -122,6 +135,7 @@ def main():
     probes = probes_mod.Probes(config)
     lang = language_mod.Language(config)
     sm = self_model_mod.SelfModel(config)
+    sem = semantics_mod.Semantics(config)   # P16：指称落地（片段 → 外部世界状态）
     narr = narrative_mod.Narrative(config)
     world = world_mod.WorldModel(config)
     voice = vocal_mod.Voice(config)
@@ -130,6 +144,16 @@ def main():
     motor = motor_mod.Motor(config, rng)
     # P5：痛 / 乐——两个带惯性的内部状态（默认 disabled，行为与改动前一致）
     affect = affect_mod.Affect(config)
+    # R3：自发双向——C2 自预期（每 tick 预测自我活动标量）+ C3 后果驱动耦合
+    # （念头浮现时写回 s[i]）。默认 disabled：observe/act 直接返回，不消耗随机数、
+    # 不改状态，行为与改动前逐位一致。C1 成句重组归口 language.py（开关同源自此）。
+    spont = spont_mod.Spont(config)
+    # P14：响应模型——发声选择依据从「状态最相似」改为「预期听者效果最好」。
+    # 默认 enabled=false：select 恒等于检索胜者，行为与改动前逐位一致。
+    rm = response_model_mod.ResponseModel(config)
+    if rm.enabled:
+        logger.info("P14 响应模型：选择依据=预期听者效果 E[f]（shuffle=%s, top_k=%d）",
+                    rm.shuffle, int(config.get("response_model", {}).get("top_k", 5)))
 
     # ---- E6 因果中介（J-space 金标准移植）----
     # p1 损伤：ablation=true → 回流通道切断（念头不再反作用于背景态）
@@ -165,6 +189,8 @@ def main():
         resumed.append("probes")
     if sm.load():
         resumed.append("self_model")
+    if sem.load():
+        resumed.append("semantics")
     if narr.load():
         resumed.append("narrative")
     if world.load():
@@ -179,11 +205,27 @@ def main():
         resumed.append("motor")
     if affect.load():
         resumed.append("affect")
+    if spont.load():
+        resumed.append("spont")
+    if rm.load():
+        resumed.append("response_model")
     if resumed:
         logger.info("恢复运行状态：%s（sim_time=%.0fs, day %d h%.2f）",
                     ", ".join(resumed), clock.sim_time(), clock.day_index(), clock.sim_hour())
     else:
         stage.start(clock.sim_time())
+
+    def save_rng():
+        if rng_aligned:
+            st = random.getstate()
+            with open(rng_state_path, "w") as f:
+                json.dump([st[0], list(st[1]), st[2]], f)
+
+    if rng_aligned and os.path.exists(rng_state_path):
+        with open(rng_state_path) as f:
+            _st = json.load(f)
+        random.setstate((_st[0], tuple(_st[1]), _st[2]))
+        logger.info("恢复语言层 RNG 状态（seed_python_random）")
 
     tick_s = config["time"]["tick_seconds"]
     wall_per_tick = tick_s / time_scale
@@ -204,6 +246,7 @@ def main():
     last_traj_wall = time.time()
     last_hb_wall = time.time()
     tick_count = 0
+    hb_count = 0            # 优化：心跳计数，用于大文件降频落盘
     stop_requested = False
 
     os.makedirs(os.path.join(ROOT, _STATE_DIR), exist_ok=True)
@@ -212,8 +255,8 @@ def main():
 
     try:
         while True:
-            # ---- STOP 检查（每 tick，不可移除）----
-            if os.path.exists(STOP):
+            # ---- STOP 检查（优化：节流到每 500 tick；SIGTERM 路径不受影响）----
+            if tick_count % 500 == 0 and os.path.exists(STOP):
                 stop_requested = True
                 logger.info("检测到 STOP 文件，正常退出。")
                 break
@@ -253,7 +296,17 @@ def main():
             # ---- P5：痛 / 乐（积分量；enabled=false 时 step 直接返回、增益为 0）----
             affect.step(dt_h, bg.s, en.level / en.budget, bg.sleep_pressure, bg.asleep)
             d_bias, e_bias = affect.feedback()
-            bg.receive_affect(d_bias, e_bias, affect.k_affect)
+            bg.receive_affect(d_bias, e_bias, affect.k_affect, dt_h)
+
+            # ---- R3 C2：每 tick 自预期（a=mean(s1..s8)）→ 自我预测误差 ----
+            # 默认关：spont.self_predict=false 时 observe 直接返回（只读 s，不改态）
+            spont.observe(bg.s)
+            # ---- R4：C3 后果窗口——每 tick 累积 (ease-distress) 相对写回基线的偏差 ----
+            # 默认关：spont.enabled/learn_coupling=false 时 tick 直接返回，不改态。
+            spont.tick(affect.ease, affect.distress)
+            # ---- R5：激活式工作集——每 tick 指数衰减 ----
+            # 默认关：workspace.enabled=false 时 decay 直接返回，不改态。
+            lang.tick_workspace(dt_h)
 
             # ---- 睡眠转换：入睡时固化记忆；醒来时补能量 ----
             if prev_asleep and not bg.asleep:
@@ -292,21 +345,33 @@ def main():
             if stage.stage in ("3_mirror", "awaiting_P3"):
                 # P3：真实照护者语言 → hear()（状态绑定）+ 共变统计。
                 # 与 E4 同一机制：它的发声若换来真实回应，能动归因随之建立
+                n_speech_tick = 0              # P14：本 tick 到达的照护者言语条数（响应模型观测）
+                # P16 前置：外部世界签名与"世界事件"（joint attention 触发条件）
+                _wf = float(getattr(milieu, "field", 0.5))
+                world_event = (_wf > lang.wc_field_hi or _wf < lang.wc_field_lo)
+                lang.maybe_grow_vocab(clock.day_index())   # P17：词汇发育（按档扩词）
                 for utext in user_speeches:
                     if not bg.asleep:
-                        lang.hear(utext, bg.s, clock.sim_time())
+                        lang.hear(utext, bg.s, clock.sim_time(), world_sig=_wf)
+                        sem.bind(utext, _wf, clock.sim_time())   # P16：指称绑定
                         pred.note_speech(clock.sim_time())
+                        n_speech_tick += 1
                         logger.info("真实照护者话语：「%s」", utext[:20])
                 # 听：照护者语言（环境侧，与事件流自然耦合）
                 # E3：传状态/睡眠/焦点给照护者——contingent 模式下用于状态应答
                 # E4：传 vocal_recent——contingent 照护者会应答刚发生的发声
+                # P16 前置：世界签名（_wf/world_event 已在上方按 tick 计算）
                 speech = lang.caregiver_speaks(
                     dt_h, clock.sim_hour(), has_event,
                     state_vec=bg.s, asleep=bg.asleep,
                     salience=(focus.get("salience", 0.0) if focus else 0.0),
-                    vocal_recent=voice.vocal_recent(clock.sim_time()))
+                    vocal_recent=voice.vocal_recent(clock.sim_time()),
+                    vocal_text=voice.last_vocal_text,   # P14b：内容敏感应答
+                    world_event=world_event, world_field=_wf)   # P16：世界相关命名
                 if speech is not None and not bg.asleep:
-                    lang.hear(speech, bg.s, clock.sim_time())
+                    lang.hear(speech, bg.s, clock.sim_time(), world_sig=_wf)
+                    sem.bind(speech, _wf, clock.sim_time())   # P16：指称绑定
+                    n_speech_tick += 1
                     # E4：照护者言语到达 → 共变统计（窗口内/外分别计数）
                     in_win = pred.note_speech(clock.sim_time())
                     # 能动归因（比较器）：跟随我发声的言语，若已习得共变
@@ -314,6 +379,16 @@ def main():
                     if in_win and pred.efficacy() > 0.3:
                         att.record(clock.sim_time(), "self", "vocal_contingent",
                                    speech[:10])
+                    # P14c：HIGH 词的“短爆”后续回应（同一次发声窗口内追加 k-1 句）
+                    for extra in lang.drain_burst():
+                        lang.hear(extra, bg.s, clock.sim_time(), world_sig=_wf)
+                        sem.bind(extra, _wf, clock.sim_time())   # P16：指称绑定
+                        pred.note_speech(clock.sim_time())
+                        n_speech_tick += 1
+                # P14：响应模型时钟——累计「发声后窗口内 / 窗口外」的言语条数与时长。
+                # 必须在 evoke/vocalize 之前结算：此刻 _last 仍是上一次发声，
+                # 本 tick 的言语才能被正确计入上一次发声的响应窗口。
+                rm.advance_clock(tick_s, clock.sim_time(), n_speech_tick)
                 # 念头：私语复述 / 状态驱动检索（睡眠中语言静默）
                 # result 每 tick 重置——否则入睡后残留上一 tick 的念头被反复回流
                 result = None
@@ -352,6 +427,12 @@ def main():
                     if not e6_cfg.get("ablation", False):
                         bg.receive_inner_speech(inner_speech,
                                                 lang.valence_of(result, bg.s))
+                    # ---- R3 C3：念头 → 后果驱动耦合（σ=sign(效价)；写回 s[i]）----
+                    # 旧 reflow 在 R3 各臂已切（ablation=true）；此处由"后果自发学出
+                    # 的耦合强度 g[σ][i]"决定写回哪个原语、写多大力。默认关时直接返回。
+                    spont.act(lang.valence_of(result, bg.s), bg.s,
+                              affect.distress, affect.ease,
+                              clock.sim_time(), clock.day_index())
                     # 目标涌现：同一片段反复激活 → goals.json
                     lang.update_goals(result, clock.sim_time(),
                                        clock.day_index(), logger=logger)
@@ -360,12 +441,21 @@ def main():
                         if sm.maybe_update(inner_speech, clock.sim_time()):
                             narr.weave(sm.get_text(), clock.sim_time(), inner_speech)
                     # E4 机制 B：发声——高唤醒时外化刚浮现的念头（生理门控，零生成）
+                    # P14：retrieval 结果携带候选池 → 在 top-k 内按 E[f] 选句（echo 不参与）
+                    _cands = (lang._last_candidates
+                              if result["type"] == "retrieval" else None)
                     spoken = voice.maybe_vocalize(bg.s, en, focus, result,
-                                                  clock.sim_time())
+                                                  clock.sim_time(),
+                                                  candidates=_cands,
+                                                  response_model=rm,
+                                                  partner_last=(lang.dialogue.last_partner_text
+                                                                if lang.dialogue is not None else None))
                     if spoken is not None:
                         pred.note_self_action(clock.sim_time())   # 开启跟随窗口
                         att.record(clock.sim_time(), "self", "vocalization",
                                    spoken[:10])
+                        if lang.dialogue is not None:             # P19：系统一轮 → 对话状态
+                            lang.dialogue.observe_turn(spoken, "self", clock.sim_time())
 
             # ---- P4：行动环（施力于世界 → 世界变化 → 回灌状态）----
             # 动作节奏由 motor.action_interval 控制（非每 tick），睡眠中不动。
@@ -467,6 +557,7 @@ def main():
                 with open(TRAJECTORY, "a") as f:
                     f.write(json.dumps(snap, ensure_ascii=False) + "\n")
             if do_hb:
+                hb_count += 1
                 logger.info(
                     "day %d h%.2f sleep=%s s1=%.2f s8=%.2f energy=%.0f%% "
                     "self_ratio=%s surprise=%s",
@@ -476,9 +567,34 @@ def main():
                     "n/a" if pred.running_mean() is None else round(pred.running_mean(), 2))
                 last_heartbeat_sim = clock.sim_time()
                 bg.save(); en.save(); pred.save(); att.save()
-                stage.save(clock.sim_time()); mem.save(); probes.save()
-                sm.save(); narr.save(); world.save(); lang.save(); voice.save()
-                milieu.save(); motor.save(); affect.save()
+                stage.save(clock.sim_time()); probes.save()
+                # P15：反事实汇总（count / mean_delta / last_delta / mean_regret）→ 自我模型
+                try:
+                    _cfp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        os.environ.get("STATE_DIR", "state"),
+                                        "counterfactual.jsonl")
+                    _cf = ([json.loads(x) for x in open(_cfp, encoding="utf-8")]
+                           if os.path.exists(_cfp) else [])
+                    _ds = [c["delta"] for c in _cf if c.get("delta") is not None]
+                    _reg = [h["predicted"] - h["observed"] for h in rm.history][-200:]
+                    if _cf:
+                        sm.set_counterfactual({
+                            "count": len(_cf),
+                            "mean_delta": round(sum(_ds) / len(_ds), 4) if _ds else None,
+                            "last_delta": _cf[-1].get("delta"),
+                            "mean_regret": round(sum(_reg) / len(_reg), 4) if _reg else None,
+                        })
+                except Exception:
+                    pass
+                sm.save(); narr.save(); world.save(); voice.save()
+                sem.save()   # P16
+                milieu.save(); motor.save(); affect.save(); spont.save()
+                rm.save()
+                # 优化：大文件（记忆 / 语言层，含 12 万条听觉史与词表发育）降频落盘，
+                # 由每心跳降到约每 20s；退出时 finally 仍会全量保存，不丢数据。
+                if hb_count % 10 == 0:
+                    mem.save(); lang.save()
+                save_rng()
 
             # ---- 实时节拍（wall_sleep 过小时跳过 sleep，避免加速模式下被系统调用开销拖垮）----
             wall_sleep = tick_s / time_scale * low_power_factor
@@ -491,7 +607,10 @@ def main():
         bg.save(); en.save(); pred.save(); att.save()
         stage.save(clock.sim_time()); mem.save(); probes.save()
         sm.save(); narr.save(); world.save(); lang.save(); voice.save()
-        milieu.save(); motor.save(); affect.save()
+        sem.save()   # P16
+        milieu.save(); motor.save(); affect.save(); spont.save()
+        rm.save()
+        save_rng()
         logger.info("退出。最后心跳仿真时刻：day %d %.2f 时。",
                     clock.day_index(), clock.sim_hour())
         if stop_requested and os.path.exists(STOP):

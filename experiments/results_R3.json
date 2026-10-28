@@ -1,0 +1,367 @@
+{
+ "fork_day": 255,
+ "n_inherit": 8065,
+ "arms": {
+  "spont_off": {
+   "gen": {
+    "n_window": 905,
+    "n_echo": 37,
+    "n_retrieval": 868,
+    "n_composed": 0,
+    "composed_rate": 0.0,
+    "composed_rate_slope_per_day": 0.0,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": false,
+    "compose": false,
+    "self_predict": false,
+    "learn_coupling": false,
+    "shuffle": false,
+    "n_obs": 0,
+    "n_acts": 0,
+    "n_writes": 0,
+    "n_probes": 0,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "g_neg": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "max_abs_g": 0.0,
+    "max_abs_g_pos": 0.0,
+    "max_abs_g_neg": 0.0
+   },
+   "err_slope_per_day": null,
+   "overlap": null
+  },
+  "spont_gen": {
+   "gen": {
+    "n_window": 893,
+    "n_echo": 34,
+    "n_retrieval": 859,
+    "n_composed": 855,
+    "composed_rate": 0.9953434225844005,
+    "composed_rate_slope_per_day": 0.0007820136852394917,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": true,
+    "self_predict": false,
+    "learn_coupling": false,
+    "shuffle": false,
+    "n_obs": 0,
+    "n_acts": 0,
+    "n_writes": 0,
+    "n_probes": 0,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "g_neg": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "max_abs_g": 0.0,
+    "max_abs_g_pos": 0.0,
+    "max_abs_g_neg": 0.0
+   },
+   "err_slope_per_day": null,
+   "overlap": {
+    "n_common": 63,
+    "phrase_agreement": 0.031746031746031744,
+    "entry_agreement": 0.031746031746031744,
+    "permutation_baseline": 0.001285714285714282,
+    "jaccard": 0.03786057692307692,
+    "first_divergence_t": 22004130.5
+   }
+  },
+  "spont_loop": {
+   "gen": {
+    "n_window": 887,
+    "n_echo": 36,
+    "n_retrieval": 851,
+    "n_composed": 0,
+    "composed_rate": 0.0,
+    "composed_rate_slope_per_day": 0.0,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": false,
+    "self_predict": true,
+    "learn_coupling": false,
+    "shuffle": false,
+    "n_obs": 51258552,
+    "n_acts": 0,
+    "n_writes": 0,
+    "n_probes": 0,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "g_neg": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "max_abs_g": 0.0,
+    "max_abs_g_pos": 0.0,
+    "max_abs_g_neg": 0.0
+   },
+   "err_slope_per_day": null,
+   "overlap": {
+    "n_common": 471,
+    "phrase_agreement": 0.9490445859872612,
+    "entry_agreement": 0.9490445859872612,
+    "permutation_baseline": 0.032408704883227384,
+    "jaccard": 0.37740384615384615,
+    "first_divergence_t": 23312160.1
+   }
+  },
+  "spont_full": {
+   "gen": {
+    "n_window": 901,
+    "n_echo": 40,
+    "n_retrieval": 861,
+    "n_composed": 857,
+    "composed_rate": 0.9953542392566783,
+    "composed_rate_slope_per_day": 0.000759013282732448,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": true,
+    "self_predict": true,
+    "learn_coupling": true,
+    "shuffle": false,
+    "n_obs": 51035155,
+    "n_acts": 901,
+    "n_writes": 901,
+    "n_probes": 131,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     -0.005393,
+     -0.005718,
+     -0.000888,
+     -0.00867,
+     -0.005625,
+     -0.008409,
+     -0.012466,
+     -0.00135
+    ],
+    "g_neg": [
+     -0.013724,
+     -0.011958,
+     -0.009342,
+     -0.007829,
+     -0.010124,
+     -0.00714,
+     -0.005012,
+     -0.015488
+    ],
+    "max_abs_g": 0.015488,
+    "max_abs_g_pos": 0.012466,
+    "max_abs_g_neg": 0.015488
+   },
+   "err_slope_per_day": -4.43753921609458e-07,
+   "overlap": {
+    "n_common": 42,
+    "phrase_agreement": 0.047619047619047616,
+    "entry_agreement": 0.047619047619047616,
+    "permutation_baseline": 0.001333333333333331,
+    "jaccard": 0.024896265560165973,
+    "first_divergence_t": 22004130.5
+   }
+  },
+  "spont_shuf": {
+   "gen": {
+    "n_window": 941,
+    "n_echo": 48,
+    "n_retrieval": 893,
+    "n_composed": 889,
+    "composed_rate": 0.9955207166853304,
+    "composed_rate_slope_per_day": 0.0006974716652136006,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": true,
+    "self_predict": true,
+    "learn_coupling": true,
+    "shuffle": true,
+    "n_obs": 51209736,
+    "n_acts": 941,
+    "n_writes": 941,
+    "n_probes": 155,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     -0.01444,
+     -0.008553,
+     -0.007784,
+     -0.008915,
+     -0.014576,
+     -0.015241,
+     -0.006666,
+     -0.00853
+    ],
+    "g_neg": [
+     -0.007015,
+     -0.006091,
+     0.001456,
+     -0.012511,
+     -0.011175,
+     -0.006906,
+     -0.014245,
+     -0.012774
+    ],
+    "max_abs_g": 0.015241,
+    "max_abs_g_pos": 0.015241,
+    "max_abs_g_neg": 0.014245
+   },
+   "err_slope_per_day": -5.59322827530272e-07,
+   "overlap": {
+    "n_common": 49,
+    "phrase_agreement": 0.04081632653061224,
+    "entry_agreement": 0.04081632653061224,
+    "permutation_baseline": 0.0021428571428571334,
+    "jaccard": 0.028621495327102803,
+    "first_divergence_t": 22004130.5
+   }
+  },
+  "spont_replay": {
+   "gen": {
+    "n_window": 849,
+    "n_echo": 39,
+    "n_retrieval": 810,
+    "n_composed": 0,
+    "composed_rate": 0.0,
+    "composed_rate_slope_per_day": 0.0,
+    "days_span": [
+     255,
+     284
+    ],
+    "n_days": 30
+   },
+   "spont": {
+    "enabled": true,
+    "compose": false,
+    "self_predict": true,
+    "learn_coupling": true,
+    "shuffle": false,
+    "n_obs": 50976485,
+    "n_acts": 849,
+    "n_writes": 849,
+    "n_probes": 124,
+    "err_ema": 0.0,
+    "err_now": 0.0,
+    "g_pos": [
+     -0.001435,
+     -0.012616,
+     -0.012225,
+     -0.003876,
+     -0.007358,
+     -0.02122,
+     -0.0049,
+     -0.006012
+    ],
+    "g_neg": [
+     -0.006566,
+     -0.008436,
+     -0.013282,
+     -0.027119,
+     -0.011053,
+     -0.015545,
+     -0.007944,
+     -0.00809
+    ],
+    "max_abs_g": 0.027119,
+    "max_abs_g_pos": 0.02122,
+    "max_abs_g_neg": 0.027119
+   },
+   "err_slope_per_day": 9.984877107331542e-07,
+   "overlap": {
+    "n_common": 45,
+    "phrase_agreement": 0.35555555555555557,
+    "entry_agreement": 0.3333333333333333,
+    "permutation_baseline": 0.03034444444444511,
+    "jaccard": 0.027556644213104716,
+    "first_divergence_t": 22050240.0
+   }
+  }
+ },
+ "coupling_test": {
+  "full_max_abs_g": 0.015488,
+  "shuf_max_abs_g": 0.015241,
+  "diff": 0.0002470000000000007,
+  "perm_p_two_sided": 1.0,
+  "n_cells": 16,
+  "caveat": "单次运行、n=16 单元，p 仅作序性参考"
+ }
+}
